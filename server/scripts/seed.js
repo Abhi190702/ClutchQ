@@ -156,6 +156,21 @@ for (let index = 0; index < 30; index += 1) {
 }
 
 const reviews = [];
+for (let index = 0; index < 8; index += 1) {
+  reviews.push(
+    await Review.create({
+      reviewerId: profiles[index + 1].userId,
+      reviewedUserId: demoProfile.userId,
+      communication: 5,
+      teamwork: 5,
+      skill: index % 2 === 0 ? 5 : 4,
+      punctuality: 5,
+      behavior: 5,
+      comment: "Reliable Duelist, strong comms, and consistently ready for ranked queues."
+    })
+  );
+}
+
 for (let index = 0; index < 48; index += 1) {
   const reviewer = profiles[(index + 2) % profiles.length];
   const reviewed = profiles[(index + 9) % profiles.length];
