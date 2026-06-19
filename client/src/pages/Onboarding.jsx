@@ -137,7 +137,7 @@ const Onboarding = () => {
 
         <div className="card p-6">
           <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-2xl font-black">{steps[step]}</h2>
+            <h2 className="text-2xl font-semibold">{steps[step]}</h2>
             <Badge>{Math.round(completeness)}% Complete</Badge>
           </div>
 
@@ -236,11 +236,11 @@ const Onboarding = () => {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="rounded-lg border border-clutch-border bg-clutch-panelSoft p-4">
                 <div className="text-sm text-clutch-muted">Display</div>
-                <div className="mt-1 text-xl font-black">{form.displayName}</div>
+                <div className="mt-1 text-xl font-semibold">{form.displayName}</div>
               </div>
               <div className="rounded-lg border border-clutch-border bg-clutch-panelSoft p-4">
                 <div className="text-sm text-clutch-muted">Game</div>
-                <div className="mt-1 text-xl font-black">{form.gameName} · {form.rank}</div>
+                <div className="mt-1 text-xl font-semibold">{form.gameName} - {form.rank}</div>
               </div>
               <div className="rounded-lg border border-clutch-border bg-clutch-panelSoft p-4">
                 <div className="text-sm text-clutch-muted">Roles</div>

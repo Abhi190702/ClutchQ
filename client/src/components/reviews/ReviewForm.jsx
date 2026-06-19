@@ -29,7 +29,7 @@ const ReviewForm = ({ players = [], onCreated }) => {
 
   return (
     <form onSubmit={submit} className="card space-y-4 p-5">
-      <h3 className="text-lg font-black">Review completed teammate</h3>
+      <h3 className="text-lg font-semibold">Review completed teammate</h3>
       <label>
         <span className="form-label">Player</span>
         <select className="form-input" value={form.reviewedUserId} onChange={(event) => setForm({ ...form, reviewedUserId: event.target.value })}>

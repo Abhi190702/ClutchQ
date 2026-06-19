@@ -10,12 +10,12 @@ const RequestCard = ({ request, direction = "incoming", onAction }) => {
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-black text-clutch-text">{other?.name || "Player request"}</h3>
+            <h3 className="font-semibold text-clutch-text">{other?.name || "Player request"}</h3>
             <Badge>{request.type}</Badge>
             <Badge>{request.status}</Badge>
           </div>
           <p className="mt-2 text-sm text-clutch-muted">{request.message || "No message provided."}</p>
-          {lobby && <p className="mt-1 text-sm text-clutch-cyan">Lobby: {lobby.title}</p>}
+          {lobby && <p className="mt-1 text-sm text-clutch-blue">Lobby: {lobby.title}</p>}
         </div>
         <div className="flex flex-wrap gap-2">
           {direction === "incoming" && request.status === "pending" && (

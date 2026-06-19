@@ -5,7 +5,7 @@ import SkeletonCard from "./SkeletonCard";
 const AdminRoute = () => {
   const { isAdmin, loading } = useAuth();
 
-  if (loading) {
+  if (loading && !isAdmin) {
     return (
       <div className="noise-bg min-h-screen p-6">
         <SkeletonCard rows={6} />

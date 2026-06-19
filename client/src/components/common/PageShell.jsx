@@ -6,12 +6,12 @@ const PageShell = ({ children, title, eyebrow, actions, fullWidth = false }) => 
     <Navbar />
     <div className="flex">
       <Sidebar />
-      <main className={`mx-auto w-full ${fullWidth ? "" : "max-w-7xl"} px-4 py-6 md:px-6`}>
+      <main className={`mx-auto min-w-0 flex-1 ${fullWidth ? "" : "max-w-6xl"} px-4 py-5 md:px-6`}>
         {(title || eyebrow || actions) && (
-          <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div className="mb-5 flex flex-col gap-3 border-b border-clutch-border pb-5 md:flex-row md:items-end md:justify-between">
             <div>
               {eyebrow && <div className="eyebrow mb-2">{eyebrow}</div>}
-              {title && <h1 className="text-3xl font-black tracking-tight md:text-4xl">{title}</h1>}
+              {title && <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{title}</h1>}
             </div>
             {actions && <div className="flex flex-wrap gap-3">{actions}</div>}
           </div>

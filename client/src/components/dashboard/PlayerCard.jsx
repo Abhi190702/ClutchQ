@@ -16,15 +16,15 @@ const PlayerCard = ({ item, onSendRequest, requested = false }) => {
   const game = getPrimaryGame(profile);
 
   return (
-    <article className="card p-5 transition hover:-translate-y-1 hover:border-clutch-cyan/40">
+    <article className="card p-5 transition hover:border-clutch-blue/40">
       <div className="flex items-start justify-between gap-4">
         <div className="flex gap-3">
-          <div className="grid h-14 w-14 shrink-0 place-items-center rounded-lg border border-clutch-border bg-clutch-panelSoft font-black text-clutch-cyan">
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-md border border-clutch-border bg-clutch-panelSoft font-semibold text-clutch-blue">
             {initials(profile?.displayName)}
           </div>
           <div>
-            <h3 className="text-lg font-black text-clutch-text">{profile?.displayName}</h3>
-            <p className="mt-1 text-sm text-clutch-muted">{game?.gameName} · {game?.roles?.join(", ")}</p>
+            <h3 className="text-lg font-semibold text-clutch-text">{profile?.displayName}</h3>
+            <p className="mt-1 text-sm text-clutch-muted">{game?.gameName} - {game?.roles?.join(", ")}</p>
             <div className="mt-3 flex flex-wrap gap-2">
               <RankBadge rank={game?.rank} />
               <TrustBadge score={profile?.trustScore} />
@@ -37,13 +37,13 @@ const PlayerCard = ({ item, onSendRequest, requested = false }) => {
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
-        <div className="rounded-lg border border-clutch-border bg-clutch-panelSoft p-3">
+        <div className="rounded-md border border-clutch-border bg-clutch-panelSoft p-3">
           <div className="text-xs text-clutch-muted">Reliability</div>
-          <div className="text-lg font-black text-clutch-text">{profile?.reliabilityScore || 0}%</div>
+          <div className="text-lg font-semibold text-clutch-text">{profile?.reliabilityScore || 0}%</div>
         </div>
-        <div className="rounded-lg border border-clutch-border bg-clutch-panelSoft p-3">
+        <div className="rounded-md border border-clutch-border bg-clutch-panelSoft p-3">
           <div className="text-xs text-clutch-muted">Overlap</div>
-          <div className="text-lg font-black text-clutch-text">{match?.availability?.overlapHours || 0}h</div>
+          <div className="text-lg font-semibold text-clutch-text">{match?.availability?.overlapHours || 0}h</div>
         </div>
         <MatchConfidence confidence={match?.confidence} />
       </div>

@@ -27,8 +27,8 @@ const ReadyCheck = ({ lobby, onUpdate }) => {
   return (
     <div className="card p-5">
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-lg font-black">Ready check</h3>
-        <span className="text-sm font-bold text-clutch-cyan">{readyCount}/{lobby.currentMembers?.length || 0} Ready</span>
+        <h3 className="text-lg font-semibold">Ready check</h3>
+        <span className="text-sm font-semibold text-clutch-blue">{readyCount}/{lobby.currentMembers?.length || 0} Ready</span>
       </div>
       <div className="flex flex-wrap gap-3">
         <button disabled={saving} onClick={() => updateReady(true)} className="btn-primary py-2" type="button">Ready</button>

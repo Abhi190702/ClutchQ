@@ -1,7 +1,7 @@
 const colors = {
-  open: "#22C55E",
-  full: "#22D3EE",
-  closed: "#F59E0B"
+  open: "#34D399",
+  full: "#60A5FA",
+  closed: "#FBBF24"
 };
 
 const LobbyHealthChart = ({ data = [] }) => {
@@ -10,7 +10,7 @@ const LobbyHealthChart = ({ data = [] }) => {
 
   return (
     <div className="card p-5">
-      <h3 className="mb-4 text-lg font-black">Lobby health</h3>
+      <h3 className="mb-4 text-lg font-semibold">Lobby health</h3>
       <svg viewBox="0 0 120 120" className="mx-auto h-44 w-44">
         {data.map((item) => {
           const dash = (item.value / total) * 100;

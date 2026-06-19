@@ -3,7 +3,7 @@ const GamePopularityChart = ({ data = [] }) => {
 
   return (
     <div className="card p-5">
-      <h3 className="mb-4 text-lg font-black">Game popularity</h3>
+      <h3 className="mb-4 text-lg font-semibold">Game popularity</h3>
       <div className="space-y-3">
         {data.map((item) => (
           <div key={item.label}>
@@ -12,7 +12,7 @@ const GamePopularityChart = ({ data = [] }) => {
               <span className="text-clutch-muted">{item.value}</span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-clutch-panelSoft">
-              <div className="h-full rounded-full bg-clutch-cyan" style={{ width: `${(item.value / max) * 100}%` }} />
+              <div className="h-full rounded-full bg-clutch-blue" style={{ width: `${(item.value / max) * 100}%` }} />
             </div>
           </div>
         ))}

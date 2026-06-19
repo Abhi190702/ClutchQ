@@ -2,7 +2,7 @@ import TrustBadge from "../common/TrustBadge";
 
 const AdminUsersTable = ({ users = [] }) => (
   <div className="card overflow-hidden">
-    <div className="border-b border-clutch-border p-5 text-lg font-black">Users</div>
+    <div className="border-b border-clutch-border p-5 text-lg font-semibold">Users</div>
     <div className="thin-scrollbar overflow-x-auto">
       <table className="w-full min-w-[760px] text-left text-sm">
         <thead className="bg-clutch-panelSoft text-xs uppercase tracking-[0.16em] text-clutch-muted">

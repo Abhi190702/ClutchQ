@@ -21,7 +21,7 @@ const ScoreRing = ({ score = 0, size = 88, label = "Match" }) => {
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke={animatedScore >= 80 ? "#22C55E" : animatedScore >= 60 ? "#22D3EE" : "#F59E0B"}
+          stroke={animatedScore >= 80 ? "#34D399" : animatedScore >= 60 ? "#60A5FA" : "#FBBF24"}
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={circumference}
@@ -30,8 +30,8 @@ const ScoreRing = ({ score = 0, size = 88, label = "Match" }) => {
         />
       </svg>
       <div className="absolute text-center">
-        <div className="text-xl font-black text-clutch-text">{Math.round(animatedScore)}%</div>
-        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-clutch-muted">{label}</div>
+        <div className="text-xl font-semibold text-clutch-text">{Math.round(animatedScore)}%</div>
+        <div className="text-[10px] font-semibold text-clutch-muted">{label}</div>
       </div>
     </div>
   );

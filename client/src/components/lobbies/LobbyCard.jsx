@@ -9,11 +9,11 @@ const LobbyCard = ({ item, onJoin, requested = false }) => {
   const openSlots = Math.max(0, (lobby.neededPlayers || 5) - (lobby.currentMembers?.length || 0));
 
   return (
-    <article className="card p-5 transition hover:-translate-y-1 hover:border-clutch-cyan/40">
+    <article className="card p-5 transition hover:border-clutch-blue/40">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h3 className="text-xl font-black text-clutch-text">{lobby.title}</h3>
-          <p className="mt-1 text-sm text-clutch-muted">{lobby.game} · {lobby.mode} · {lobby.region}</p>
+          <h3 className="text-xl font-semibold text-clutch-text">{lobby.title}</h3>
+          <p className="mt-1 text-sm text-clutch-muted">{lobby.game} - {lobby.mode} - {lobby.region}</p>
         </div>
         <Badge tone={openSlots ? "border-clutch-green/40 bg-clutch-green/10 text-green-200" : "border-clutch-amber/40 bg-clutch-amber/10 text-amber-100"}>
           {openSlots} slots
@@ -39,7 +39,7 @@ const LobbyCard = ({ item, onJoin, requested = false }) => {
 
       {!!item.compatibility?.warnings?.length && (
         <div className="mt-4 rounded-lg border border-clutch-amber/40 bg-clutch-amber/10 p-3 text-xs text-amber-100">
-          {item.compatibility.warnings.join(" · ")}
+          {item.compatibility.warnings.join(" - ")}
         </div>
       )}
 

@@ -4,9 +4,18 @@ import GamerProfile from "../models/GamerProfile.js";
 import generateToken from "../utils/generateToken.js";
 import { asyncHandler } from "../middleware/errorMiddleware.js";
 
+const cookieOptions = {
+  httpOnly: true,
+  maxAge: 30 * 24 * 60 * 60 * 1000,
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  secure: process.env.NODE_ENV === "production"
+};
+
 const authResponse = async (res, user, message) => {
   const profile = await GamerProfile.findOne({ userId: user._id });
   const token = generateToken(user._id);
+
+  res.cookie("token", token, cookieOptions);
 
   res.json({
     success: true,
@@ -87,6 +96,19 @@ export const demoLogin = asyncHandler(async (req, res) => {
   }
 
   await authResponse(res, user, "Demo session started");
+});
+
+export const logout = asyncHandler(async (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    sameSite: cookieOptions.sameSite,
+    secure: cookieOptions.secure
+  });
+
+  res.json({
+    success: true,
+    message: "Logged out"
+  });
 });
 
 export const getMe = asyncHandler(async (req, res) => {

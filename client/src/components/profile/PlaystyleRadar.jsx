@@ -16,8 +16,8 @@ const PlaystyleRadar = ({ stats = {}, compareStats = null, size = 260 }) => {
   return (
     <div className="card p-5">
       <div className="mb-4">
-        <h3 className="text-lg font-black text-clutch-text">Playstyle radar</h3>
-        <p className="text-sm text-clutch-muted">Custom SVG chart built without chart libraries.</p>
+        <h3 className="text-lg font-semibold text-clutch-text">Playstyle radar</h3>
+        <p className="text-sm text-clutch-muted">Your playstyle balance across team signals.</p>
       </div>
       <svg width="100%" viewBox={`0 0 ${size} ${size}`} className="mx-auto max-w-[320px]">
         {[0.25, 0.5, 0.75, 1].map((scale) => (
@@ -40,8 +40,8 @@ const PlaystyleRadar = ({ stats = {}, compareStats = null, size = 260 }) => {
             </g>
           );
         })}
-        {compareStats && <polygon points={polygonPoints(compareStats, radius, center)} fill="rgba(139,92,246,0.22)" stroke="#8B5CF6" strokeWidth="2" />}
-        <polygon points={polygonPoints(stats, radius, center)} fill="rgba(34,211,238,0.22)" stroke="#22D3EE" strokeWidth="2" />
+        {compareStats && <polygon points={polygonPoints(compareStats, radius, center)} fill="rgba(167,139,250,0.16)" stroke="#A78BFA" strokeWidth="2" />}
+        <polygon points={polygonPoints(stats, radius, center)} fill="rgba(96,165,250,0.18)" stroke="#60A5FA" strokeWidth="2" />
       </svg>
     </div>
   );

@@ -54,14 +54,13 @@ const Register = () => {
   return (
     <div className="noise-bg min-h-screen">
       <Navbar />
-      <main className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl items-center gap-8 px-4 py-10 md:grid-cols-2">
-        <div>
-          <div className="eyebrow mb-4">Create your player card</div>
-          <h1 className="text-4xl font-black tracking-tight md:text-6xl">Your squad fit starts with profile data.</h1>
-          <p className="mt-5 max-w-xl text-clutch-muted">Register, complete onboarding, and ClutchQ turns your rank, role, schedule, and trust history into visible match intelligence.</p>
-        </div>
-        <form onSubmit={submit} className="card space-y-4 p-6">
-          <h2 className="text-2xl font-black">Register</h2>
+      <main className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-md items-center px-4 py-10">
+        <form onSubmit={submit} className="card w-full space-y-4 p-6">
+          <div>
+            <div className="eyebrow mb-3">New account</div>
+            <h1 className="text-2xl font-semibold text-clutch-text">Create your player profile</h1>
+            <p className="mt-2 text-sm leading-6 text-clutch-muted">Add the basics now, then finish your game, rank, role, and availability in onboarding.</p>
+          </div>
           {field("name", "Name")}
           {field("email", "Email", "email")}
           {field("password", "Password", "password")}
@@ -71,7 +70,7 @@ const Register = () => {
           </button>
           <p className="text-sm text-clutch-muted">
             Already registered?{" "}
-            <Link to="/login" className="font-semibold text-clutch-cyan">
+            <Link to="/login" className="font-semibold text-clutch-blue">
               Login
             </Link>
           </p>

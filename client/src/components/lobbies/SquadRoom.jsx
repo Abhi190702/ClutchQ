@@ -13,8 +13,8 @@ const SquadRoom = ({ data, onLobbyUpdate }) => {
         <div className="card p-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
-              <h2 className="text-2xl font-black">{lobby.title}</h2>
-              <p className="mt-2 text-sm text-clutch-muted">{lobby.game} · {lobby.region} · starts {shortDateTime(lobby.startTime)}</p>
+              <h2 className="text-2xl font-semibold">{lobby.title}</h2>
+              <p className="mt-2 text-sm text-clutch-muted">{lobby.game} - {lobby.region} - starts {shortDateTime(lobby.startTime)}</p>
             </div>
             <Badge>{lobby.inviteCode}</Badge>
           </div>
@@ -22,7 +22,7 @@ const SquadRoom = ({ data, onLobbyUpdate }) => {
             {lobby.currentMembers?.map((member) => (
               <div key={member.userId?._id || member.userId} className="rounded-lg border border-clutch-border bg-clutch-panelSoft p-3">
                 <div className="font-bold text-clutch-text">{member.userId?.name || "Member"}</div>
-                <div className="mt-1 text-sm text-clutch-muted">{member.role} · {member.ready ? "Ready" : "Waiting"}</div>
+                <div className="mt-1 text-sm text-clutch-muted">{member.role} - {member.ready ? "Ready" : "Waiting"}</div>
               </div>
             ))}
           </div>
@@ -33,7 +33,7 @@ const SquadRoom = ({ data, onLobbyUpdate }) => {
         <ReadyCheck lobby={lobby} onUpdate={onLobbyUpdate} />
         <SquadRoleBalance roleBalance={chemistry.roleBalance} />
         <div className="card p-5">
-          <h3 className="text-lg font-black">Compatibility warnings</h3>
+          <h3 className="text-lg font-semibold">Compatibility warnings</h3>
           <div className="mt-4 flex flex-wrap gap-2">
             {chemistry.warnings?.length ? chemistry.warnings.map((warning) => <Badge key={warning} tone="border-clutch-amber/40 bg-clutch-amber/10 text-amber-100">{warning}</Badge>) : <Badge tone="border-clutch-green/40 bg-clutch-green/10 text-green-200">No major warnings</Badge>}
           </div>

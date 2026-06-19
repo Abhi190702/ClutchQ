@@ -14,16 +14,16 @@ const Sidebar = () => {
   const allLinks = isAdmin ? [...links, { to: "/admin", label: "Admin", hint: "Safety" }] : links;
 
   return (
-    <aside className="hidden w-64 shrink-0 border-r border-clutch-border bg-clutch-bg/70 p-4 lg:block">
+    <aside className="hidden w-56 shrink-0 border-r border-clutch-border bg-clutch-bg p-3 lg:block">
       <div className="sticky top-20 space-y-2">
         {allLinks.map((link) => (
           <NavLink
             key={link.to}
             to={link.to}
             className={({ isActive }) =>
-              `flex items-center justify-between rounded-lg border px-4 py-3 text-sm transition ${
+              `flex items-center justify-between rounded-md border px-3 py-2.5 text-sm transition ${
                 isActive
-                  ? "border-clutch-cyan/50 bg-clutch-cyan/10 text-clutch-cyan"
+                  ? "border-clutch-blue/40 bg-clutch-blue/10 text-clutch-blue"
                   : "border-transparent text-clutch-muted hover:border-clutch-border hover:bg-clutch-panelSoft hover:text-clutch-text"
               }`
             }

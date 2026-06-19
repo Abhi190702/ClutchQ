@@ -11,22 +11,47 @@ import ProfileCompleteness from "../components/profile/ProfileCompleteness";
 import ProfileHeader from "../components/profile/ProfileHeader";
 import SessionHistory from "../components/profile/SessionHistory";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
+import { getErrorMessage } from "../services/api";
 import api from "../services/api";
 
 const Profile = () => {
   const { profile, refresh } = useAuth();
+  const { showToast } = useToast();
+  const [currentProfile, setCurrentProfile] = useState(profile);
   const [sessions, setSessions] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!profile);
 
   useEffect(() => {
+    let alive = true;
+
     const load = async () => {
-      await refresh();
-      const response = await api.get("/sessions");
-      setSessions(response.data.data);
-      setLoading(false);
+      try {
+        if (!currentProfile) setLoading(true);
+        const data = await refresh();
+        if (!alive) return;
+        setCurrentProfile(data?.profile || profile);
+
+        try {
+          const response = await api.get("/sessions");
+          if (alive) setSessions(response.data.data);
+        } catch (error) {
+          if (alive) showToast(getErrorMessage(error), "error");
+        }
+      } finally {
+        if (alive) setLoading(false);
+      }
     };
+
     load();
+    return () => {
+      alive = false;
+    };
   }, []);
+
+  useEffect(() => {
+    setCurrentProfile(profile);
+  }, [profile]);
 
   if (loading) {
     return (
@@ -36,7 +61,7 @@ const Profile = () => {
     );
   }
 
-  if (!profile) {
+  if (!currentProfile) {
     return (
       <PageShell title="Profile" eyebrow="Player identity">
         <EmptyState
@@ -54,26 +79,26 @@ const Profile = () => {
       eyebrow="Player identity"
       actions={<Link to="/onboarding" className="btn-secondary">Edit profile</Link>}
     >
-      <div className="grid gap-6">
-        <ProfileHeader profile={profile} actions={<Link to="/dashboard" className="btn-primary">Find matches</Link>} />
-        <div className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr]">
-          <div className="space-y-6">
-            <ProfileCompleteness value={profile.profileCompleteness} />
-            <PlayerBadges badges={profile.badges} />
+      <div className="grid min-w-0 gap-6">
+        <ProfileHeader profile={currentProfile} actions={<Link to="/dashboard" className="btn-primary">Find matches</Link>} />
+        <div className="grid min-w-0 gap-6 lg:grid-cols-[0.72fr_1.28fr]">
+          <div className="min-w-0 space-y-6">
+            <ProfileCompleteness value={currentProfile.profileCompleteness} />
+            <PlayerBadges badges={currentProfile.badges} />
             <SessionHistory sessions={sessions} />
           </div>
-          <div className="space-y-6">
-            <div className="card p-5">
-              <h3 className="mb-4 text-lg font-black">Games and roles</h3>
+          <div className="min-w-0 space-y-6">
+            <div className="card min-w-0 p-5">
+              <h3 className="mb-4 text-lg font-semibold">Games and roles</h3>
               <div className="grid gap-3 md:grid-cols-2">
-                {profile.games?.map((game) => <GameRankCard key={game.gameName} game={game} />)}
+                {currentProfile.games?.map((game) => <GameRankCard key={game.gameName} game={game} />)}
               </div>
             </div>
-            <div className="card p-5">
-              <h3 className="mb-4 text-lg font-black">Availability heatmap</h3>
-              <AvailabilityHeatmap value={profile.availability} readonly />
+            <div className="card min-w-0 p-5">
+              <h3 className="mb-4 text-lg font-semibold">Availability heatmap</h3>
+              <AvailabilityHeatmap value={currentProfile.availability} readonly />
             </div>
-            <PlaystyleRadar stats={profile.playstyleStats} />
+            <PlaystyleRadar stats={currentProfile.playstyleStats} />
           </div>
         </div>
       </div>

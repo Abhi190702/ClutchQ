@@ -96,7 +96,7 @@ const PlayerProfile = () => {
           <div className="space-y-6">
             {data?.match && (
               <div className="card p-5">
-                <h3 className="mb-4 text-lg font-black">Why this player matches</h3>
+                <h3 className="mb-4 text-lg font-semibold">Why this player matches</h3>
                 <MatchBreakdown match={data.match} />
               </div>
             )}

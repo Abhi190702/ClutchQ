@@ -5,23 +5,23 @@ export default {
     extend: {
       colors: {
         clutch: {
-          bg: "#070A12",
-          panel: "#0F172A",
-          panelSoft: "#111827",
-          border: "#1E293B",
+          bg: "#0B1020",
+          panel: "#111827",
+          panelSoft: "#151E2E",
+          border: "#263244",
           text: "#F8FAFC",
-          muted: "#94A3B8",
-          cyan: "#22D3EE",
-          blue: "#3B82F6",
-          violet: "#8B5CF6",
-          green: "#22C55E",
-          amber: "#F59E0B",
-          red: "#EF4444"
+          muted: "#A8B3C7",
+          cyan: "#38BDF8",
+          blue: "#60A5FA",
+          violet: "#A78BFA",
+          green: "#34D399",
+          amber: "#FBBF24",
+          red: "#F87171"
         }
       },
       boxShadow: {
-        card: "0 18px 60px rgba(2, 6, 23, 0.28)",
-        cyan: "0 0 28px rgba(34, 211, 238, 0.18)"
+        card: "0 1px 0 rgba(255, 255, 255, 0.03)",
+        cyan: "0 0 0 rgba(0, 0, 0, 0)"
       },
       fontFamily: {
         display: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"]

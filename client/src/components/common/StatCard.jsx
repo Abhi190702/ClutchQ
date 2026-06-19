@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-
 const accentMap = {
   cyan: "#22D3EE",
   blue: "#3B82F6",
@@ -10,25 +8,13 @@ const accentMap = {
 };
 
 const StatCard = ({ label, value, suffix = "", accent = "cyan" }) => {
-  const [display, setDisplay] = useState(0);
   const isNumber = Number.isFinite(Number(value));
-
-  useEffect(() => {
-    if (!isNumber) return;
-    const target = Number(value);
-    let frame = 0;
-    const timer = window.setInterval(() => {
-      frame += 1;
-      setDisplay(Math.round((target * frame) / 18));
-      if (frame >= 18) window.clearInterval(timer);
-    }, 18);
-    return () => window.clearInterval(timer);
-  }, [value, isNumber]);
+  const display = isNumber ? Math.round(Number(value)) : value;
 
   return (
     <div className="card p-5">
-      <div className="mb-4 h-1 w-12 rounded-full" style={{ backgroundColor: accentMap[accent] || accentMap.cyan }} />
-      <div className="text-3xl font-black text-clutch-text">{isNumber ? display : value}{suffix}</div>
+      <div className="mb-4 h-1 w-10 rounded-full" style={{ backgroundColor: accentMap[accent] || accentMap.cyan }} />
+      <div className="text-3xl font-semibold text-clutch-text">{display}{suffix}</div>
       <div className="mt-1 text-sm text-clutch-muted">{label}</div>
     </div>
   );

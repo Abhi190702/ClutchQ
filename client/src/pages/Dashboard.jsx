@@ -68,8 +68,8 @@ const Dashboard = () => {
 
   return (
     <PageShell
-      title={`Welcome back${profile?.displayName ? `, ${profile.displayName}` : ""}`}
-      eyebrow="Matchmaking dashboard"
+      title={profile?.displayName ? `Welcome, ${profile.displayName}` : "Dashboard"}
+      eyebrow="Overview"
       actions={<Link to="/lobbies/create" className="btn-primary">Create Lobby</Link>}
     >
       <div className="grid gap-6">
@@ -79,9 +79,9 @@ const Dashboard = () => {
           <StatCard label="Trust score" value={profile?.trustScore || 0} suffix="%" accent="violet" />
           <StatCard label="Availability hours" value={profile?.availability?.length || 0} accent="amber" />
         </div>
-        <FindSquadNow />
-        <div className="grid gap-6 xl:grid-cols-[0.72fr_1.28fr]">
+        <div className="grid gap-6 xl:grid-cols-[0.78fr_1.22fr]">
           <div className="space-y-6">
+            <FindSquadNow />
             <PlayerFilters filters={filters} onChange={setFilters} />
             {best && <LiveDNAVisualizer breakdown={best.match.breakdown} totalScore={best.match.totalScore} />}
           </div>

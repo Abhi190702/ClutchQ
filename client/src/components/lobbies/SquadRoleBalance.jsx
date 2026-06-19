@@ -7,7 +7,7 @@ const SquadRoleBalance = ({ roleBalance }) => {
   return (
     <div className="card p-5">
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-lg font-black">Squad role balance</h3>
+        <h3 className="text-lg font-semibold">Squad role balance</h3>
         <Badge>{roleBalance?.score || 0}% Balance</Badge>
       </div>
       <div className="space-y-2">

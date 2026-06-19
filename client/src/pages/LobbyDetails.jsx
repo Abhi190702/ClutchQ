@@ -60,7 +60,7 @@ const LobbyDetails = () => {
 
   if (loading || !data) {
     return (
-      <PageShell title="Lobby Details" eyebrow="Squad intelligence">
+      <PageShell title="Lobby Details" eyebrow="Lobby details">
         <SkeletonCard rows={8} />
       </PageShell>
     );
@@ -101,12 +101,12 @@ const LobbyDetails = () => {
           <SquadRoleBalance roleBalance={chemistry.roleBalance} />
           <MissingRoleDetector missing={chemistry.roleBalance.missing} />
           <div className="card p-5">
-            <h3 className="mb-4 text-lg font-black">Current members</h3>
+            <h3 className="mb-4 text-lg font-semibold">Current members</h3>
             <div className="space-y-3">
               {lobby.currentMembers?.map((member) => (
                 <div key={member.userId?._id || member.userId} className="rounded-lg border border-clutch-border bg-clutch-panelSoft p-3">
                   <div className="font-bold">{member.userId?.name || "Member"}</div>
-                  <div className="text-sm text-clutch-muted">{member.role} · {member.ready ? "Ready" : "Waiting"}</div>
+                  <div className="text-sm text-clutch-muted">{member.role} - {member.ready ? "Ready" : "Waiting"}</div>
                 </div>
               ))}
             </div>

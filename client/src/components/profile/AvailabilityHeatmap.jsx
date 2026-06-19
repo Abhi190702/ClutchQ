@@ -10,7 +10,7 @@ const AvailabilityHeatmap = ({ value = [], onChange, readonly = false, compact =
   };
 
   return (
-    <div className="thin-scrollbar overflow-x-auto">
+    <div className="thin-scrollbar max-w-full overflow-x-auto">
       <div className={`grid min-w-[780px] gap-1 ${compact ? "text-[10px]" : "text-xs"}`} style={{ gridTemplateColumns: "44px repeat(24, minmax(22px, 1fr))" }}>
         <div />
         {HOURS.map((hour) => (

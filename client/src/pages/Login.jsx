@@ -47,14 +47,13 @@ const Login = () => {
   return (
     <div className="noise-bg min-h-screen">
       <Navbar />
-      <main className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl items-center gap-8 px-4 py-10 md:grid-cols-2">
-        <div>
-          <div className="eyebrow mb-4">Demo-ready login</div>
-          <h1 className="text-4xl font-black tracking-tight md:text-6xl">Start with the right squad.</h1>
-          <p className="mt-5 max-w-xl text-clutch-muted">Use the demo player to see seeded recommendations, lobby fit, reviews, and admin analytics instantly.</p>
-        </div>
-        <form onSubmit={submit} className="card p-6">
-          <h2 className="mb-6 text-2xl font-black">Login</h2>
+      <main className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-md items-center px-4 py-10">
+        <form onSubmit={submit} className="card w-full p-6">
+          <div className="mb-6">
+            <div className="eyebrow mb-3">Welcome back</div>
+            <h1 className="text-2xl font-semibold text-clutch-text">Login to ClutchQ</h1>
+            <p className="mt-2 text-sm leading-6 text-clutch-muted">Use the seeded demo account or your own account to open the dashboard.</p>
+          </div>
           <label className="form-label">Email</label>
           <input className="form-input mb-4" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} />
           <label className="form-label">Password</label>
@@ -67,7 +66,7 @@ const Login = () => {
           </button>
           <p className="mt-5 text-sm text-clutch-muted">
             New here?{" "}
-            <Link to="/register" className="font-semibold text-clutch-cyan">
+            <Link to="/register" className="font-semibold text-clutch-blue">
               Create an account
             </Link>
           </p>
