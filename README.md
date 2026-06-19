@@ -151,6 +151,8 @@ Final Score = clamp(0, 100)
 
 ## Local Setup
 
+For the shortest step-by-step path, see [SETUP.md](SETUP.md).
+
 ```bash
 git clone https://github.com/Abhi190702/ClutchQ.git
 cd ClutchQ
@@ -179,7 +181,13 @@ Client `.env`:
 VITE_API_URL=http://localhost:5000/api
 ```
 
-Start MongoDB locally or use MongoDB Atlas, then seed and run:
+Start MongoDB locally, use MongoDB Atlas, or start the included Docker MongoDB service:
+
+```bash
+npm run mongo
+```
+
+Then seed and run:
 
 ```bash
 npm run seed
