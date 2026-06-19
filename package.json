@@ -11,7 +11,8 @@
     "mongo:down": "docker compose down",
     "seed": "cd server && npm run seed",
     "clear": "cd server && npm run clear",
-    "build": "cd client && npm run build"
+    "build": "cd client && npm run build",
+    "serve": "node serve-dist.cjs"
   },
   "devDependencies": {
     "concurrently": "^9.0.0"
