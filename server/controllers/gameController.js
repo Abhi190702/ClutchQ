@@ -4,13 +4,27 @@ import GameActivity from "../models/GameActivity.js";
 import GamePlaytimeAggregate from "../models/GamePlaytimeAggregate.js";
 import GamerProfile from "../models/GamerProfile.js";
 import { gameCatalog, getGameBySlug } from "../data/gameCatalog.js";
+import { buildDemoRooms, countDemoRoomPlayers } from "../data/demoGameRooms.js";
 import { asyncHandler } from "../middleware/errorMiddleware.js";
 
 const toGameObject = (game) => (game?.toObject ? game.toObject() : game);
 
+const applyCatalogPresentation = (game) => {
+  const catalogGame = getGameBySlug(game?.slug);
+  if (!catalogGame) return game;
+
+  return {
+    ...game,
+    posterUrl: catalogGame.posterUrl || game.posterUrl,
+    coverUrl: catalogGame.coverUrl || game.coverUrl,
+    fallbackGradient: catalogGame.fallbackGradient || game.fallbackGradient,
+    accentColor: catalogGame.accentColor || game.accentColor
+  };
+};
+
 const getGamesWithFallback = async (query = {}) => {
   const games = await Game.find({ active: true, ...query }).sort({ activeRooms: -1, title: 1 });
-  return games.length ? games.map(toGameObject) : gameCatalog;
+  return games.length ? games.map((game) => applyCatalogPresentation(toGameObject(game))) : gameCatalog;
 };
 
 const enrichGameWithLiveStats = async (game) => {
@@ -57,7 +71,7 @@ export const listGames = asyncHandler(async (req, res) => {
 
 export const getGame = asyncHandler(async (req, res) => {
   const dbGame = await Game.findOne({ slug: req.params.slug, active: true });
-  const game = dbGame ? toGameObject(dbGame) : getGameBySlug(req.params.slug);
+  const game = dbGame ? applyCatalogPresentation(toGameObject(dbGame)) : getGameBySlug(req.params.slug);
 
   if (!game) {
     res.status(404);
@@ -77,26 +91,33 @@ export const getGameRooms = asyncHandler(async (req, res) => {
     .populate("currentMembers.userId", "name avatar")
     .sort({ status: 1, startsAt: 1, createdAt: -1 })
     .limit(80);
+  const dbGame = await Game.findOne({ slug: req.params.slug, active: true });
+  const game = dbGame ? toGameObject(dbGame) : getGameBySlug(req.params.slug);
+  const demoRooms = rooms.length ? [] : buildDemoRooms(game);
 
   res.json({
     success: true,
     message: "Game rooms loaded",
-    data: rooms
+    data: rooms.length ? rooms : demoRooms
   });
 });
 
 export const getGameStats = asyncHandler(async (req, res) => {
-  const [rooms, playtime] = await Promise.all([
+  const [rooms, playtime, dbGame] = await Promise.all([
     GameRoom.find({ gameSlug: req.params.slug, status: { $in: ["open", "starting", "in_game"] } }),
-    req.user ? GamePlaytimeAggregate.findOne({ userId: req.user._id, gameSlug: req.params.slug }) : null
+    req.user ? GamePlaytimeAggregate.findOne({ userId: req.user._id, gameSlug: req.params.slug }) : null,
+    Game.findOne({ slug: req.params.slug, active: true })
   ]);
+  const game = dbGame ? toGameObject(dbGame) : getGameBySlug(req.params.slug);
+  const demoRooms = rooms.length ? [] : buildDemoRooms(game);
+  const visibleRooms = rooms.length ? rooms : demoRooms;
 
   res.json({
     success: true,
     message: "Game stats loaded",
     data: {
-      activeRooms: rooms.length,
-      activePlayers: rooms.reduce((sum, room) => sum + (room.currentMembers?.length || 0), 0),
+      activeRooms: visibleRooms.length,
+      activePlayers: rooms.length ? rooms.reduce((sum, room) => sum + (room.currentMembers?.length || 0), 0) : countDemoRoomPlayers(demoRooms),
       yourStats: playtime || null
     }
   });

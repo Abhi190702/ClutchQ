@@ -1,13 +1,13 @@
 const genreArtwork = {
   FPS: [
-    "https://cdn.cloudflare.steamstatic.com/steam/apps/730/library_600x900_2x.jpg",
-    "https://cdn.cloudflare.steamstatic.com/steam/apps/359550/library_600x900_2x.jpg",
-    "https://cdn.cloudflare.steamstatic.com/steam/apps/2357570/library_600x900_2x.jpg"
+    "/game-art/valorant.png",
+    "/game-art/escape-from-tarkov-arena.png",
+    "https://cdn.cloudflare.steamstatic.com/steam/apps/730/library_600x900_2x.jpg"
   ],
   "Battle Royale": [
-    "https://cdn.cloudflare.steamstatic.com/steam/apps/1172470/library_600x900_2x.jpg",
-    "https://cdn.cloudflare.steamstatic.com/steam/apps/1962663/library_600x900_2x.jpg",
-    "https://cdn.cloudflare.steamstatic.com/steam/apps/578080/library_600x900_2x.jpg"
+    "/game-art/fortnite.png",
+    "/game-art/bgmi.png",
+    "/game-art/free-fire.png"
   ],
   "Co-op": [
     "https://cdn.cloudflare.steamstatic.com/steam/apps/1966720/library_600x900_2x.jpg",
@@ -20,21 +20,21 @@ const genreArtwork = {
     "https://cdn.cloudflare.steamstatic.com/steam/apps/774861/library_600x900_2x.jpg"
   ],
   Sports: [
-    "https://images.unsplash.com/photo-1517927033932-b3d18e61fb3a?auto=format&fit=crop&w=320&q=80",
+    "/game-art/ea-fc.png",
     "https://images.unsplash.com/photo-1511882150382-421056c89033?auto=format&fit=crop&w=320&q=80",
     "https://images.unsplash.com/photo-1518091043644-c1d4457512c6?auto=format&fit=crop&w=320&q=80"
   ],
   Racing: [
-    "https://cdn.cloudflare.steamstatic.com/steam/apps/1551360/library_600x900_2x.jpg",
-    "https://images.unsplash.com/photo-1517524206127-48bbd363f3d7?auto=format&fit=crop&w=320&q=80",
-    "https://images.unsplash.com/photo-1504707748692-419802cf939d?auto=format&fit=crop&w=320&q=80"
+    "/game-art/trackmania.png",
+    "/game-art/f1.png",
+    "https://cdn.cloudflare.steamstatic.com/steam/apps/1551360/library_600x900_2x.jpg"
   ]
 };
 
 const fallbackImages = [
-  "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=320&q=80",
-  "https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?auto=format&fit=crop&w=320&q=80",
-  "https://images.unsplash.com/photo-1627856013091-fed6e4e30025?auto=format&fit=crop&w=320&q=80"
+  "/game-art/league-of-legends.png",
+  "/game-art/mobile-legends.png",
+  "/game-art/roblox.png"
 ];
 
 const GenreArtwork = ({ genre }) => {

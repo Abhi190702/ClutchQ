@@ -15,6 +15,7 @@ const GameRoomCard = ({ room, user, onUpdated, compact = false }) => {
   const isMember = room.currentMembers?.some((member) => getUserId(member.userId) === userId);
   const members = room.currentMembers?.filter((member) => member.status !== "left") || [];
   const hasDiscord = Boolean(room.discord?.inviteUrl);
+  const isPreview = Boolean(room.isPreview) || String(room._id || "").startsWith("preview-");
 
   const runAction = async (key, action, success) => {
     setLoading(key);
@@ -40,6 +41,7 @@ const GameRoomCard = ({ room, user, onUpdated, compact = false }) => {
         <div className="min-w-0">
           <div className="mb-2 flex flex-wrap items-center gap-2">
             <span className="rounded bg-[#303036] px-2 py-1 text-xs font-bold text-white">{room.status?.replace("_", " ") || "open"}</span>
+            {isPreview ? <span className="rounded bg-sky-400 px-2 py-1 text-xs font-bold text-black">Demo room</span> : null}
             {room.micRequired ? <span className="rounded bg-[#303036] px-2 py-1 text-xs font-bold text-white">Mic required</span> : null}
             {hasDiscord ? <span className="rounded bg-indigo-500/20 px-2 py-1 text-xs font-bold text-indigo-100">Discord ready</span> : null}
           </div>
@@ -77,10 +79,10 @@ const GameRoomCard = ({ room, user, onUpdated, compact = false }) => {
           <button
             type="button"
             className="btn-primary py-2"
-            disabled={loading === "join"}
-            onClick={() => runAction("join", () => gameApi.joinRoom(room._id), "Joined room")}
+            disabled={isPreview || loading === "join"}
+            onClick={() => !isPreview && runAction("join", () => gameApi.joinRoom(room._id), "Joined room")}
           >
-            Join Room
+            {isPreview ? "Preview Room" : "Join Room"}
           </button>
         ) : (
           <button
@@ -112,9 +114,11 @@ const GameRoomCard = ({ room, user, onUpdated, compact = false }) => {
             </button>
           </>
         ) : null}
-        <Link to={`/games/${room.gameSlug}/rooms`} className="btn-secondary py-2">
-          View Details
-        </Link>
+        {!isPreview ? (
+          <Link to={`/games/${room.gameSlug}/rooms`} className="btn-secondary py-2">
+            View Details
+          </Link>
+        ) : null}
       </div>
     </article>
   );
