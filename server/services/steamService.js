@@ -95,15 +95,18 @@ const normalizeUrlValue = (value) => {
   const trimmed = String(value).trim().replace(/\/$/, "");
   if (!trimmed) return null;
 
-  const fixed = trimmed.startsWith("https:") && !trimmed.startsWith("https://")
-    ? trimmed.replace("https:", "https://")
-    : trimmed.startsWith("http:") && !trimmed.startsWith("http://")
-      ? trimmed.replace("http:", "http://")
-      : trimmed;
+  let fixed = trimmed;
+  fixed = fixed.replace(/^https:\/\/https\/\//i, "https://");
+  fixed = fixed.replace(/^http:\/\/http\/\//i, "http://");
+  fixed = fixed.replace(/^https\/\//i, "https://");
+  fixed = fixed.replace(/^http\/\//i, "http://");
+  fixed = fixed.startsWith("https:") && !fixed.startsWith("https://") ? fixed.replace("https:", "https://") : fixed;
+  fixed = fixed.startsWith("http:") && !fixed.startsWith("http://") ? fixed.replace("http:", "http://") : fixed;
 
   try {
     const url = new URL(fixed);
     if (!["http:", "https:"].includes(url.protocol) || !url.hostname) return null;
+    if (["http", "https"].includes(url.hostname.toLowerCase())) return null;
     return url;
   } catch {
     return null;
