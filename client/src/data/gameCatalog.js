@@ -1,0 +1,42 @@
+export const gameGenres = ["FPS", "Battle Royale", "Co-op", "Social Deduction", "Sports", "Racing", "Survival", "Party", "Strategy", "Sandbox"];
+export const gamePlatforms = ["PC", "PlayStation", "Xbox", "Switch", "Mobile", "Console"];
+export const gameTypes = ["FPS Tactical", "Battle Royale", "Co-op Horror", "Co-op Shooter", "MOBA", "Sports", "Racing", "Sandbox", "Party"];
+
+export const fallbackGameCatalog = [
+  "Valorant",
+  "Counter-Strike 2",
+  "Fortnite",
+  "Apex Legends",
+  "Call of Duty Warzone",
+  "PUBG Battlegrounds",
+  "Rainbow Six Siege",
+  "Overwatch 2",
+  "The Finals",
+  "Escape from Tarkov Arena",
+  "BGMI",
+  "Free Fire",
+  "Chained Together",
+  "Lethal Company",
+  "Phasmophobia",
+  "Helldivers 2",
+  "Minecraft",
+  "Terraria",
+  "Content Warning",
+  "Overcooked 2",
+  "Among Us",
+  "Goose Goose Duck",
+  "Project Winter",
+  "Rocket League",
+  "EA FC",
+  "Forza Horizon",
+  "Trackmania",
+  "F1",
+  "League of Legends",
+  "Dota 2",
+  "Mobile Legends",
+  "Clash Royale",
+  "GTA Online",
+  "Roblox",
+  "Fall Guys",
+  "Stardew Valley"
+];

@@ -14,12 +14,17 @@ import reportRoutes from "./routes/reportRoutes.js";
 import sessionRoutes from "./routes/sessionRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import discordRoutes from "./routes/discordRoutes.js";
+import gameRoutes from "./routes/gameRoutes.js";
+import gameRoomRoutes from "./routes/gameRoomRoutes.js";
+import activityRoutes from "./routes/activityRoutes.js";
+import leaderboardRoutes from "./routes/leaderboardRoutes.js";
 
 dotenv.config();
 await connectDB();
 
 const app = express();
-const port = process.env.PORT || 5000;
+const isDevServer = process.env.npm_lifecycle_event === "dev";
+const port = isDevServer ? process.env.LOCAL_PORT || 5000 : process.env.PORT || 5000;
 
 const normalizeOrigin = (origin) => {
   if (!origin) return null;
@@ -48,10 +53,19 @@ const allowedOrigins = new Set(
     .filter(Boolean)
 );
 
+const isLocalOrigin = (origin) => {
+  try {
+    const url = new URL(origin);
+    return ["localhost", "127.0.0.1", "::1"].includes(url.hostname);
+  } catch {
+    return false;
+  }
+};
+
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || allowedOrigins.has(normalizeOrigin(origin))) {
+      if (!origin || isLocalOrigin(origin) || allowedOrigins.has(normalizeOrigin(origin))) {
         callback(null, true);
         return;
       }
@@ -96,6 +110,10 @@ app.use("/api/reports", reportRoutes);
 app.use("/api/sessions", sessionRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/discord", discordRoutes);
+app.use("/api/games", gameRoutes);
+app.use("/api/game-rooms", gameRoomRoutes);
+app.use("/api/activity", activityRoutes);
+app.use("/api/leaderboards", leaderboardRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

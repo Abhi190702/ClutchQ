@@ -33,7 +33,8 @@ const Login = () => {
 
   const handleProviderClick = (provider) => {
     if (provider.status === "oauth" && provider.route) {
-      window.location.href = `${getServerBaseUrl()}${provider.route}`;
+      const params = new URLSearchParams({ returnTo: window.location.origin });
+      window.location.href = `${getServerBaseUrl()}${provider.route}?${params.toString()}`;
       return;
     }
 

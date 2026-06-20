@@ -7,9 +7,10 @@
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "client": "cd client && npm run dev",
     "server": "cd server && npm run dev",
-    "mongo": "docker compose up -d mongo",
-    "mongo:down": "docker compose down",
+    "mongo": "docker-compose up -d mongo",
+    "mongo:down": "docker-compose down",
     "seed": "cd server && npm run seed",
+    "seed:games": "cd server && npm run seed:games",
     "clear": "cd server && npm run clear",
     "build": "cd client && npm run build",
     "serve": "node serve-dist.cjs"

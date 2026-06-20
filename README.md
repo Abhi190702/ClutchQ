@@ -31,8 +31,11 @@ ClutchQ matches gamers using rank, role, region, language, availability, playsty
 - Trust score from reviews, reliability, no-shows, and report penalties
 - Teammate requests and lobby join requests
 - Owner-created Discord voice rooms for accepted lobby members
+- Game-first browse hub with poster cards, filters, game detail pages, and room queues
+- Manual playtime tracking with session timer, match ratings, and match analysis
+- Game and player leaderboards for weekly, monthly, and all-time activity
 - Admin analytics and report moderation
-- Rich seed data with 50+ gamer profiles and demo/admin accounts
+- Rich seed data with 50+ gamer profiles, 30+ games, rooms, activity, and demo/admin accounts
 
 ## Tech Stack
 
@@ -47,8 +50,8 @@ No Angular, Vue, Next.js, Bootstrap, Material UI, Chakra, ShadCN, chart librarie
 ## Architecture
 
 ```txt
-client/  React/Vite app, custom Tailwind components, route guards, visual explainers
-server/  Express API, Mongoose models, JWT middleware, controllers, algorithms
+client/  React/Vite app, custom Tailwind components, game hub routes, route guards
+server/  Express API, Mongoose models, JWT middleware, controllers, algorithms, seed data
 docs/    Architecture, API, algorithm, and demo script notes
 ```
 
@@ -74,6 +77,7 @@ clutchq/
 │   ├── models/
 │   ├── routes/
 │   ├── scripts/
+│   ├── seed/
 │   └── utils/
 ├── docs/
 ├── screenshots/
@@ -116,6 +120,11 @@ Final Score = clamp(0, 100)
 - User: account, email, password hash, role, avatar, suspension state
 - GamerProfile: game/rank/roles, region, languages, availability, playstyle, trust, badges
 - Lobby: owner, game, rank range, region, language, members, requests, invite code, Discord voice room metadata
+- Game: game catalog, poster/cover URLs, roles, platforms, modes, status, and activity metadata
+- GameRoom: game-specific room, host, members, roles needed, ready status, and Discord voice metadata
+- GameActivity: manual play sessions, result, duration, ratings, and notes
+- GamePlaytimeAggregate: per-player game totals for weekly, monthly, and all-time leaderboards
+- MatchAnalysis: rating breakdown, highlights, improvement areas, and trust impact
 - Request: teammate or lobby request with pending/accepted/rejected/cancelled state
 - Review: communication, teamwork, skill, punctuality, behavior, comment
 - Report: reporter, reported user, reason, status, admin note
@@ -158,6 +167,48 @@ Final Score = clamp(0, 100)
 - `GET /api/admin/reports`
 - `PATCH /api/admin/reports/:id`
 - `GET /api/discord/health`
+- `GET /api/games`
+- `GET /api/games/:slug`
+- `GET /api/games/:slug/rooms`
+- `GET /api/games/:slug/stats`
+- `GET /api/games/:slug/top-players`
+- `GET /api/games/:slug/find-squad`
+- `POST /api/game-rooms`
+- `GET /api/game-rooms/:id`
+- `POST /api/game-rooms/:id/join`
+- `POST /api/game-rooms/:id/leave`
+- `POST /api/game-rooms/:id/ready`
+- `PATCH /api/game-rooms/:id`
+- `DELETE /api/game-rooms/:id`
+- `POST /api/game-rooms/:id/discord/create`
+- `GET /api/game-rooms/:id/discord`
+- `POST /api/activity/start`
+- `POST /api/activity/:id/stop`
+- `GET /api/activity/me`
+- `GET /api/activity/active`
+- `GET /api/activity/game/:slug`
+- `GET /api/activity/summary/me`
+- `GET /api/leaderboards/games`
+- `GET /api/leaderboards/players`
+- `GET /api/leaderboards/trending-games`
+
+## Game Hub
+
+The game-first experience lives at:
+
+- `/games` for browse, search, genres, and filters
+- `/games/:slug` for game detail, active rooms, top players, user stats, and Find Squad Now
+- `/games/:slug/rooms` for game-specific room creation and joining
+- `/activity` for manual session tracking and match analysis
+- `/leaderboards` for game and player rankings
+
+Seed the richer game demo data with:
+
+```bash
+npm run seed:games
+```
+
+This upserts game catalog data, sample game rooms, activity records, playtime aggregates, and match analyses without deleting existing users.
 
 ## Local Setup
 
@@ -211,6 +262,7 @@ Then seed and run:
 
 ```bash
 npm run seed
+npm run seed:games
 npm run dev
 ```
 
@@ -309,6 +361,7 @@ git push
 
 - MongoDB connection failed: start local MongoDB or set `MONGO_URI` to Atlas.
 - Demo login not found: run `npm run seed`.
+- Game browse is empty: run `npm run seed:games`, or the app will fall back to the built-in catalog until MongoDB has game rows.
 - Vite cannot reach API: confirm `server/.env` `PORT=5000` and `client/.env` `VITE_API_URL=http://localhost:5000/api`.
 - JWT errors after changing secrets: log out, clear local storage, and log in again.
 

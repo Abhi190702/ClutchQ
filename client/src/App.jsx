@@ -4,8 +4,13 @@ import ProtectedRoute from "./components/common/ProtectedRoute";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminReports from "./pages/AdminReports";
 import CreateLobby from "./pages/CreateLobby";
+import Activity from "./pages/Activity";
 import Dashboard from "./pages/Dashboard";
+import GameDetail from "./pages/GameDetail";
+import GameRooms from "./pages/GameRooms";
+import Games from "./pages/Games";
 import Landing from "./pages/Landing";
+import Leaderboards from "./pages/Leaderboards";
 import Lobbies from "./pages/Lobbies";
 import LobbyDetails from "./pages/LobbyDetails";
 import Login from "./pages/Login";
@@ -29,6 +34,11 @@ const App = () => (
     <Route element={<ProtectedRoute />}>
       <Route path="/onboarding" element={<Onboarding />} />
       <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/games" element={<Games />} />
+      <Route path="/games/:slug" element={<GameDetail />} />
+      <Route path="/games/:slug/rooms" element={<GameRooms />} />
+      <Route path="/activity" element={<Activity />} />
+      <Route path="/leaderboards" element={<Leaderboards />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/player/:id" element={<PlayerProfile />} />
       <Route path="/lobbies" element={<Lobbies />} />

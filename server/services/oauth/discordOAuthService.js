@@ -2,7 +2,7 @@ const DISCORD_AUTH_URL = "https://discord.com/oauth2/authorize";
 const DISCORD_TOKEN_URL = "https://discord.com/api/oauth2/token";
 const DISCORD_USER_URL = "https://discord.com/api/users/@me";
 
-const requiredDiscordEnv = () => ["DISCORD_CLIENT_ID", "DISCORD_CLIENT_SECRET", "DISCORD_CALLBACK_URL", "CLIENT_URL"].every((key) => Boolean(process.env[key]));
+const requiredDiscordEnv = () => ["DISCORD_CLIENT_ID", "DISCORD_CLIENT_SECRET", "DISCORD_CALLBACK_URL"].every((key) => Boolean(process.env[key]));
 
 const getDiscordAvatarUrl = (profile) => {
   if (!profile.avatar) return null;

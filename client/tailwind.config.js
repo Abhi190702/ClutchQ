@@ -5,14 +5,14 @@ export default {
     extend: {
       colors: {
         clutch: {
-          bg: "#0B1020",
-          panel: "#111827",
-          panelSoft: "#151E2E",
-          border: "#263244",
-          text: "#F8FAFC",
-          muted: "#A8B3C7",
+          bg: "#121216",
+          panel: "#202024",
+          panelSoft: "#28282D",
+          border: "#33333A",
+          text: "#F5F5F7",
+          muted: "#A1A1AA",
           cyan: "#38BDF8",
-          blue: "#60A5FA",
+          blue: "#35B8FF",
           violet: "#A78BFA",
           green: "#34D399",
           amber: "#FBBF24",
@@ -20,7 +20,7 @@ export default {
         }
       },
       boxShadow: {
-        card: "0 1px 0 rgba(255, 255, 255, 0.03)",
+        card: "none",
         cyan: "0 0 0 rgba(0, 0, 0, 0)"
       },
       fontFamily: {

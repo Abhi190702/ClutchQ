@@ -2,7 +2,7 @@ const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_USERINFO_URL = "https://openidconnect.googleapis.com/v1/userinfo";
 
-const requiredGoogleEnv = () => ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_CALLBACK_URL", "CLIENT_URL"].every((key) => Boolean(process.env[key]));
+const requiredGoogleEnv = () => ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_CALLBACK_URL"].every((key) => Boolean(process.env[key]));
 
 export const isGoogleOAuthConfigured = requiredGoogleEnv;
 

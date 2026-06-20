@@ -51,6 +51,21 @@ const gamerProfileSchema = new mongoose.Schema(
       unique: true
     },
     displayName: String,
+    clutchTag: {
+      type: String,
+      trim: true,
+      index: true
+    },
+    playerCode: {
+      type: String,
+      trim: true,
+      index: true
+    },
+    gameHandles: {
+      type: Map,
+      of: String,
+      default: {}
+    },
     bio: String,
     region: String,
     country: String,

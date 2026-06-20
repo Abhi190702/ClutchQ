@@ -2,8 +2,11 @@ import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const links = [
-  { to: "/dashboard", label: "Dashboard", hint: "Matches" },
-  { to: "/lobbies", label: "Lobbies", hint: "Squads" },
+  { to: "/games", label: "Games", hint: "Browse" },
+  { to: "/activity", label: "Activity", hint: "Stats" },
+  { to: "/leaderboards", label: "Leaders", hint: "Ranks" },
+  { to: "/dashboard", label: "Dashboard", hint: "Home" },
+  { to: "/lobbies", label: "Lobbies", hint: "Classic" },
   { to: "/requests", label: "Requests", hint: "Inbox" },
   { to: "/reviews", label: "Reviews", hint: "Trust" },
   { to: "/profile", label: "Profile", hint: "Identity" }
@@ -23,8 +26,8 @@ const Sidebar = () => {
             className={({ isActive }) =>
               `flex items-center justify-between rounded-md border px-3 py-2.5 text-sm transition ${
                 isActive
-                  ? "border-clutch-blue/40 bg-clutch-blue/10 text-clutch-blue"
-                  : "border-transparent text-clutch-muted hover:border-clutch-border hover:bg-clutch-panelSoft hover:text-clutch-text"
+                  ? "border-clutch-border bg-clutch-panelSoft text-clutch-text"
+                  : "border-transparent text-clutch-muted hover:border-clutch-border hover:bg-clutch-panel hover:text-clutch-text"
               }`
             }
           >

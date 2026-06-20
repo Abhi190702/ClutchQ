@@ -1,19 +1,17 @@
 .noise-bg {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 16rem),
-    #0b1020;
+  background: #121216;
 }
 
 .glass-panel {
-  background: #111827;
-  border: 1px solid #263244;
+  background: #202024;
+  border: 1px solid #2f2f36;
   box-shadow: none;
   backdrop-filter: none;
 }
 
 .thin-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #1e293b transparent;
+  scrollbar-color: #3a3a42 transparent;
 }
 
 .thin-scrollbar::-webkit-scrollbar {
@@ -22,6 +20,6 @@
 }
 
 .thin-scrollbar::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #3a3a42;
   border-radius: 999px;
 }
