@@ -90,17 +90,56 @@ export const getPlayerAchievements = async (steamId, appId) => {
 
 export const getSteamProvider = (user) => user?.authProviders?.steam || null;
 
-export const buildSteamAuthUrl = ({ returnTo, token } = {}) => {
-  const callbackUrl = new URL(process.env.STEAM_CALLBACK_URL || "http://localhost:5000/api/auth/steam/callback");
+const normalizeUrlValue = (value) => {
+  if (!value) return null;
+  const trimmed = String(value).trim().replace(/\/$/, "");
+  if (!trimmed) return null;
+
+  const fixed = trimmed.startsWith("https:") && !trimmed.startsWith("https://")
+    ? trimmed.replace("https:", "https://")
+    : trimmed.startsWith("http:") && !trimmed.startsWith("http://")
+      ? trimmed.replace("http:", "http://")
+      : trimmed;
+
+  try {
+    const url = new URL(fixed);
+    if (!["http:", "https:"].includes(url.protocol) || !url.hostname) return null;
+    return url;
+  } catch {
+    return null;
+  }
+};
+
+const getServerOrigin = () =>
+  normalizeUrlValue(process.env.SERVER_URL)?.origin ||
+  normalizeUrlValue(process.env.RENDER_EXTERNAL_URL)?.origin ||
+  "http://localhost:5000";
+
+const getSteamCallbackUrl = () => {
+  const configured = normalizeUrlValue(process.env.STEAM_CALLBACK_URL);
+  if (configured) return configured;
+
+  return new URL("/api/auth/steam/callback", getServerOrigin());
+};
+
+const getSteamRealm = (callbackUrl) => {
+  const configured = normalizeUrlValue(process.env.STEAM_REALM);
+  return configured?.origin || callbackUrl.origin;
+};
+
+const safeNextPath = (value) => (typeof value === "string" && value.startsWith("/") && !value.startsWith("//") ? value : "/profile");
+
+export const buildSteamAuthUrl = ({ returnTo, token, next } = {}) => {
+  const callbackUrl = getSteamCallbackUrl();
   if (returnTo) callbackUrl.searchParams.set("returnTo", returnTo);
   if (token) callbackUrl.searchParams.set("linkToken", token);
+  callbackUrl.searchParams.set("next", safeNextPath(next));
 
-  const realm = process.env.STEAM_REALM || callbackUrl.origin;
   const params = new URLSearchParams({
     "openid.ns": "http://specs.openid.net/auth/2.0",
     "openid.mode": "checkid_setup",
     "openid.return_to": callbackUrl.toString(),
-    "openid.realm": realm,
+    "openid.realm": getSteamRealm(callbackUrl),
     "openid.identity": "http://specs.openid.net/auth/2.0/identifier_select",
     "openid.claimed_id": "http://specs.openid.net/auth/2.0/identifier_select"
   });

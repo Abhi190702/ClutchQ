@@ -11,6 +11,8 @@ const OAuthSuccess = () => {
     const completeSignIn = async () => {
       const params = new URLSearchParams(window.location.search);
       const token = params.get("token");
+      const next = params.get("next");
+      const nextPath = next?.startsWith("/") && !next.startsWith("//") ? next : null;
 
       if (!token) {
         navigate("/login?error=oauth_failed", { replace: true });
@@ -26,7 +28,7 @@ const OAuthSuccess = () => {
         localStorage.setItem("clutchq_user", JSON.stringify(user));
         if (profile) localStorage.setItem("clutchq_profile", JSON.stringify(profile));
         await refresh();
-        navigate(profile ? "/dashboard" : "/onboarding", { replace: true });
+        navigate(nextPath || (profile ? "/dashboard" : "/onboarding"), { replace: true });
       } catch {
         localStorage.removeItem("clutchq_token");
         localStorage.removeItem("clutchq_user");

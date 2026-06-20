@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
+import { startProviderOAuth } from "../../utils/oauthLinks";
 import ProfileAvatarUploader from "./ProfileAvatarUploader";
 import ProfileStatCards from "./ProfileStatCards";
 
-const ProfileHero = ({ bundle, libraryCount, onAvatarUpload, onAvatarRemove, onSyncSteam, syncing }) => {
+const ProfileHero = ({ bundle, libraryCount, steamLinked, onAvatarUpload, onAvatarRemove, onSyncSteam, syncing }) => {
   const { user, profile, steamSummary, playerScore } = bundle;
   const displayName = profile?.displayName || user?.name || steamSummary?.displayName || "ClutchQ Player";
   const tag = profile?.playerCode || profile?.clutchTag || `CLQ-${String(user?._id || "PLAYER").slice(-5).toUpperCase()}`;
@@ -17,7 +18,7 @@ const ProfileHero = ({ bundle, libraryCount, onAvatarUpload, onAvatarRemove, onS
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full border border-clutch-border bg-clutch-panel px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-clutch-muted">
-                {steamSummary?.connected ? "Steam connected" : "ClutchQ account"}
+                {steamLinked ? "Steam connected" : steamSummary?.demo ? "Demo Steam preview" : "ClutchQ account"}
               </span>
               {profile?.micAvailable && <span className="rounded-full border border-clutch-green/30 bg-clutch-green/10 px-3 py-1 text-xs font-bold text-emerald-200">Mic ready</span>}
             </div>
@@ -36,9 +37,13 @@ const ProfileHero = ({ bundle, libraryCount, onAvatarUpload, onAvatarRemove, onS
             <div className="mt-6 flex flex-wrap gap-3">
               <Link to="/onboarding" className="btn-secondary">Edit profile</Link>
               <Link to="/dashboard" className="btn-primary">Find matches</Link>
-              {steamSummary?.connected && (
+              {steamLinked ? (
                 <button type="button" className="btn-secondary" onClick={onSyncSteam} disabled={syncing}>
                   {syncing ? "Syncing..." : "Sync Steam"}
+                </button>
+              ) : (
+                <button type="button" className="btn-secondary" onClick={() => startProviderOAuth("steam", "/profile")}>
+                  Connect Steam
                 </button>
               )}
             </div>

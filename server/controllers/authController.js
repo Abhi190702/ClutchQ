@@ -170,10 +170,15 @@ const createOrUpdateOAuthUser = async ({ provider, providerData }) => {
   });
 };
 
-const redirectOAuthSuccess = (req, res, provider, user) => {
+const safeNextPath = (value) => (typeof value === "string" && value.startsWith("/") && !value.startsWith("//") ? value : null);
+
+const redirectOAuthSuccess = (req, res, provider, user, nextPath = null) => {
   const clientOrigin = provider ? getStoredClientOrigin(req, res, provider) : getRequestClientOrigin(req);
   const token = issueToken(res, user);
-  res.redirect(getClientRedirect(`/oauth/success?token=${encodeURIComponent(token)}`, clientOrigin));
+  const params = new URLSearchParams({ token });
+  const safeNext = safeNextPath(nextPath || req.query.next);
+  if (safeNext) params.set("next", safeNext);
+  res.redirect(getClientRedirect(`/oauth/success?${params.toString()}`, clientOrigin));
 };
 
 const getLinkUserFromRequest = async (req) => {
@@ -361,7 +366,7 @@ export const startDiscordOAuth = asyncHandler(async (req, res) => {
 });
 
 export const startSteamOAuth = asyncHandler(async (req, res) => {
-  res.redirect(buildSteamAuthUrl({ returnTo: getRequestClientOrigin(req), token: req.query.token }));
+  res.redirect(buildSteamAuthUrl({ returnTo: getRequestClientOrigin(req), token: req.query.token, next: req.query.next }));
 });
 
 export const handleSteamOAuth = asyncHandler(async (req, res) => {
@@ -374,7 +379,7 @@ export const handleSteamOAuth = asyncHandler(async (req, res) => {
       summary = null;
     }
     const user = await createOrUpdateSteamUser({ req, steamId, summary });
-    redirectOAuthSuccess(req, res, null, user);
+    redirectOAuthSuccess(req, res, null, user, "/profile");
   } catch (error) {
     redirectOAuthError(req, res, null, "oauth_failed");
   }

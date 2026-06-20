@@ -127,19 +127,21 @@ const Profile = () => {
   }
 
   const score = bundle.playerScore || {};
+  const steamLinked = bundle.connectedAccounts?.some((account) => account.id === "steam" && account.status === "connected");
 
   return (
     <ProfileShell actions={<Link to="/onboarding" className="btn-secondary">Edit profile</Link>}>
       <ProfileHero
         bundle={bundle}
         libraryCount={steam.library.length}
+        steamLinked={steamLinked}
         onAvatarUpload={handleAvatarUpload}
         onAvatarRemove={handleAvatarRemove}
         onSyncSteam={handleSteamSync}
         syncing={syncing}
       />
       <ConnectedAccountsPanel accounts={bundle.connectedAccounts} steamSummary={bundle.steamSummary} onSyncSteam={handleSteamSync} syncing={syncing} />
-      <SteamIdentityCard steamSummary={bundle.steamSummary} />
+      <SteamIdentityCard steamSummary={bundle.steamSummary} steamLinked={steamLinked} />
       <PlayerScorePanel score={score} />
       <SteamActivityHeatmap days={steam.heatmap} />
       <FavoriteGamesPanel favorites={steam.favorites} />
