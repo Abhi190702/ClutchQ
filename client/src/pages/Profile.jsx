@@ -1,110 +1,155 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import PageShell from "../components/common/PageShell";
-import EmptyState from "../components/common/EmptyState";
-import SkeletonCard from "../components/common/SkeletonCard";
-import AvailabilityHeatmap from "../components/profile/AvailabilityHeatmap";
-import ConnectedAccounts from "../components/profile/ConnectedAccounts";
-import GameRankCard from "../components/profile/GameRankCard";
-import PlayerBadges from "../components/profile/PlayerBadges";
-import PlaystyleRadar from "../components/profile/PlaystyleRadar";
-import ProfileCompleteness from "../components/profile/ProfileCompleteness";
-import ProfileHeader from "../components/profile/ProfileHeader";
-import SessionHistory from "../components/profile/SessionHistory";
+import ConnectedAccountsPanel from "../components/profile/ConnectedAccountsPanel";
+import FavoriteGamesPanel from "../components/profile/FavoriteGamesPanel";
+import MatchAnalyticsPanel from "../components/profile/MatchAnalyticsPanel";
+import PlayerScorePanel from "../components/profile/PlayerScorePanel";
+import PrivacyNoticeCard from "../components/profile/PrivacyNoticeCard";
+import ProfileBadgesPanel from "../components/profile/ProfileBadgesPanel";
+import ProfileEmptyState from "../components/profile/ProfileEmptyState";
+import ProfileHero from "../components/profile/ProfileHero";
+import ProfileShell from "../components/profile/ProfileShell";
+import ProfileSkeleton from "../components/profile/ProfileSkeleton";
+import SteamAchievementsPanel from "../components/profile/SteamAchievementsPanel";
+import SteamActivityHeatmap from "../components/profile/SteamActivityHeatmap";
+import SteamFriendsPanel from "../components/profile/SteamFriendsPanel";
+import SteamIdentityCard from "../components/profile/SteamIdentityCard";
+import SteamLibraryPreview from "../components/profile/SteamLibraryPreview";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { getErrorMessage } from "../services/api";
-import api from "../services/api";
+import profileApi from "../services/profileApi";
+import steamApi from "../services/steamApi";
+
+const fromResult = (result, fallback) => (result.status === "fulfilled" ? result.value.data.data : fallback);
+
+const defaultSteamData = {
+  library: [],
+  recent: [],
+  favorites: [],
+  achievements: null,
+  friends: [],
+  heatmap: [],
+  insights: null
+};
 
 const Profile = () => {
-  const { profile, refresh, user } = useAuth();
+  const { refresh } = useAuth();
   const { showToast } = useToast();
-  const [currentProfile, setCurrentProfile] = useState(profile);
-  const [sessions, setSessions] = useState([]);
-  const [loading, setLoading] = useState(!profile);
+  const [bundle, setBundle] = useState(null);
+  const [steam, setSteam] = useState(defaultSteamData);
+  const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    let alive = true;
+  const loadProfile = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) setLoading(true);
+    setError("");
 
-    const load = async () => {
-      try {
-        if (!currentProfile) setLoading(true);
-        const data = await refresh();
-        if (!alive) return;
-        setCurrentProfile(data?.profile || profile);
+    try {
+      const [profileResult, libraryResult, recentResult, favoritesResult, achievementsResult, friendsResult, heatmapResult, insightsResult] =
+        await Promise.allSettled([
+          profileApi.getProfile(),
+          steamApi.getSteamLibrary(),
+          steamApi.getSteamRecent(),
+          steamApi.getSteamFavorites(),
+          steamApi.getSteamAchievements(),
+          steamApi.getSteamFriends(),
+          steamApi.getSteamHeatmap(),
+          steamApi.getSteamMatchInsights()
+        ]);
 
-        try {
-          const response = await api.get("/sessions");
-          if (alive) setSessions(response.data.data);
-        } catch (error) {
-          if (alive) showToast(getErrorMessage(error), "error");
-        }
-      } finally {
-        if (alive) setLoading(false);
-      }
-    };
+      const nextBundle = fromResult(profileResult, null);
+      if (!nextBundle) throw new Error("Profile could not be loaded.");
 
-    load();
-    return () => {
-      alive = false;
-    };
+      setBundle(nextBundle);
+      setSteam({
+        library: fromResult(libraryResult, []),
+        recent: fromResult(recentResult, []),
+        favorites: fromResult(favoritesResult, []),
+        achievements: fromResult(achievementsResult, null),
+        friends: fromResult(friendsResult, []),
+        heatmap: fromResult(heatmapResult, []),
+        insights: fromResult(insightsResult, null)
+      });
+    } catch (loadError) {
+      setError(getErrorMessage(loadError));
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    setCurrentProfile(profile);
-  }, [profile]);
+    loadProfile();
+  }, [loadProfile]);
+
+  const handleAvatarUpload = async (dataUrl) => {
+    const response = await profileApi.uploadAvatar(dataUrl);
+    setBundle((current) => ({ ...current, profile: response.data.data }));
+    await refresh();
+    showToast("Profile photo updated.", "success");
+  };
+
+  const handleAvatarRemove = async () => {
+    const response = await profileApi.deleteAvatar();
+    setBundle((current) => ({ ...current, profile: response.data.data }));
+    await refresh();
+    showToast("Profile photo removed.", "success");
+  };
+
+  const handleSteamSync = async () => {
+    setSyncing(true);
+    try {
+      const response = await steamApi.syncSteam();
+      showToast(response.data.message || "Steam synced successfully.", "success");
+      await loadProfile({ silent: true });
+    } catch (syncError) {
+      showToast(getErrorMessage(syncError), "error");
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   if (loading) {
     return (
-      <PageShell title="Profile" eyebrow="Player identity">
-        <SkeletonCard rows={8} />
-      </PageShell>
+      <ProfileShell>
+        <ProfileSkeleton />
+      </ProfileShell>
     );
   }
 
-  if (!currentProfile) {
+  if (error || !bundle) {
     return (
-      <PageShell title="Profile" eyebrow="Player identity">
-        <EmptyState
-          title="No gamer profile yet."
-          description="Create your profile so ClutchQ can calculate match fit, availability overlap, and trust signals."
-          action={<Link to="/onboarding" className="btn-primary">Start onboarding</Link>}
-        />
-      </PageShell>
+      <ProfileShell actions={<Link to="/dashboard" className="btn-secondary">Back to dashboard</Link>}>
+        <ProfileEmptyState title="Profile could not be loaded." description={error || "Try refreshing the page."} />
+      </ProfileShell>
     );
   }
+
+  const score = bundle.playerScore || {};
 
   return (
-    <PageShell
-      title="My Profile"
-      eyebrow="Player identity"
-      actions={<Link to="/onboarding" className="btn-secondary">Edit profile</Link>}
-    >
-      <div className="grid min-w-0 gap-6">
-        <ProfileHeader profile={currentProfile} actions={<Link to="/dashboard" className="btn-primary">Find matches</Link>} />
-        <div className="grid min-w-0 gap-6 lg:grid-cols-[0.72fr_1.28fr]">
-          <div className="min-w-0 space-y-6">
-            <ProfileCompleteness value={currentProfile.profileCompleteness} />
-            <PlayerBadges badges={currentProfile.badges} />
-            <ConnectedAccounts user={user} />
-            <SessionHistory sessions={sessions} />
-          </div>
-          <div className="min-w-0 space-y-6">
-            <div className="card min-w-0 p-5">
-              <h3 className="mb-4 text-lg font-semibold">Games and roles</h3>
-              <div className="grid gap-3 md:grid-cols-2">
-                {currentProfile.games?.map((game) => <GameRankCard key={game.gameName} game={game} />)}
-              </div>
-            </div>
-            <div className="card min-w-0 p-5">
-              <h3 className="mb-4 text-lg font-semibold">Availability heatmap</h3>
-              <AvailabilityHeatmap value={currentProfile.availability} readonly />
-            </div>
-            <PlaystyleRadar stats={currentProfile.playstyleStats} />
-          </div>
-        </div>
-      </div>
-    </PageShell>
+    <ProfileShell actions={<Link to="/onboarding" className="btn-secondary">Edit profile</Link>}>
+      <ProfileHero
+        bundle={bundle}
+        libraryCount={steam.library.length}
+        onAvatarUpload={handleAvatarUpload}
+        onAvatarRemove={handleAvatarRemove}
+        onSyncSteam={handleSteamSync}
+        syncing={syncing}
+      />
+      <ConnectedAccountsPanel accounts={bundle.connectedAccounts} steamSummary={bundle.steamSummary} onSyncSteam={handleSteamSync} syncing={syncing} />
+      <SteamIdentityCard steamSummary={bundle.steamSummary} />
+      <PlayerScorePanel score={score} />
+      <SteamActivityHeatmap days={steam.heatmap} />
+      <FavoriteGamesPanel favorites={steam.favorites} />
+      <SteamLibraryPreview library={steam.library} recent={steam.recent} />
+      <SteamAchievementsPanel summary={steam.achievements} />
+      <SteamFriendsPanel friends={steam.friends} />
+      <MatchAnalyticsPanel insights={steam.insights} recentActivitySummary={bundle.recentActivitySummary} />
+      <ProfileBadgesPanel profile={bundle.profile} />
+      <PrivacyNoticeCard />
+    </ProfileShell>
   );
 };
 

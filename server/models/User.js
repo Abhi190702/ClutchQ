@@ -59,7 +59,7 @@ const userSchema = new mongoose.Schema(
     passwordHash: {
       type: String,
       required() {
-        return !this.authProviders?.google?.id && !this.authProviders?.discord?.id;
+        return !this.authProviders?.google?.id && !this.authProviders?.discord?.id && !this.authProviders?.steam?.steamId;
       }
     },
     role: {

@@ -18,6 +18,7 @@ import gameRoutes from "./routes/gameRoutes.js";
 import gameRoomRoutes from "./routes/gameRoomRoutes.js";
 import activityRoutes from "./routes/activityRoutes.js";
 import leaderboardRoutes from "./routes/leaderboardRoutes.js";
+import steamRoutes from "./routes/steamRoutes.js";
 
 dotenv.config();
 await connectDB();
@@ -102,6 +103,7 @@ app.get("/api/health", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/profiles", profileRoutes);
+app.use("/api/profile", profileRoutes);
 app.use("/api/matchmaking", matchmakingRoutes);
 app.use("/api/lobbies", lobbyRoutes);
 app.use("/api/requests", requestRoutes);
@@ -114,6 +116,7 @@ app.use("/api/games", gameRoutes);
 app.use("/api/game-rooms", gameRoomRoutes);
 app.use("/api/activity", activityRoutes);
 app.use("/api/leaderboards", leaderboardRoutes);
+app.use("/api/steam", steamRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

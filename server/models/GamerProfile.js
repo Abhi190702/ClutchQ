@@ -42,6 +42,14 @@ const averageRatingsSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const customAvatarSchema = new mongoose.Schema(
+  {
+    dataUrl: String,
+    uploadedAt: Date
+  },
+  { _id: false }
+);
+
 const gamerProfileSchema = new mongoose.Schema(
   {
     userId: {
@@ -65,6 +73,10 @@ const gamerProfileSchema = new mongoose.Schema(
       type: Map,
       of: String,
       default: {}
+    },
+    customAvatar: {
+      type: customAvatarSchema,
+      default: undefined
     },
     bio: String,
     region: String,

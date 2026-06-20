@@ -64,9 +64,9 @@ export const AUTH_PROVIDERS = [
     label: "Steam",
     shortLabel: "S",
     section: "other",
-    status: "stub",
+    status: "oauth",
     route: "/api/auth/steam",
-    description: "Steam OpenID coming next",
+    description: "Continue with Steam",
     tone: "sky",
     logoUrl: "https://cdn.simpleicons.org/steam/FFFFFF",
     logoBg: "sky"

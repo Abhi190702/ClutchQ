@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import GamerProfile from "../models/GamerProfile.js";
 import generateToken from "../utils/generateToken.js";
@@ -7,6 +8,7 @@ import { asyncHandler } from "../middleware/errorMiddleware.js";
 import { createDemoProfile } from "../utils/seedData.js";
 import { buildDiscordAuthUrl, handleDiscordOAuthCallback, isDiscordOAuthConfigured } from "../services/oauth/discordOAuthService.js";
 import { buildGoogleAuthUrl, handleGoogleOAuthCallback, isGoogleOAuthConfigured } from "../services/oauth/googleOAuthService.js";
+import { buildSteamAuthUrl, getPlayerSummary, verifySteamOpenId } from "../services/steamService.js";
 
 const isLocalDev = process.env.npm_lifecycle_event === "dev" || process.env.NODE_ENV === "development";
 const useSecureCookies = process.env.NODE_ENV === "production" && !isLocalDev;
@@ -169,9 +171,76 @@ const createOrUpdateOAuthUser = async ({ provider, providerData }) => {
 };
 
 const redirectOAuthSuccess = (req, res, provider, user) => {
-  const clientOrigin = getStoredClientOrigin(req, res, provider);
+  const clientOrigin = provider ? getStoredClientOrigin(req, res, provider) : getRequestClientOrigin(req);
   const token = issueToken(res, user);
   res.redirect(getClientRedirect(`/oauth/success?token=${encodeURIComponent(token)}`, clientOrigin));
+};
+
+const getLinkUserFromRequest = async (req) => {
+  const token = req.cookies?.token || req.query.linkToken;
+  if (!token) return null;
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "dev_secret_replace_me");
+    return User.findById(decoded.id);
+  } catch {
+    return null;
+  }
+};
+
+const createOrUpdateSteamUser = async ({ req, steamId, summary }) => {
+  const linkUser = await getLinkUserFromRequest(req);
+  const steamData = {
+    steamId,
+    displayName: summary?.personaname || `Steam ${steamId.slice(-6)}`,
+    avatar: summary?.avatarfull || summary?.avatarmedium,
+    profileUrl: summary?.profileurl || `https://steamcommunity.com/profiles/${steamId}`,
+    connectedAt: new Date(),
+    lastSyncedAt: new Date()
+  };
+
+  if (linkUser) {
+    linkUser.authProviders = {
+      ...(linkUser.authProviders?.toObject?.() || linkUser.authProviders || {}),
+      steam: steamData
+    };
+    linkUser.avatar = linkUser.avatar || steamData.avatar;
+    await linkUser.save();
+    return linkUser;
+  }
+
+  const existing = await User.findOne({ "authProviders.steam.steamId": steamId });
+  if (existing) {
+    existing.name = existing.name || steamData.displayName;
+    existing.avatar = steamData.avatar || existing.avatar;
+    existing.authProviders = {
+      ...(existing.authProviders?.toObject?.() || existing.authProviders || {}),
+      steam: steamData
+    };
+    await existing.save();
+    return existing;
+  }
+
+  const user = await User.create({
+    name: steamData.displayName,
+    email: `steam-${steamId}@steam.clutchq.local`,
+    avatar: steamData.avatar,
+    authProviders: { steam: steamData }
+  });
+
+  await GamerProfile.findOneAndUpdate(
+    { userId: user._id },
+    {
+      userId: user._id,
+      displayName: steamData.displayName,
+      clutchTag: `${steamData.displayName.replace(/[^a-z0-9]/gi, "").slice(0, 12) || "Steam"}#${steamId.slice(-4)}`,
+      playerCode: `CLQ-STEAM-${steamId.slice(-4)}`,
+      profileCompleteness: 25
+    },
+    { upsert: true, new: true }
+  );
+
+  return user;
 };
 
 export const register = asyncHandler(async (req, res) => {
@@ -289,6 +358,26 @@ export const startDiscordOAuth = asyncHandler(async (req, res) => {
   if (!isDiscordOAuthConfigured()) return redirectOAuthError(req, res, "discord", "provider_not_configured");
   const state = createOAuthState(req, res, "discord");
   res.redirect(buildDiscordAuthUrl(state));
+});
+
+export const startSteamOAuth = asyncHandler(async (req, res) => {
+  res.redirect(buildSteamAuthUrl({ returnTo: getRequestClientOrigin(req), token: req.query.token }));
+});
+
+export const handleSteamOAuth = asyncHandler(async (req, res) => {
+  try {
+    const steamId = await verifySteamOpenId(req.query);
+    let summary = null;
+    try {
+      summary = await getPlayerSummary(steamId);
+    } catch {
+      summary = null;
+    }
+    const user = await createOrUpdateSteamUser({ req, steamId, summary });
+    redirectOAuthSuccess(req, res, null, user);
+  } catch (error) {
+    redirectOAuthError(req, res, null, "oauth_failed");
+  }
 });
 
 export const handleDiscordOAuth = asyncHandler(async (req, res) => {

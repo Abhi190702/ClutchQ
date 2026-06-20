@@ -4,12 +4,14 @@ import {
   getMe,
   handleDiscordOAuth,
   handleGoogleOAuth,
+  handleSteamOAuth,
   login,
   logout,
   providerNotConfigured,
   register,
   startDiscordOAuth,
-  startGoogleOAuth
+  startGoogleOAuth,
+  startSteamOAuth
 } from "../controllers/authController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -26,8 +28,8 @@ router.get("/google/callback", handleGoogleOAuth);
 router.get("/discord", startDiscordOAuth);
 router.get("/discord/callback", handleDiscordOAuth);
 
-router.get("/steam", providerNotConfigured("Steam"));
-router.get("/steam/callback", providerNotConfigured("Steam"));
+router.get("/steam", startSteamOAuth);
+router.get("/steam/callback", handleSteamOAuth);
 router.get("/epic", providerNotConfigured("Epic Games"));
 router.get("/epic/callback", providerNotConfigured("Epic Games"));
 router.get("/microsoft", providerNotConfigured("Microsoft"));
