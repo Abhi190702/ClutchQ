@@ -4,6 +4,7 @@ import User from "../models/User.js";
 import GamerProfile from "../models/GamerProfile.js";
 import generateToken from "../utils/generateToken.js";
 import { asyncHandler } from "../middleware/errorMiddleware.js";
+import { createDemoProfile } from "../utils/seedData.js";
 import { buildDiscordAuthUrl, handleDiscordOAuthCallback, isDiscordOAuthConfigured } from "../services/oauth/discordOAuthService.js";
 import { buildGoogleAuthUrl, handleGoogleOAuthCallback, isGoogleOAuthConfigured } from "../services/oauth/googleOAuthService.js";
 
@@ -163,11 +164,22 @@ export const login = asyncHandler(async (req, res) => {
 });
 
 export const demoLogin = asyncHandler(async (req, res) => {
-  const user = await User.findOne({ email: "demo@clutchq.com" });
+  let user = await User.findOne({ email: "demo@clutchq.com" });
 
   if (!user) {
-    res.status(404);
-    throw new Error("Demo account not found. Run npm run seed first.");
+    const passwordHash = await bcrypt.hash("demo123", 10);
+    user = await User.create({
+      name: "Abhijeet",
+      email: "demo@clutchq.com",
+      passwordHash,
+      role: "user",
+      avatar: "/clutchq-logo.svg"
+    });
+  }
+
+  const profile = await GamerProfile.findOne({ userId: user._id });
+  if (!profile) {
+    await GamerProfile.create(createDemoProfile(user._id));
   }
 
   await authResponse(res, user, "Demo session started");
