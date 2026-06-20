@@ -30,6 +30,7 @@ ClutchQ matches gamers using rank, role, region, language, availability, playsty
 - Custom playstyle radar chart without chart libraries
 - Trust score from reviews, reliability, no-shows, and report penalties
 - Teammate requests and lobby join requests
+- Owner-created Discord voice rooms for accepted lobby members
 - Admin analytics and report moderation
 - Rich seed data with 50+ gamer profiles and demo/admin accounts
 
@@ -37,7 +38,8 @@ ClutchQ matches gamers using rank, role, region, language, availability, playsty
 
 - Frontend: ReactJS, Vite, JavaScript, Tailwind CSS, React Router DOM, Axios
 - Backend: Node.js, Express.js, MongoDB, Mongoose
-- Auth: JWT and bcryptjs
+- Auth: JWT, bcryptjs, Google OAuth, and Discord OAuth
+- Integrations: Discord Bot API for lobby voice rooms
 - Tooling: nodemon and concurrently
 
 No Angular, Vue, Next.js, Bootstrap, Material UI, Chakra, ShadCN, chart libraries, or external UI component libraries are used.
@@ -113,7 +115,7 @@ Final Score = clamp(0, 100)
 
 - User: account, email, password hash, role, avatar, suspension state
 - GamerProfile: game/rank/roles, region, languages, availability, playstyle, trust, badges
-- Lobby: owner, game, rank range, region, language, members, requests, invite code
+- Lobby: owner, game, rank range, region, language, members, requests, invite code, Discord voice room metadata
 - Request: teammate or lobby request with pending/accepted/rejected/cancelled state
 - Review: communication, teamwork, skill, punctuality, behavior, comment
 - Report: reporter, reported user, reason, status, admin note
@@ -125,6 +127,10 @@ Final Score = clamp(0, 100)
 - `POST /api/auth/login`
 - `POST /api/auth/demo`
 - `GET /api/auth/me`
+- `GET /api/auth/google`
+- `GET /api/auth/google/callback`
+- `GET /api/auth/discord`
+- `GET /api/auth/discord/callback`
 - `GET /api/profiles`
 - `GET /api/profiles/me`
 - `PUT /api/profiles/me`
@@ -134,6 +140,9 @@ Final Score = clamp(0, 100)
 - `GET /api/lobbies`
 - `POST /api/lobbies`
 - `GET /api/lobbies/:id`
+- `POST /api/lobbies/:id/discord/create`
+- `GET /api/lobbies/:id/discord`
+- `DELETE /api/lobbies/:id/discord`
 - `PATCH /api/lobbies/:id/ready`
 - `PATCH /api/lobbies/:id/close`
 - `GET /api/requests`
@@ -173,6 +182,16 @@ PORT=5000
 MONGO_URI=mongodb://127.0.0.1:27017/clutchq
 JWT_SECRET=replace_with_secure_secret
 CLIENT_URL=http://localhost:5173
+SERVER_URL=http://localhost:5000
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/callback
+DISCORD_CLIENT_ID=
+DISCORD_CLIENT_SECRET=
+DISCORD_CALLBACK_URL=http://localhost:5000/api/auth/discord/callback
+DISCORD_BOT_TOKEN=
+DISCORD_GUILD_ID=
+DISCORD_CATEGORY_ID=
 ```
 
 Client `.env`:
@@ -196,6 +215,37 @@ npm run dev
 
 Frontend: http://localhost:5173  
 Backend: http://localhost:5000
+
+## Discord Voice Rooms
+
+ClutchQ can create a Discord voice channel for a lobby after the lobby owner clicks **Create Discord Voice Room**. The invite is returned only to the lobby owner and accepted members.
+
+Required `server/.env` values:
+
+```env
+DISCORD_BOT_TOKEN=your_discord_bot_token
+DISCORD_GUILD_ID=your_discord_server_id
+DISCORD_CATEGORY_ID=optional_category_id_for_voice_rooms
+```
+
+If `DISCORD_CATEGORY_ID` is blank, channels are created directly in the server. If it is set, channels are created inside that category.
+
+The Discord bot needs:
+
+- Manage Channels
+- Create Invite
+- View Channels
+- Connect
+- Speak
+
+Manual test:
+
+1. Log in and open a lobby you own.
+2. Click **Create Discord Voice Room**.
+3. Confirm a voice channel appears in the configured Discord server/category.
+4. Use **Join Voice Room** or **Copy Invite**.
+5. Refresh the lobby and create again; the existing room should be reused.
+6. Check as a non-member; the invite should not be visible.
 
 ## Demo Credentials
 
@@ -230,7 +280,7 @@ See [docs/demo-script.md](docs/demo-script.md).
 ## Future Scope
 
 - Real-time lobby chat and ready checks with WebSockets
-- Discord OAuth and server invite integration
+- Steam, Epic Games, Microsoft, PlayStation, Xbox, and Nintendo account linking
 - Anti-toxicity reputation weighting
 - Tournament team builder mode
 - ML-assisted role recommendation

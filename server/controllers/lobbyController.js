@@ -16,6 +16,31 @@ const getLobbyMemberProfiles = async (lobby) => {
   return GamerProfile.find({ userId: { $in: memberIds } }).populate("userId", "name avatar role");
 };
 
+const getUserId = (value) => String(value?._id || value || "");
+
+const canAccessLobbyDiscord = (lobby, userId) => {
+  const viewerId = getUserId(userId);
+  const ownerId = getUserId(lobby.ownerId);
+  const isMember = lobby.currentMembers?.some((member) => getUserId(member.userId) === viewerId);
+
+  return ownerId === viewerId || isMember;
+};
+
+const sanitizeLobbyForViewer = (lobby, userId) => {
+  const lobbyObject = lobby.toObject ? lobby.toObject({ virtuals: true }) : { ...lobby };
+
+  if (lobbyObject.discord && !canAccessLobbyDiscord(lobbyObject, userId)) {
+    lobbyObject.discord = lobbyObject.discord.channelName
+      ? {
+          channelName: lobbyObject.discord.channelName,
+          createdAt: lobbyObject.discord.createdAt
+        }
+      : undefined;
+  }
+
+  return lobbyObject;
+};
+
 const calculateLobbyViewerCompatibility = async (viewerProfile, lobby) => {
   if (!viewerProfile) return null;
   const memberProfiles = await getLobbyMemberProfiles(lobby);
@@ -56,7 +81,7 @@ export const listLobbies = asyncHandler(async (req, res) => {
 
   const enriched = await Promise.all(
     lobbies.map(async (lobby) => ({
-      lobby,
+      lobby: sanitizeLobbyForViewer(lobby, req.user._id),
       compatibility: await calculateLobbyViewerCompatibility(viewerProfile, lobby)
     }))
   );
@@ -158,7 +183,7 @@ export const getLobby = asyncHandler(async (req, res) => {
     success: true,
     message: "Lobby loaded",
     data: {
-      lobby,
+      lobby: sanitizeLobbyForViewer(lobby, req.user._id),
       memberProfiles,
       chemistry,
       compatibility

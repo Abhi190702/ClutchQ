@@ -15,6 +15,17 @@ const memberSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const discordRoomSchema = new mongoose.Schema(
+  {
+    channelId: String,
+    channelName: String,
+    inviteUrl: String,
+    createdAt: Date,
+    expiresAt: Date
+  },
+  { _id: false }
+);
+
 const lobbySchema = new mongoose.Schema(
   {
     title: {
@@ -56,7 +67,11 @@ const lobbySchema = new mongoose.Schema(
     },
     startTime: Date,
     description: String,
-    inviteCode: String
+    inviteCode: String,
+    discord: {
+      type: discordRoomSchema,
+      default: undefined
+    }
   },
   { timestamps: true }
 );

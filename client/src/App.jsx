@@ -11,6 +11,7 @@ import LobbyDetails from "./pages/LobbyDetails";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
+import OAuthSuccess from "./pages/OAuthSuccess";
 import PlayerProfile from "./pages/PlayerProfile";
 import Profile from "./pages/Profile";
 import Register from "./pages/Register";
@@ -23,6 +24,7 @@ const App = () => (
     <Route path="/" element={<Landing />} />
     <Route path="/login" element={<Login />} />
     <Route path="/register" element={<Register />} />
+    <Route path="/oauth/success" element={<OAuthSuccess />} />
 
     <Route element={<ProtectedRoute />}>
       <Route path="/onboarding" element={<Onboarding />} />

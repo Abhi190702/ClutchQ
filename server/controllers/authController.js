@@ -1,8 +1,11 @@
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import User from "../models/User.js";
 import GamerProfile from "../models/GamerProfile.js";
 import generateToken from "../utils/generateToken.js";
 import { asyncHandler } from "../middleware/errorMiddleware.js";
+import { buildDiscordAuthUrl, handleDiscordOAuthCallback, isDiscordOAuthConfigured } from "../services/oauth/discordOAuthService.js";
+import { buildGoogleAuthUrl, handleGoogleOAuthCallback, isGoogleOAuthConfigured } from "../services/oauth/googleOAuthService.js";
 
 const cookieOptions = {
   httpOnly: true,
@@ -11,11 +14,43 @@ const cookieOptions = {
   secure: process.env.NODE_ENV === "production"
 };
 
+const oauthStateCookieOptions = {
+  httpOnly: true,
+  maxAge: 10 * 60 * 1000,
+  sameSite: "lax",
+  secure: process.env.NODE_ENV === "production"
+};
+
+const oauthStateCookieName = (provider) => `clutchq_${provider}_oauth_state`;
+
+const getClientRedirect = (path) => `${process.env.CLIENT_URL || "http://localhost:5173"}${path}`;
+
+const redirectOAuthError = (res, error = "oauth_failed") => {
+  res.redirect(getClientRedirect(`/login?error=${encodeURIComponent(error)}`));
+};
+
+const createOAuthState = (res, provider) => {
+  const state = crypto.randomBytes(24).toString("hex");
+  res.cookie(oauthStateCookieName(provider), state, oauthStateCookieOptions);
+  return state;
+};
+
+const verifyOAuthState = (req, res, provider) => {
+  const cookieName = oauthStateCookieName(provider);
+  const expectedState = req.cookies?.[cookieName];
+  res.clearCookie(cookieName, oauthStateCookieOptions);
+  return Boolean(expectedState && req.query.state && expectedState === req.query.state);
+};
+
+const issueToken = (res, user) => {
+  const token = generateToken(user._id);
+  res.cookie("token", token, cookieOptions);
+  return token;
+};
+
 const authResponse = async (res, user, message) => {
   const profile = await GamerProfile.findOne({ userId: user._id });
-  const token = generateToken(user._id);
-
-  res.cookie("token", token, cookieOptions);
+  const token = issueToken(res, user);
 
   res.json({
     success: true,
@@ -26,6 +61,46 @@ const authResponse = async (res, user, message) => {
       profile
     }
   });
+};
+
+const findUserForProvider = async (provider, providerId, email) => {
+  const providerPath = `authProviders.${provider}.id`;
+  const byProvider = await User.findOne({ [providerPath]: providerId });
+  if (byProvider) return byProvider;
+  if (!email) return null;
+  return User.findOne({ email: email.toLowerCase() });
+};
+
+const createOrUpdateOAuthUser = async ({ provider, providerData }) => {
+  const fallbackEmail = providerData.email || `${provider}-${providerData.id}@${provider}.clutchq.local`;
+  const user = await findUserForProvider(provider, providerData.id, fallbackEmail);
+  const name = providerData.name || providerData.globalName || providerData.username || fallbackEmail.split("@")[0];
+
+  if (user) {
+    user.name = user.name || name;
+    user.email = user.email || fallbackEmail;
+    user.avatar = providerData.avatar || user.avatar;
+    user.authProviders = {
+      ...(user.authProviders?.toObject?.() || user.authProviders || {}),
+      [provider]: providerData
+    };
+    await user.save();
+    return user;
+  }
+
+  return User.create({
+    name,
+    email: fallbackEmail,
+    avatar: providerData.avatar,
+    authProviders: {
+      [provider]: providerData
+    }
+  });
+};
+
+const redirectOAuthSuccess = (res, user) => {
+  const token = issueToken(res, user);
+  res.redirect(getClientRedirect(`/oauth/success?token=${encodeURIComponent(token)}`));
 };
 
 export const register = asyncHandler(async (req, res) => {
@@ -111,6 +186,52 @@ export const logout = asyncHandler(async (req, res) => {
   });
 });
 
+export const startGoogleOAuth = asyncHandler(async (req, res) => {
+  if (!isGoogleOAuthConfigured()) return redirectOAuthError(res, "provider_not_configured");
+  const state = createOAuthState(res, "google");
+  res.redirect(buildGoogleAuthUrl(state));
+});
+
+export const handleGoogleOAuth = asyncHandler(async (req, res) => {
+  try {
+    if (!req.query.code || !verifyOAuthState(req, res, "google")) return redirectOAuthError(res);
+    const providerData = await handleGoogleOAuthCallback(req.query.code);
+    const user = await createOrUpdateOAuthUser({ provider: "google", providerData });
+    redirectOAuthSuccess(res, user);
+  } catch (error) {
+    redirectOAuthError(res);
+  }
+});
+
+export const startDiscordOAuth = asyncHandler(async (req, res) => {
+  if (!isDiscordOAuthConfigured()) return redirectOAuthError(res, "provider_not_configured");
+  const state = createOAuthState(res, "discord");
+  res.redirect(buildDiscordAuthUrl(state));
+});
+
+export const handleDiscordOAuth = asyncHandler(async (req, res) => {
+  try {
+    if (!req.query.code || !verifyOAuthState(req, res, "discord")) return redirectOAuthError(res);
+    const providerData = await handleDiscordOAuthCallback(req.query.code);
+    const user = await createOrUpdateOAuthUser({ provider: "discord", providerData });
+    redirectOAuthSuccess(res, user);
+  } catch (error) {
+    redirectOAuthError(res);
+  }
+});
+
+export const providerNotConfigured = (providerLabel) =>
+  asyncHandler(async (req, res) => {
+    if (req.accepts("html")) {
+      return redirectOAuthError(res, "provider_not_configured");
+    }
+
+    res.status(501).json({
+      success: false,
+      message: `${providerLabel} login is not configured yet.`
+    });
+  });
+
 export const getMe = asyncHandler(async (req, res) => {
   const profile = await GamerProfile.findOne({ userId: req.user._id });
 
@@ -118,7 +239,7 @@ export const getMe = asyncHandler(async (req, res) => {
     success: true,
     message: "Current user loaded",
     data: {
-      user: req.user,
+      user: req.user.toSafeJSON ? req.user.toSafeJSON() : req.user,
       profile
     }
   });

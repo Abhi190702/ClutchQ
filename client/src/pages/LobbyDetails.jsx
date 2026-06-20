@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import PageShell from "../components/common/PageShell";
 import SkeletonCard from "../components/common/SkeletonCard";
 import Badge from "../components/common/Badge";
+import DiscordVoiceRoom from "../components/lobbies/DiscordVoiceRoom";
 import LobbyCompatibility from "../components/lobbies/LobbyCompatibility";
 import MissingRoleDetector from "../components/lobbies/MissingRoleDetector";
 import SmartInviteSuggestions from "../components/lobbies/SmartInviteSuggestions";
@@ -68,6 +69,7 @@ const LobbyDetails = () => {
 
   const { lobby, chemistry, compatibility, memberProfiles } = data;
   const isOwner = String(lobby.ownerId?._id || lobby.ownerId) === String(user?._id);
+  const isMember = lobby.currentMembers?.some((member) => String(member.userId?._id || member.userId) === String(user?._id));
 
   return (
     <PageShell
@@ -93,6 +95,7 @@ const LobbyDetails = () => {
             </div>
             <p className="mt-5 text-sm leading-6 text-clutch-muted">{lobby.description}</p>
           </div>
+          <DiscordVoiceRoom lobby={lobby} isOwner={isOwner} isMember={isMember} onUpdated={load} />
           <SquadChemistryGraph members={memberProfiles} pairwiseScores={chemistry.pairwiseScores} />
           <SmartInviteSuggestions chemistry={chemistry} />
         </div>

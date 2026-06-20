@@ -1,78 +1,91 @@
-import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import Navbar from "../components/common/Navbar";
-import { useAuth } from "../context/AuthContext";
+import { useEffect, useRef } from "react";
+import AuthDivider from "../components/auth/AuthDivider";
+import AuthNotice from "../components/auth/AuthNotice";
+import AuthProviderGrid from "../components/auth/AuthProviderGrid";
+import EmailLoginPanel from "../components/auth/EmailLoginPanel";
+import LoginBrandHeader from "../components/auth/LoginBrandHeader";
 import { useToast } from "../context/ToastContext";
-import { getErrorMessage } from "../services/api";
+import { API_URL } from "../utils/constants";
+import { getConsoleProviders, getOtherProviders } from "../utils/authProviders";
+
+const getServerBaseUrl = () => {
+  try {
+    return new URL(API_URL).origin;
+  } catch {
+    return API_URL.replace(/\/api\/?$/, "");
+  }
+};
 
 const Login = () => {
-  const [form, setForm] = useState({ email: "demo@clutchq.com", password: "demo123" });
-  const [loading, setLoading] = useState(false);
-  const { login, demoLogin } = useAuth();
+  const emailPanelRef = useRef(null);
+  const emailPanelWrapRef = useRef(null);
   const { showToast } = useToast();
-  const navigate = useNavigate();
-  const location = useLocation();
 
-  const redirectAfterAuth = (profile) => {
-    navigate(profile ? location.state?.from?.pathname || "/dashboard" : "/onboarding", { replace: true });
-  };
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get("error");
 
-  const submit = async (event) => {
-    event.preventDefault();
-    setLoading(true);
-    try {
-      const data = await login(form);
-      showToast("Logged in successfully");
-      redirectAfterAuth(data.profile);
-    } catch (error) {
-      showToast(getErrorMessage(error), "error");
-    } finally {
-      setLoading(false);
+    if (error === "oauth_failed") showToast("OAuth sign-in failed. Please try again.", "error");
+    if (error === "provider_not_configured") showToast("This provider is not configured yet.", "error");
+
+    if (error) window.history.replaceState({}, "", "/login");
+  }, [showToast]);
+
+  const handleProviderClick = (provider) => {
+    if (provider.status === "oauth" && provider.route) {
+      window.location.href = `${getServerBaseUrl()}${provider.route}`;
+      return;
     }
-  };
 
-  const continueDemo = async () => {
-    setLoading(true);
-    try {
-      const data = await demoLogin();
-      showToast("Demo player loaded");
-      redirectAfterAuth(data.profile);
-    } catch (error) {
-      showToast(getErrorMessage(error), "error");
-    } finally {
-      setLoading(false);
+    if (provider.status === "stub") {
+      showToast(`${provider.label} integration is coming next.`, "info");
+      return;
+    }
+
+    if (provider.status === "manual") {
+      showToast(`Manual ${provider.label} linking is coming next. You will be able to add this inside Profile.`, "info");
+      return;
+    }
+
+    if (provider.status === "local") {
+      emailPanelWrapRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      window.setTimeout(() => emailPanelRef.current?.focusEmail(), 250);
+      return;
+    }
+
+    if (provider.status === "demo") {
+      emailPanelRef.current?.continueDemo();
     }
   };
 
   return (
-    <div className="noise-bg min-h-screen">
-      <Navbar />
-      <main className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-md items-center px-4 py-10">
-        <form onSubmit={submit} className="card w-full p-6">
-          <div className="mb-6">
-            <div className="eyebrow mb-3">Welcome back</div>
-            <h1 className="text-2xl font-semibold text-clutch-text">Login to ClutchQ</h1>
-            <p className="mt-2 text-sm leading-6 text-clutch-muted">Use the seeded demo account or your own account to open the dashboard.</p>
-          </div>
-          <label className="form-label">Email</label>
-          <input className="form-input mb-4" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} />
-          <label className="form-label">Password</label>
-          <input className="form-input mb-5" type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} />
-          <button disabled={loading} className="btn-primary w-full" type="submit">
-            Login
-          </button>
-          <button disabled={loading} type="button" onClick={continueDemo} className="btn-secondary mt-3 w-full">
-            Continue as Demo Player
-          </button>
-          <p className="mt-5 text-sm text-clutch-muted">
-            New here?{" "}
-            <Link to="/register" className="font-semibold text-clutch-blue">
-              Create an account
-            </Link>
-          </p>
-        </form>
-      </main>
-    </div>
+    <main className="min-h-screen bg-[#18181b] px-4 py-8 text-white md:py-12">
+      <div className="relative mx-auto flex max-w-[760px] flex-col gap-8">
+        <LoginBrandHeader />
+
+        <AuthProviderGrid
+          title="Only played on console?"
+          subtitle="Sign in or connect your console identity"
+          providers={getConsoleProviders()}
+          onProviderClick={handleProviderClick}
+        />
+
+        <AuthDivider label="Other ways to sign in" />
+
+        <AuthProviderGrid
+          title="Other ways to sign in"
+          subtitle="Choose the account you want to use for your ClutchQ identity."
+          providers={getOtherProviders()}
+          onProviderClick={handleProviderClick}
+        />
+
+        <div ref={emailPanelWrapRef}>
+          <EmailLoginPanel ref={emailPanelRef} />
+        </div>
+
+        <AuthNotice />
+      </div>
+    </main>
   );
 };
 

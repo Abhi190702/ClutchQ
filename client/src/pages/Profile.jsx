@@ -4,6 +4,7 @@ import PageShell from "../components/common/PageShell";
 import EmptyState from "../components/common/EmptyState";
 import SkeletonCard from "../components/common/SkeletonCard";
 import AvailabilityHeatmap from "../components/profile/AvailabilityHeatmap";
+import ConnectedAccounts from "../components/profile/ConnectedAccounts";
 import GameRankCard from "../components/profile/GameRankCard";
 import PlayerBadges from "../components/profile/PlayerBadges";
 import PlaystyleRadar from "../components/profile/PlaystyleRadar";
@@ -16,7 +17,7 @@ import { getErrorMessage } from "../services/api";
 import api from "../services/api";
 
 const Profile = () => {
-  const { profile, refresh } = useAuth();
+  const { profile, refresh, user } = useAuth();
   const { showToast } = useToast();
   const [currentProfile, setCurrentProfile] = useState(profile);
   const [sessions, setSessions] = useState([]);
@@ -85,6 +86,7 @@ const Profile = () => {
           <div className="min-w-0 space-y-6">
             <ProfileCompleteness value={currentProfile.profileCompleteness} />
             <PlayerBadges badges={currentProfile.badges} />
+            <ConnectedAccounts user={user} />
             <SessionHistory sessions={sessions} />
           </div>
           <div className="min-w-0 space-y-6">
