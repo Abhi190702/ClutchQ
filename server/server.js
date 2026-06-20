@@ -21,9 +21,43 @@ await connectDB();
 const app = express();
 const port = process.env.PORT || 5000;
 
+const normalizeOrigin = (origin) => {
+  if (!origin) return null;
+  const trimmed = origin.trim().replace(/\/$/, "");
+
+  if (trimmed.startsWith("https:") && !trimmed.startsWith("https://")) {
+    return trimmed.replace("https:", "https://");
+  }
+
+  if (trimmed.startsWith("http:") && !trimmed.startsWith("http://")) {
+    return trimmed.replace("http:", "http://");
+  }
+
+  return trimmed;
+};
+
+const allowedOrigins = new Set(
+  [
+    "http://localhost:5173",
+    "https://clutch-q.vercel.app",
+    process.env.CLIENT_URL,
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
+    ...(process.env.ALLOWED_ORIGINS || "").split(",")
+  ]
+    .map(normalizeOrigin)
+    .filter(Boolean)
+);
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.has(normalizeOrigin(origin))) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`CORS blocked origin: ${origin}`));
+    },
     credentials: true
   })
 );
