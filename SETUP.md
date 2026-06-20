@@ -67,7 +67,7 @@ To create lobby voice rooms, `server/.env` must include:
 ```env
 DISCORD_BOT_TOKEN=your_discord_bot_token
 DISCORD_GUILD_ID=your_discord_server_id
-DISCORD_CATEGORY_ID=1517815485931061268
+DISCORD_CATEGORY_ID=1517824708668817499
 ```
 
 The bot must be installed in that Discord server with Manage Channels, Create Invite, View Channels, Connect, and Speak permissions.

@@ -1,5 +1,14 @@
 const DISCORD_API_BASE = "https://discord.com/api/v10";
 const INVITE_MAX_AGE_SECONDS = 24 * 60 * 60;
+const CATEGORY_CHANNEL_TYPE = 4;
+const ADMINISTRATOR_PERMISSION = 8n;
+const ALL_REQUIRED_PERMISSIONS = [
+  { label: "Create Invite", bit: 1n },
+  { label: "Manage Channels", bit: 16n },
+  { label: "View Channels", bit: 1024n },
+  { label: "Connect", bit: 1048576n },
+  { label: "Speak", bit: 2097152n }
+];
 
 export class DiscordServiceError extends Error {
   constructor(message, statusCode = 400, details = null) {
@@ -56,6 +65,67 @@ const readDiscordResponse = async (response) => {
   }
 };
 
+const hasPermission = (permissions, bit) => (permissions & bit) === bit || (permissions & ADMINISTRATOR_PERMISSION) === ADMINISTRATOR_PERMISSION;
+
+const getRolePermissions = (guild, roleIds = []) => {
+  const roles = guild.roles || [];
+  const roleIdSet = new Set([guild.id, ...roleIds]);
+
+  return roles.reduce((permissions, role) => {
+    if (!roleIdSet.has(role.id)) return permissions;
+    return permissions | BigInt(role.permissions || 0);
+  }, 0n);
+};
+
+const applyCategoryOverwrites = (permissions, guild, member, category) => {
+  if (!category?.permission_overwrites?.length || hasPermission(permissions, ADMINISTRATOR_PERMISSION)) {
+    return permissions;
+  }
+
+  let nextPermissions = permissions;
+  const memberRoleIds = new Set(member.roles || []);
+  const everyoneOverwrite = category.permission_overwrites.find((overwrite) => overwrite.id === guild.id && overwrite.type === 0);
+
+  if (everyoneOverwrite) {
+    nextPermissions &= ~BigInt(everyoneOverwrite.deny || 0);
+    nextPermissions |= BigInt(everyoneOverwrite.allow || 0);
+  }
+
+  let roleAllows = 0n;
+  let roleDenies = 0n;
+
+  category.permission_overwrites.forEach((overwrite) => {
+    if (overwrite.type !== 0 || !memberRoleIds.has(overwrite.id)) return;
+    roleAllows |= BigInt(overwrite.allow || 0);
+    roleDenies |= BigInt(overwrite.deny || 0);
+  });
+
+  nextPermissions &= ~roleDenies;
+  nextPermissions |= roleAllows;
+
+  const memberOverwrite = category.permission_overwrites.find((overwrite) => overwrite.id === member.user?.id && overwrite.type === 1);
+
+  if (memberOverwrite) {
+    nextPermissions &= ~BigInt(memberOverwrite.deny || 0);
+    nextPermissions |= BigInt(memberOverwrite.allow || 0);
+  }
+
+  return nextPermissions;
+};
+
+const runDiscordRequest = async (path) => {
+  const response = await fetch(`${DISCORD_API_BASE}${path}`, {
+    headers: getDiscordHeaders()
+  });
+  const data = await readDiscordResponse(response);
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    data
+  };
+};
+
 const logDiscordError = (context, response, body) => {
   console.error("Discord API error", {
     context,
@@ -63,6 +133,114 @@ const logDiscordError = (context, response, body) => {
     statusText: response.statusText,
     body
   });
+};
+
+export const checkDiscordSetup = async () => {
+  const checks = [];
+  const addCheck = (key, success, message) => {
+    checks.push({ key, success, message });
+  };
+
+  addCheck(
+    "botToken",
+    Boolean(process.env.DISCORD_BOT_TOKEN),
+    process.env.DISCORD_BOT_TOKEN ? "Discord bot token is present." : "Discord voice rooms are not configured yet."
+  );
+  addCheck(
+    "guildId",
+    Boolean(process.env.DISCORD_GUILD_ID),
+    process.env.DISCORD_GUILD_ID ? "Discord guild ID is present." : "Discord voice rooms are not configured yet."
+  );
+  addCheck(
+    "categoryId",
+    Boolean(process.env.DISCORD_CATEGORY_ID),
+    process.env.DISCORD_CATEGORY_ID ? "Discord category ID is present." : "Discord category is not set; voice channels will be created at server root."
+  );
+
+  if (!process.env.DISCORD_BOT_TOKEN || !process.env.DISCORD_GUILD_ID) {
+    return {
+      success: false,
+      checks
+    };
+  }
+
+  try {
+    const botResponse = await runDiscordRequest("/users/@me");
+    addCheck(
+      "botAccess",
+      botResponse.ok,
+      botResponse.ok ? "Discord bot token is valid." : "Discord bot token is invalid or expired."
+    );
+
+    if (!botResponse.ok) {
+      return { success: false, checks };
+    }
+
+    const guildResponse = await runDiscordRequest(`/guilds/${process.env.DISCORD_GUILD_ID}`);
+    addCheck(
+      "guildAccess",
+      guildResponse.ok,
+      guildResponse.ok ? "Bot can access the configured Discord server." : "Discord server could not be found."
+    );
+
+    if (!guildResponse.ok) {
+      return { success: false, checks };
+    }
+
+    let category = null;
+    if (process.env.DISCORD_CATEGORY_ID) {
+      const categoryResponse = await runDiscordRequest(`/channels/${process.env.DISCORD_CATEGORY_ID}`);
+      const categoryAccessible = categoryResponse.ok;
+      const categoryIsCategory = categoryAccessible && categoryResponse.data?.type === CATEGORY_CHANNEL_TYPE;
+      category = categoryIsCategory ? categoryResponse.data : null;
+
+      addCheck(
+        "categoryAccess",
+        categoryAccessible,
+        categoryAccessible ? "Discord category is accessible." : "Discord category is invalid or inaccessible."
+      );
+      addCheck(
+        "categoryType",
+        categoryIsCategory,
+        categoryIsCategory ? "Configured Discord channel is a category." : "Discord category is invalid; this ID is not a category."
+      );
+    }
+
+    const memberResponse = await runDiscordRequest(`/guilds/${process.env.DISCORD_GUILD_ID}/members/${botResponse.data.id}`);
+    addCheck(
+      "botMember",
+      memberResponse.ok,
+      memberResponse.ok ? "Bot membership in the Discord server is confirmed." : "Bot membership could not be verified."
+    );
+
+    if (!memberResponse.ok) {
+      return { success: false, checks };
+    }
+
+    const basePermissions = getRolePermissions(guildResponse.data, memberResponse.data.roles);
+    const effectivePermissions = category
+      ? applyCategoryOverwrites(basePermissions, guildResponse.data, memberResponse.data, category)
+      : basePermissions;
+    const missingPermissions = ALL_REQUIRED_PERMISSIONS
+      .filter((permission) => !hasPermission(effectivePermissions, permission.bit))
+      .map((permission) => permission.label);
+
+    addCheck(
+      "permissions",
+      missingPermissions.length === 0,
+      missingPermissions.length
+        ? `Discord bot does not have permission: ${missingPermissions.join(", ")}.`
+        : "Discord bot has the required voice room permissions."
+    );
+  } catch (error) {
+    console.error("Discord setup health check failed", error);
+    addCheck("healthRequest", false, "Discord setup check could not reach Discord.");
+  }
+
+  return {
+    success: checks.every((check) => check.success),
+    checks
+  };
 };
 
 const handleCreateChannelError = (response, body) => {

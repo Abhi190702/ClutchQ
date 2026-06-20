@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import PageShell from "../components/common/PageShell";
 import SkeletonCard from "../components/common/SkeletonCard";
 import AdminStats from "../components/admin/AdminStats";
+import DiscordSetupStatus from "../components/admin/DiscordSetupStatus";
 import GamePopularityChart from "../components/admin/GamePopularityChart";
 import LobbyHealthChart from "../components/admin/LobbyHealthChart";
 import AdminUsersTable from "../components/admin/AdminUsersTable";
@@ -40,6 +41,7 @@ const AdminDashboard = () => {
     <PageShell title="Admin Dashboard" eyebrow="Safety analytics" actions={<Link to="/admin/reports" className="btn-primary">Moderate reports</Link>}>
       <div className="space-y-6">
         <AdminStats totals={stats.totals} />
+        <DiscordSetupStatus />
         <div className="grid gap-6 xl:grid-cols-2">
           <GamePopularityChart data={stats.gamePopularity} />
           <LobbyHealthChart data={stats.lobbyHealth} />

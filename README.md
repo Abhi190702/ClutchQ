@@ -157,6 +157,7 @@ Final Score = clamp(0, 100)
 - `GET /api/admin/users`
 - `GET /api/admin/reports`
 - `PATCH /api/admin/reports/:id`
+- `GET /api/discord/health`
 
 ## Local Setup
 

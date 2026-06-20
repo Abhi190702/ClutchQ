@@ -13,6 +13,7 @@ import reviewRoutes from "./routes/reviewRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
 import sessionRoutes from "./routes/sessionRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import discordRoutes from "./routes/discordRoutes.js";
 
 dotenv.config();
 await connectDB();
@@ -60,6 +61,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/sessions", sessionRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/discord", discordRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
