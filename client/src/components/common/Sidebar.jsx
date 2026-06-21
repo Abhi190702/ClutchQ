@@ -4,14 +4,14 @@ import { useAuth } from "../../context/AuthContext";
 import ChevronIcon from "./ChevronIcon";
 
 const baseLinks = [
-  { to: "/games", label: "Games", hint: "Browse", icon: "games", group: "Play" },
-  { to: "/activity", label: "Activity", hint: "Stats", icon: "activity", group: "Play" },
-  { to: "/leaderboards", label: "Leaders", hint: "Ranks", icon: "leaders", group: "Play" },
-  { to: "/dashboard", label: "Dashboard", hint: "Home", icon: "dashboard", group: "Play" },
-  { to: "/lobbies", label: "Lobbies", hint: "Classic", icon: "lobbies", group: "Squad" },
-  { to: "/requests", label: "Requests", hint: "Inbox", icon: "requests", group: "Squad" },
-  { to: "/reviews", label: "Reviews", hint: "Trust", icon: "reviews", group: "Account" },
-  { to: "/profile", label: "Profile", hint: "Identity", icon: "profile", group: "Account" }
+  { to: "/dashboard", label: "Dashboard", icon: "dashboard", group: "Play" },
+  { to: "/games", label: "Games", icon: "games", group: "Play" },
+  { to: "/activity", label: "Activity", icon: "activity", group: "Play" },
+  { to: "/leaderboards", label: "Leaderboards", icon: "leaders", group: "Play" },
+  { to: "/lobbies", label: "Lobbies", icon: "lobbies", group: "Squad" },
+  { to: "/requests", label: "Requests", icon: "requests", group: "Squad" },
+  { to: "/reviews", label: "Reviews", icon: "reviews", group: "Account" },
+  { to: "/profile", label: "Profile", icon: "profile", group: "Account" }
 ];
 
 const iconPaths = {
@@ -41,7 +41,7 @@ const Sidebar = () => {
       return false;
     }
   });
-  const links = isAdmin ? [...baseLinks, { to: "/admin", label: "Admin", hint: "Safety", icon: "admin", group: "Account" }] : baseLinks;
+  const links = isAdmin ? [...baseLinks, { to: "/admin", label: "Admin", icon: "admin", group: "Account" }] : baseLinks;
   const groups = links.reduce((map, link) => {
     map[link.group] = [...(map[link.group] || []), link];
     return map;
@@ -56,15 +56,15 @@ const Sidebar = () => {
   }, [collapsed]);
 
   return (
-    <aside className={`hidden shrink-0 border-r border-white/10 bg-[#101014] transition-all duration-300 lg:block ${collapsed ? "w-[82px]" : "w-64"}`}>
-      <div className="sticky top-16 flex h-[calc(100vh-4rem)] flex-col px-3 py-4">
-        <div className={`mb-5 flex items-center ${collapsed ? "flex-col justify-center gap-3" : "justify-between"}`}>
+    <aside className={`hidden shrink-0 border-r border-white/10 bg-[#101014]/95 transition-all duration-300 lg:block ${collapsed ? "w-[76px]" : "w-[276px]"}`}>
+      <div className="sticky top-0 flex h-screen flex-col px-3 py-4">
+        <div className={`mb-8 flex items-center ${collapsed ? "flex-col justify-center gap-3" : "justify-between"}`}>
           <div className={`flex min-w-0 items-center ${collapsed ? "justify-center" : "gap-3"}`}>
             <img src="/brand/clutchq-logo.png" alt="ClutchQ" className="h-10 w-10 shrink-0 rounded-xl object-cover" />
             {!collapsed && (
               <div className="min-w-0">
-                <div className="text-xs font-black uppercase tracking-[0.22em] text-zinc-500">ClutchQ</div>
-                <div className="mt-1 truncate text-sm font-bold text-zinc-200">Squad Console</div>
+                <div className="text-[11px] font-black uppercase tracking-[0.24em] text-zinc-500">ClutchQ</div>
+                <div className="mt-1 truncate text-sm font-bold text-zinc-100">Squad Console</div>
               </div>
             )}
           </div>
@@ -78,35 +78,35 @@ const Sidebar = () => {
           </button>
         </div>
 
-        <nav className="min-h-0 flex-1 overflow-y-auto">
+        <nav className="thin-scrollbar min-h-0 flex-1 overflow-y-auto pr-1">
           {Object.entries(groups).map(([group, groupLinks]) => (
-            <div key={group} className="mb-5">
-              {!collapsed && <div className="mb-2 px-3 text-[11px] font-black uppercase tracking-[0.22em] text-zinc-600">{group}</div>}
+            <div key={group} className="mb-6">
+              {!collapsed && <div className="mb-2 px-3 text-[11px] font-black uppercase tracking-[0.24em] text-zinc-600">{group}</div>}
               <div className="space-y-1">
                 {groupLinks.map((link) => (
                   <NavLink
                     key={link.to}
                     to={link.to}
-                    title={collapsed ? `${link.label} - ${link.hint}` : undefined}
+                    title={collapsed ? link.label : undefined}
                     className={({ isActive }) =>
-                      `group flex h-11 items-center rounded-md text-sm font-bold transition ${
-                        collapsed ? "justify-center px-0" : "justify-between gap-3 px-3"
+                      `group relative flex h-11 items-center rounded-xl text-sm font-bold transition ${
+                        collapsed ? "justify-center px-0" : "gap-3 px-3"
                       } ${
                         isActive
-                          ? "bg-white text-black"
-                          : "text-zinc-400 hover:bg-white/[0.055] hover:text-white"
+                          ? "bg-white/[0.09] text-white"
+                          : "text-zinc-500 hover:bg-white/[0.055] hover:text-white"
                       }`
                     }
                   >
                     {({ isActive }) => (
                       <>
+                        {isActive ? <span className="absolute left-0 top-2 h-7 w-1 rounded-r-full bg-clutch-blue" /> : null}
                         <span className={`flex min-w-0 items-center ${collapsed ? "justify-center" : "gap-3"}`}>
-                          <span className={isActive ? "text-black" : "text-zinc-500 group-hover:text-white"}>
+                          <span className={isActive ? "text-clutch-blue" : "text-zinc-600 group-hover:text-zinc-200"}>
                             <SidebarIcon name={link.icon} />
                           </span>
                           {!collapsed && <span className="truncate">{link.label}</span>}
                         </span>
-                        {!collapsed && <span className={isActive ? "text-xs text-black/60" : "text-xs text-zinc-600 group-hover:text-zinc-300"}>{link.hint}</span>}
                       </>
                     )}
                   </NavLink>
@@ -115,6 +115,13 @@ const Sidebar = () => {
             </div>
           ))}
         </nav>
+
+        {!collapsed && (
+          <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+            <div className="text-[11px] font-black uppercase tracking-[0.22em] text-zinc-600">Live Demo</div>
+            <p className="mt-2 text-sm leading-5 text-zinc-400">Use seeded accounts for judge-ready rooms, requests, and activity.</p>
+          </div>
+        )}
       </div>
     </aside>
   );

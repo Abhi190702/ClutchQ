@@ -350,11 +350,13 @@ Steam privacy matters: library, friends, achievements, and recent activity only 
 
 ## Demo Credentials
 
-Demo User:
+Seeded demo users:
 
 ```txt
-Email: demo@clutchq.com
-Password: demo123
+Abhijeet: demo@clutchq.com / demo123
+CaptainRex: captain@clutchq.com / demo123
+NovaSentinel: sentinel@clutchq.com / demo123
+FlexByte: flex@clutchq.com / demo123
 ```
 
 Admin:
@@ -363,6 +365,8 @@ Admin:
 Email: admin@clutchq.com
 Password: admin123
 ```
+
+The demo accounts include richer profile data, lobbies, requests, activity history, Steam-like library data, achievements, friends, and compatibility signals. They are safe for live judging when a real Steam account has private or empty library data.
 
 ## Screenshots
 
@@ -409,7 +413,7 @@ git push
 ## Common Errors
 
 - MongoDB connection failed: start local MongoDB or set `MONGO_URI` to Atlas.
-- Demo login not found: run `npm run seed`.
+- Demo login not found: run `npm run seed`. If your local `server/.env` has `NODE_ENV=production`, either change it to `development` for local testing or run PowerShell with `$env:NODE_ENV='development'; npm run seed`.
 - Game browse is empty: run `npm run seed:games`, or the app will fall back to the built-in catalog until MongoDB has game rows.
 - Vite cannot reach API: confirm `server/.env` `PORT=5000` and `client/.env` `VITE_LOCAL_API_URL=http://localhost:5000/api`.
 - JWT errors after changing secrets: log out, clear local storage, and log in again.

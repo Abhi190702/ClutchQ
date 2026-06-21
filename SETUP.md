@@ -22,7 +22,9 @@ Start Docker Desktop manually, wait until it says Docker is running, then:
 
 ```powershell
 docker compose up -d mongo
+$env:NODE_ENV='development'
 npm run seed
+npm run seed:games
 npm run dev
 ```
 
@@ -35,9 +37,14 @@ http://localhost:5173
 Use:
 
 ```txt
-Demo: demo@clutchq.com / demo123
+Abhijeet: demo@clutchq.com / demo123
+CaptainRex: captain@clutchq.com / demo123
+NovaSentinel: sentinel@clutchq.com / demo123
+FlexByte: flex@clutchq.com / demo123
 Admin: admin@clutchq.com / admin123
 ```
+
+If your local `server/.env` has `NODE_ENV=production` for Render, keep the PowerShell override above while seeding locally so the seed uses your local MongoDB instead of Atlas.
 
 ## Atlas Path
 

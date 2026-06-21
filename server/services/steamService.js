@@ -24,7 +24,20 @@ export class SteamServiceError extends Error {
   }
 }
 
-const isDemoUser = (user) => user?.email === "demo@clutchq.com";
+const demoEmails = new Set(["demo@clutchq.com", "captain@clutchq.com", "sentinel@clutchq.com", "flex@clutchq.com"]);
+const demoIdentityByEmail = {
+  "demo@clutchq.com": { steamId: "76561199000072910", displayName: "Abhijeet", level: 42 },
+  "captain@clutchq.com": { steamId: "76561199000072911", displayName: "CaptainRex", level: 56 },
+  "sentinel@clutchq.com": { steamId: "76561199000072912", displayName: "NovaSentinel", level: 38 },
+  "flex@clutchq.com": { steamId: "76561199000072913", displayName: "FlexByte", level: 34 }
+};
+const isDemoUser = (user) => demoEmails.has(String(user?.email || "").toLowerCase());
+const getDemoIdentity = (user) => ({
+  ...demoSteamIdentity,
+  ...(demoIdentityByEmail[String(user?.email || "").toLowerCase()] || {}),
+  avatar: user?.avatar || demoSteamIdentity.avatar,
+  profileUrl: `https://steamcommunity.com/id/clutchq-${String(user?.email || "demo").split("@")[0]}`
+});
 const minutesToHours = (minutes = 0) => Math.round((minutes / 60) * 10) / 10;
 const clamp = (value, min = 0, max = 100) => Math.max(min, Math.min(max, Math.round(value)));
 const getApiKey = () => process.env.STEAM_API_KEY;
@@ -388,7 +401,7 @@ export const syncSteamForUser = async (user) => {
 };
 
 export const getSteamIdentityForUser = async (user) => {
-  if (shouldUseDemoSteamData(user)) return demoSteamIdentity;
+  if (shouldUseDemoSteamData(user)) return getDemoIdentity(user);
   const provider = getSteamProvider(user);
   if (!provider?.steamId) return { connected: false };
   const lastLog = await SteamSyncLog.findOne({ userId: user._id }).sort({ startedAt: -1 });

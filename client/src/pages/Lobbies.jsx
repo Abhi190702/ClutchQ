@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import PageShell from "../components/common/PageShell";
-import EmptyState from "../components/common/EmptyState";
 import ErrorState from "../components/common/ErrorState";
-import SkeletonCard from "../components/common/SkeletonCard";
-import LobbyCard from "../components/lobbies/LobbyCard";
+import LobbyBoard from "../components/lobbies/LobbyBoard";
 import LobbyFilters from "../components/lobbies/LobbyFilters";
 import { useToast } from "../context/ToastContext";
 import api, { getErrorMessage } from "../services/api";
@@ -16,6 +14,7 @@ const Lobbies = () => {
   const [error, setError] = useState("");
   const [requested, setRequested] = useState([]);
   const [filters, setFilters] = useState({ game: "", region: "", language: "", mode: "" });
+  const clearFilters = () => setFilters({ game: "", region: "", language: "", mode: "" });
 
   const load = async () => {
     setLoading(true);
@@ -63,27 +62,26 @@ const Lobbies = () => {
   };
 
   return (
-    <PageShell
-      title="Open Lobbies"
-      eyebrow="Squad finder"
-      actions={<Link to="/lobbies/create" className="btn-primary">Create Lobby</Link>}
-    >
-      <div className="space-y-6">
+    <PageShell fullWidth>
+      <div className="space-y-7">
+        <section className="flex flex-col gap-5 border-b border-white/10 pb-8 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="eyebrow mb-3">Squad Finder</div>
+            <h1 className="text-4xl font-black tracking-tight text-white md:text-6xl">Open Lobbies</h1>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-400">
+              Join ranked stacks, casual squads, and active voice-ready rooms.
+            </p>
+          </div>
+          <Link to="/lobbies/create" className="btn-primary shrink-0">
+            Create Lobby
+          </Link>
+        </section>
+
         <LobbyFilters filters={filters} onChange={setFilters} />
         {error ? (
           <ErrorState message={error} onRetry={load} />
-        ) : loading ? (
-          <div className="grid gap-4 lg:grid-cols-2">{Array.from({ length: 4 }).map((_, index) => <SkeletonCard key={index} rows={5} />)}</div>
-        ) : filtered.length ? (
-          <div className="grid gap-4 lg:grid-cols-2">
-            {filtered.map((item) => <LobbyCard key={item.lobby._id} item={item} onJoin={requestJoin} requested={requested.includes(item.lobby._id)} />)}
-          </div>
         ) : (
-          <EmptyState
-            title="No open lobbies yet."
-            description="Create the first squad for tonight and let ClutchQ explain the fit."
-            action={<Link to="/lobbies/create" className="btn-primary">Create lobby</Link>}
-          />
+          <LobbyBoard items={filtered} loading={loading} onJoin={requestJoin} requested={requested} onClearFilters={clearFilters} />
         )}
       </div>
     </PageShell>

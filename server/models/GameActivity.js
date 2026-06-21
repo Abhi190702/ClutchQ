@@ -23,7 +23,7 @@ const gameActivitySchema = new mongoose.Schema(
     },
     source: {
       type: String,
-      enum: ["manual", "steam", "discord", "api"],
+      enum: ["manual", "steam", "discord", "api", "demo"],
       default: "manual"
     },
     startedAt: {

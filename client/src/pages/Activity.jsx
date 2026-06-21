@@ -1,36 +1,65 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PageShell from "../components/common/PageShell";
 import ErrorState from "../components/common/ErrorState";
-import ActiveSessionTimer from "../components/activity/ActiveSessionTimer";
-import MostPlayedGames from "../components/activity/MostPlayedGames";
-import PlaytimeSummary from "../components/activity/PlaytimeSummary";
-import RecentSessions from "../components/activity/RecentSessions";
-import StartPlayingPanel from "../components/activity/StartPlayingPanel";
+import ActivityHero from "../components/activity/ActivityHero";
+import ActivityInsightPanel from "../components/activity/ActivityInsightPanel";
+import ActivitySnapshotStrip from "../components/activity/ActivitySnapshotStrip";
+import FriendCompatibilityStrip from "../components/activity/FriendCompatibilityStrip";
+import GameTimeSplit from "../components/activity/GameTimeSplit";
+import GamingRhythmChart from "../components/activity/GamingRhythmChart";
+import RecentGameTimeline from "../components/activity/RecentGameTimeline";
+import StartSessionDock from "../components/activity/StartSessionDock";
+import {
+  buildActivitySnapshot,
+  buildGameTimeSplit,
+  buildPlaytimeSeries,
+  deriveFriendCompatibility
+} from "../utils/activityInsights";
+import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import activityApi from "../services/activityApi";
 import gameApi from "../services/gameApi";
 import { getErrorMessage } from "../services/api";
+import steamApi from "../services/steamApi";
 
 const Activity = () => {
+  const { profile } = useAuth();
   const { showToast } = useToast();
   const [games, setGames] = useState([]);
   const [summary, setSummary] = useState({ aggregates: [], active: null, recentAnalysis: [] });
   const [sessions, setSessions] = useState([]);
+  const [steamHeatmap, setSteamHeatmap] = useState([]);
+  const [steamLibrary, setSteamLibrary] = useState([]);
+  const [steamFriends, setSteamFriends] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [ending, setEnding] = useState(null);
   const [form, setForm] = useState({ result: "completed", teamworkScore: 75, communicationScore: 75, performanceScore: 75, notes: "" });
   const [error, setError] = useState("");
 
   const load = async () => {
+    setLoading(true);
     setError("");
     try {
-      const [gamesResponse, summaryResponse, sessionsResponse] = await Promise.all([gameApi.list(), activityApi.summary(), activityApi.me()]);
-      setGames(gamesResponse.data.data);
-      setSummary(summaryResponse.data.data);
-      setSessions(sessionsResponse.data.data);
+      const [gamesResponse, summaryResponse, sessionsResponse, heatmapResponse, libraryResponse, friendsResponse] = await Promise.all([
+        gameApi.list(),
+        activityApi.summary(),
+        activityApi.me(),
+        steamApi.getSteamHeatmap().catch(() => ({ data: { data: [] } })),
+        steamApi.getSteamLibrary().catch(() => ({ data: { data: [] } })),
+        steamApi.getSteamFriends().catch(() => ({ data: { data: [] } }))
+      ]);
+      setGames(gamesResponse.data.data || []);
+      setSummary(summaryResponse.data.data || { aggregates: [], active: null, recentAnalysis: [] });
+      setSessions(sessionsResponse.data.data || []);
+      setSteamHeatmap(heatmapResponse.data.data || []);
+      setSteamLibrary(libraryResponse.data.data || []);
+      setSteamFriends(friendsResponse.data.data || []);
     } catch (error) {
       const message = getErrorMessage(error);
       setError(message);
       showToast(message, "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -50,25 +79,38 @@ const Activity = () => {
     }
   };
 
+  const series = useMemo(() => buildPlaytimeSeries(sessions, steamHeatmap, 30), [sessions, steamHeatmap]);
+  const split = useMemo(() => buildGameTimeSplit(summary.aggregates, steamLibrary), [summary.aggregates, steamLibrary]);
+  const snapshot = useMemo(
+    () => buildActivitySnapshot({ aggregates: summary.aggregates, sessions, steamLibrary, series }),
+    [summary.aggregates, sessions, steamLibrary, series]
+  );
+  const compatibleFriends = useMemo(
+    () => deriveFriendCompatibility({ steamFriends, sessions, profile }),
+    [steamFriends, sessions, profile]
+  );
+
   return (
     <PageShell fullWidth>
-      <div className="mx-auto max-w-[1480px] space-y-8 px-1 py-4">
-        <div>
-          <h1 className="text-4xl font-black tracking-tight text-white">Activity</h1>
-          <p className="mt-3 max-w-2xl text-zinc-400">Track playtime, end sessions with match notes, and build a useful ClutchQ history.</p>
-        </div>
+      <div className="space-y-8">
+        <ActivityHero snapshot={snapshot} active={summary.active} onEndActive={setEnding} />
         {error ? <ErrorState message={error} onRetry={load} /> : null}
-        <PlaytimeSummary aggregates={summary.aggregates} />
-        <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
+        {loading ? (
+          <div className="rounded-3xl bg-white/[0.035] p-8 text-sm font-semibold text-zinc-400">Loading activity rhythm...</div>
+        ) : null}
+        <ActivitySnapshotStrip snapshot={snapshot} />
+        <StartSessionDock games={games} active={summary.active} onStarted={load} showToast={showToast} />
+        <div className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
           <div className="space-y-6">
-            <StartPlayingPanel games={games} onStarted={load} />
-            <RecentSessions sessions={sessions} />
+            <GamingRhythmChart series={series} />
+            <RecentGameTimeline sessions={sessions} />
           </div>
           <aside className="space-y-6">
-            <ActiveSessionTimer activity={summary.active} onEnd={setEnding} />
-            <MostPlayedGames aggregates={summary.aggregates} />
+            <GameTimeSplit items={split} />
+            <ActivityInsightPanel snapshot={snapshot} split={split} />
           </aside>
         </div>
+        <FriendCompatibilityStrip friends={compatibleFriends} />
 
         {ending ? (
           <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">

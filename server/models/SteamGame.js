@@ -32,7 +32,7 @@ const steamGameSchema = new mongoose.Schema(
     hasCommunityVisibleStats: Boolean,
     source: {
       type: String,
-      enum: ["steam"],
+      enum: ["steam", "demo"],
       default: "steam"
     },
     lastSyncedAt: Date

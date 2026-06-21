@@ -89,6 +89,65 @@ export const ranks = [
   "Diamond 2"
 ];
 
+export const demoAccounts = [
+  {
+    key: "demo",
+    name: "Abhijeet",
+    email: "demo@clutchq.com",
+    role: ["Duelist", "Flex"],
+    mainGame: "Valorant",
+    rank: "Gold 2",
+    rankValue: 11,
+    trustScore: 91,
+    reliabilityScore: 94,
+    bio: "Gold Duelist looking for coordinated ranked stacks with clean comms and late-night consistency.",
+    playstyle: "Aggressive",
+    discordTag: "abhijeet#1907"
+  },
+  {
+    key: "captain",
+    name: "CaptainRex",
+    email: "captain@clutchq.com",
+    role: ["Controller", "IGL"],
+    mainGame: "Valorant",
+    rank: "Platinum 1",
+    rankValue: 13,
+    trustScore: 94,
+    reliabilityScore: 96,
+    bio: "Controller and shotcaller for ranked stacks that need calm mid-round calls.",
+    playstyle: "Shotcaller",
+    discordTag: "captainrex#2040"
+  },
+  {
+    key: "sentinel",
+    name: "NovaSentinel",
+    email: "sentinel@clutchq.com",
+    role: ["Sentinel", "Support"],
+    mainGame: "Valorant",
+    rank: "Gold 3",
+    rankValue: 12,
+    trustScore: 89,
+    reliabilityScore: 91,
+    bio: "Sentinel main who anchors sites, keeps utility clean, and prefers patient ranked games.",
+    playstyle: "Defensive",
+    discordTag: "novasentinel#3312"
+  },
+  {
+    key: "flex",
+    name: "FlexByte",
+    email: "flex@clutchq.com",
+    role: ["Initiator", "Flex"],
+    mainGame: "CS2",
+    rank: "Gold 1",
+    rankValue: 10,
+    trustScore: 86,
+    reliabilityScore: 88,
+    bio: "Flex player for CS2 and Valorant who fills utility roles and keeps comms short.",
+    playstyle: "Balanced",
+    discordTag: "flexbyte#8110"
+  }
+];
+
 export const pick = (items, index, offset = 0) => items[(index + offset) % items.length];
 
 export const makeAvailability = (index, strongDemoWindow = false) => {
@@ -136,41 +195,49 @@ export const makePlaystyleStats = (index, profileType = "balanced") => {
   );
 };
 
-export const createDemoProfile = (userId) => ({
+export const createDemoProfile = (userId, account = demoAccounts[0], index = 0) => ({
   userId,
-  displayName: "Abhijeet",
-  bio: "Gold Duelist looking for coordinated ranked stacks with clean comms and late-night consistency.",
+  displayName: account.name,
+  bio: account.bio,
   region: "India",
   country: "India",
   languages: ["Hindi", "English"],
   micAvailable: true,
-  discordTag: "abhijeet#1907",
+  discordTag: account.discordTag,
   lookingFor: ["Rank Push", "Competitive", "Mic Only", "No Toxicity"],
   games: [
     {
-      gameName: "Valorant",
-      rank: "Gold 2",
-      rankValue: 11,
-      roles: ["Duelist", "Flex"],
-      playstyle: "Aggressive",
+      gameName: account.mainGame,
+      rank: account.rank,
+      rankValue: account.rankValue,
+      roles: account.role,
+      playstyle: account.playstyle,
       isPrimary: true
+    },
+    {
+      gameName: account.mainGame === "CS2" ? "Valorant" : "CS2",
+      rank: account.mainGame === "CS2" ? "Gold 2" : "Gold 1",
+      rankValue: 10,
+      roles: account.role.includes("Duelist") ? ["Entry", "Flex"] : ["Support", "Flex"],
+      playstyle: "Balanced",
+      isPrimary: false
     }
   ],
-  availability: makeAvailability(0, true),
-  playstyleStats: makePlaystyleStats(0, "aggressive"),
-  trustScore: 91,
-  reliabilityScore: 94,
+  availability: makeAvailability(index, true),
+  playstyleStats: makePlaystyleStats(index, account.playstyle === "Aggressive" ? "aggressive" : account.role.includes("Support") ? "support" : "balanced"),
+  trustScore: account.trustScore,
+  reliabilityScore: account.reliabilityScore,
   totalReviews: 8,
-  completedSessions: 16,
+  completedSessions: 18 + index * 3,
   noShows: 0,
-  createdLobbies: 3,
+  createdLobbies: 3 + index,
   validReports: 0,
   averageRatings: {
-    communication: 4.7,
-    teamwork: 4.5,
-    skill: 4.4,
-    punctuality: 4.8,
-    behavior: 4.9
+    communication: 4.6 + index * 0.05,
+    teamwork: 4.5 + index * 0.04,
+    skill: 4.4 + index * 0.03,
+    punctuality: 4.7 + index * 0.04,
+    behavior: 4.8
   },
   badges: ["Reliable", "Mic Ready", "Rank Pusher", "Night Grinder", "Clutch Player", "Good Communicator"],
   profileCompleteness: 100
