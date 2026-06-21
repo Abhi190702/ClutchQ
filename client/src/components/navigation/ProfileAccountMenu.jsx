@@ -5,23 +5,17 @@ import { getInitials } from "../profile/profileDisplay";
 
 const menuGroups = [
   [
-    { label: "My Profile", path: "/profile", icon: "P" },
-    { label: "Steam Library", path: "/profile?tab=steam", icon: "S" },
-    { label: "Activity", path: "/profile?tab=activity", icon: "A" },
-    { label: "Connected Accounts", path: "/profile?tab=connections", icon: "C" },
-    { label: "Settings", path: "/profile?tab=settings", icon: "E" }
+    { label: "My Profile", path: "/profile", helper: "Identity and snapshot" },
+    { label: "Steam Library", path: "/profile?tab=steam", helper: "Games and achievements" },
+    { label: "Activity", path: "/profile?tab=activity", helper: "Rhythm and sessions" },
+    { label: "Connected Accounts", path: "/profile?tab=connections", helper: "Platforms and OAuth" },
+    { label: "Settings", path: "/profile?tab=settings", helper: "Profile controls" }
   ],
   [
-    { label: "Help / Support", path: "/requests", icon: "?" },
-    { label: "Privacy", path: "/profile?tab=settings", icon: "i" }
+    { label: "Help / Support", path: "/requests", helper: "Requests inbox" },
+    { label: "Privacy", path: "/profile?tab=settings", helper: "Visibility and sync" }
   ]
 ];
-
-const MenuIcon = ({ label }) => (
-  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-white/5 text-xs font-black text-clutch-muted">
-    {label}
-  </span>
-);
 
 const ProfileAccountMenu = ({ user, profile, steamSummary, steamLinked, onLogout }) => {
   const navigate = useNavigate();
@@ -94,17 +88,20 @@ const ProfileAccountMenu = ({ user, profile, steamSummary, steamLinked, onLogout
 
           <div className="p-2">
             {menuGroups.map((group, groupIndex) => (
-              <div key={groupIndex} className={groupIndex ? "border-t border-white/10 pt-2" : ""}>
+              <div key={groupIndex} className={groupIndex ? "mt-2 border-t border-white/10 pt-2" : ""}>
                 {group.map((item) => (
                   <button
                     key={item.label}
                     type="button"
                     onClick={() => goTo(item.path)}
-                    className="flex w-full items-center gap-3 rounded-md px-3 py-3 text-left text-sm font-semibold text-clutch-muted transition hover:bg-white/[0.06] hover:text-clutch-text"
+                    className="group flex w-full items-center justify-between gap-4 rounded-md px-3 py-3 text-left transition hover:bg-white/[0.055]"
                     role="menuitem"
                   >
-                    <MenuIcon label={item.icon} />
-                    <span>{item.label}</span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-bold text-clutch-text">{item.label}</span>
+                      <span className="mt-0.5 block truncate text-xs text-clutch-muted">{item.helper}</span>
+                    </span>
+                    <span className="text-sm font-bold text-clutch-muted transition group-hover:translate-x-0.5 group-hover:text-clutch-text">&gt;</span>
                   </button>
                 ))}
               </div>
@@ -115,11 +112,11 @@ const ProfileAccountMenu = ({ user, profile, steamSummary, steamLinked, onLogout
             <button
               type="button"
               onClick={handleLogout}
-              className="flex w-full items-center gap-3 rounded-md px-3 py-3 text-left text-sm font-semibold text-red-100 transition hover:bg-clutch-red/10"
+              className="flex w-full items-center justify-between rounded-md px-3 py-3 text-left text-sm font-semibold text-red-100 transition hover:bg-clutch-red/10"
               role="menuitem"
             >
-              <MenuIcon label="->" />
               <span>Sign out</span>
+              <span className="text-xs text-red-200">Logout</span>
             </button>
           </div>
         </div>

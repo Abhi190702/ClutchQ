@@ -4,14 +4,17 @@ const GameFilters = ({ filters, onChange }) => {
   const update = (key, value) => onChange({ ...filters, [key]: value });
 
   return (
-    <aside className="rounded-[10px] border border-[#2f2f36] bg-[#202024] p-4">
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="font-bold text-white">Filters</h3>
+    <section className="border-y border-white/10 py-5">
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <div>
+          <h3 className="text-lg font-black text-white">Filters</h3>
+          <p className="mt-1 text-sm text-zinc-500">Narrow by platform, party size, room activity, or genre.</p>
+        </div>
         <button type="button" className="text-xs font-bold text-zinc-400 hover:text-white" onClick={() => onChange({})}>
           Reset
         </button>
       </div>
-      <div className="space-y-4">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         <label>
           <span className="form-label">Genre</span>
           <select className="form-input" value={filters.genre || ""} onChange={(event) => update("genre", event.target.value)}>
@@ -68,7 +71,7 @@ const GameFilters = ({ filters, onChange }) => {
           </select>
         </label>
       </div>
-    </aside>
+    </section>
   );
 };
 

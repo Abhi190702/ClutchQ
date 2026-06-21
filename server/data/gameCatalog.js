@@ -328,8 +328,8 @@ export const gameCatalog = [
     genres: ["Sandbox", "Survival", "Co-op"],
     platforms: ["PC", "Console", "Mobile"],
     teamSize: 8,
-    posterUrl: "https://images.unsplash.com/photo-1627856013091-fed6e4e30025?auto=format&fit=crop&w=720&q=80",
-    coverUrl: "https://images.unsplash.com/photo-1627856013091-fed6e4e30025?auto=format&fit=crop&w=1600&q=80",
+    posterUrl: gameArt("minecraft"),
+    coverUrl: gameArt("minecraft"),
     fallbackGradient: "from-green-600 via-emerald-950 to-black",
     accentColor: "#22c55e",
     status: "active",
@@ -339,7 +339,7 @@ export const gameCatalog = [
     description: "Find survival groups, build teams, mini-game parties, and chill servers.",
     supportedModes: ["Survival", "Bedwars", "SMP", "Creative"],
     roles: ["Builder", "Explorer", "Miner", "PvP", "Redstone"],
-    source: "Remote demo image"
+    source: "Local supplied image"
   },
   {
     slug: "terraria",
@@ -468,8 +468,8 @@ export const gameCatalog = [
     genres: ["Sports", "Racing", "Competitive"],
     platforms: ["PC", "PlayStation", "Xbox", "Switch"],
     teamSize: 3,
-    posterUrl: "https://images.unsplash.com/photo-1511882150382-421056c89033?auto=format&fit=crop&w=720&q=80",
-    coverUrl: "https://images.unsplash.com/photo-1511882150382-421056c89033?auto=format&fit=crop&w=1600&q=80",
+    posterUrl: gameArt("rocket-league"),
+    coverUrl: gameArt("rocket-league"),
     fallbackGradient: "from-blue-500 via-orange-950 to-black",
     accentColor: "#3b82f6",
     status: "squads active",
@@ -479,7 +479,7 @@ export const gameCatalog = [
     description: "Find reliable duos and trios for ranked, mechanics practice, and tourneys.",
     supportedModes: ["Ranked 2v2", "Ranked 3v3", "Casual", "Tournament"],
     roles: ["First Man", "Second Man", "Third Man", "Striker", "Defender"],
-    source: "Remote demo image"
+    source: "Local supplied image"
   },
   {
     slug: "ea-fc",

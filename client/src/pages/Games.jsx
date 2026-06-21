@@ -44,44 +44,39 @@ const Games = () => {
 
   return (
     <PageShell fullWidth>
-      <div className="mx-auto max-w-[1480px] space-y-10 px-1 py-4">
-        <div className="grid gap-5 xl:grid-cols-[1fr_260px]">
-          <div className="space-y-7">
+      <div className="mx-auto max-w-[1540px] space-y-10 px-1 py-4">
+        <section className="space-y-7">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
             <div>
-              <h1 className="text-4xl font-black tracking-tight text-white md:text-5xl">Browse Game Rooms</h1>
-              <p className="mt-3 max-w-2xl text-base leading-7 text-zinc-400">Pick a game, find active squads, and join a live party before you queue.</p>
+              <h1 className="text-5xl font-black tracking-tight text-white md:text-6xl">Browse Game Rooms</h1>
+              <p className="mt-4 max-w-3xl text-lg leading-8 text-zinc-400">Pick a game, find active squads, and join a live party before you queue.</p>
             </div>
-
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-              <div className="relative max-w-xl flex-1">
-                <input
-                  className="w-full rounded-full border border-transparent bg-[#202024] px-5 py-3 text-sm text-white outline-none transition focus:border-[#3a3a42]"
-                  placeholder="Search games"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                />
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab}
-                    type="button"
-                    className={`rounded-full px-4 py-2 text-sm font-bold transition ${activeTab === tab ? "bg-white text-black" : "text-zinc-400 hover:text-white"}`}
-                    onClick={() => setActiveTab(tab)}
-                  >
-                    {tab}
-                  </button>
-                ))}
-              </div>
+            <div className="flex flex-wrap gap-2">
+              {tabs.map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  className={`rounded-full px-5 py-2.5 text-sm font-bold transition ${activeTab === tab ? "bg-white text-black" : "text-zinc-400 hover:bg-white/[0.06] hover:text-white"}`}
+                  onClick={() => setActiveTab(tab)}
+                >
+                  {tab}
+                </button>
+              ))}
             </div>
-
-            <GameGenreRail genres={gameGenres} activeGenre={filters.genre} onSelect={(genre) => setFilters({ ...filters, genre })} />
           </div>
 
-          <div className="xl:pt-28">
-            <GameFilters filters={filters} onChange={setFilters} />
+          <div className="max-w-3xl">
+            <input
+              className="w-full rounded-full border border-transparent bg-[#202024] px-6 py-4 text-base text-white outline-none transition focus:border-[#3a3a42]"
+              placeholder="Search games"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
           </div>
-        </div>
+
+          <GameFilters filters={filters} onChange={setFilters} />
+          <GameGenreRail genres={gameGenres} activeGenre={filters.genre} onSelect={(genre) => setFilters({ ...filters, genre })} />
+        </section>
 
         <section className="space-y-5">
           <div className="flex items-end justify-between gap-4">
