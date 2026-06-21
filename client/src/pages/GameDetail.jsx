@@ -109,7 +109,7 @@ const GameDetail = () => {
                 {topPlayers.slice(0, 6).map((row) => (
                   <div key={row.user?._id || row.playtime?._id} className="rounded-md border border-[#33333a] bg-[#18181c] p-3">
                     <div className="font-bold text-white">{row.user?.name || "Player"}</div>
-                    <div className="text-sm text-zinc-400">Trust {row.profile?.trustScore || 70} · {Math.round((row.playtime?.totalMinutes || 0) / 60)}h</div>
+                    <div className="text-sm text-zinc-400">Trust {row.profile?.trustScore || 70} - {Math.round((row.playtime?.totalMinutes || 0) / 60)}h</div>
                   </div>
                 ))}
               </div>

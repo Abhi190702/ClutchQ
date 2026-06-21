@@ -122,8 +122,17 @@ export const createLobby = asyncHandler(async (req, res) => {
     throw new Error("Lobby title, game, rank range, region, and language are required");
   }
 
+  const playerCount = Math.max(2, Math.min(10, Number(neededPlayers) || 4));
+  const cleanTitle = String(title).trim().slice(0, 80);
+  const cleanDescription = description ? String(description).trim().slice(0, 500) : "";
+
+  if (!cleanTitle) {
+    res.status(400);
+    throw new Error("Lobby title is required");
+  }
+
   const lobby = await Lobby.create({
-    title,
+    title: cleanTitle,
     ownerId: req.user._id,
     game,
     rankMin,
@@ -133,8 +142,8 @@ export const createLobby = asyncHandler(async (req, res) => {
     region,
     language,
     micRequired: Boolean(micRequired),
-    neededPlayers: Number(neededPlayers) || 4,
-    neededRoles: neededRoles || [],
+    neededPlayers: playerCount,
+    neededRoles: Array.isArray(neededRoles) ? neededRoles.slice(0, playerCount) : [],
     currentMembers: [
       {
         userId: req.user._id,
@@ -144,7 +153,7 @@ export const createLobby = asyncHandler(async (req, res) => {
     ],
     mode: mode || "competitive",
     startTime,
-    description,
+    description: cleanDescription,
     inviteCode: inviteCode()
   });
 

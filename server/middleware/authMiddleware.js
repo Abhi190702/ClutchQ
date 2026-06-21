@@ -1,11 +1,13 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import { getJwtSecret } from "../utils/validateEnv.js";
 
 export const protect = async (req, res, next) => {
   let token;
 
-  if (req.headers.authorization?.startsWith("Bearer ")) {
-    token = req.headers.authorization.split(" ")[1];
+  const header = req.headers.authorization || "";
+  if (typeof header === "string" && header.startsWith("Bearer ")) {
+    token = header.slice(7).trim();
   }
 
   if (!token && req.cookies?.token) {
@@ -14,11 +16,11 @@ export const protect = async (req, res, next) => {
 
   if (!token) {
     res.status(401);
-    return next(new Error("Not authorized, token missing"));
+    return next(new Error("Please log in to continue."));
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || "dev_secret_replace_me");
+    const decoded = jwt.verify(token, getJwtSecret());
     const user = await User.findById(decoded.id).select("-passwordHash");
 
     if (!user) {
@@ -35,6 +37,6 @@ export const protect = async (req, res, next) => {
     next();
   } catch (error) {
     res.status(401);
-    next(new Error("Not authorized, token invalid"));
+    next(new Error("Session expired. Please log in again."));
   }
 };

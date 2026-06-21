@@ -6,16 +6,8 @@ import AuthProviderGrid from "../components/auth/AuthProviderGrid";
 import EmailLoginPanel from "../components/auth/EmailLoginPanel";
 import LoginBrandHeader from "../components/auth/LoginBrandHeader";
 import { useToast } from "../context/ToastContext";
-import { API_URL } from "../utils/constants";
+import { getServerBaseUrl } from "../utils/constants";
 import { getConsoleProviders, getOtherProviders } from "../utils/authProviders";
-
-const getServerBaseUrl = () => {
-  try {
-    return new URL(API_URL).origin;
-  } catch {
-    return API_URL.replace(/\/api\/?$/, "");
-  }
-};
 
 const Login = () => {
   const emailPanelRef = useRef(null);

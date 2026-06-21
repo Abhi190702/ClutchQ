@@ -15,6 +15,20 @@ export const API_URL =
     ? localApiUrl
     : configuredApiUrl || productionApiUrl;
 
+export const getServerBaseUrl = () => {
+  try {
+    return new URL(API_URL).origin;
+  } catch {
+    return API_URL.replace(/\/api\/?$/, "");
+  }
+};
+
+export const getOAuthUrl = (provider, params = {}) => {
+  const query = new URLSearchParams(params);
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  return `${getServerBaseUrl()}/api/auth/${provider}${suffix}`;
+};
+
 export const GAMES = [
   "Valorant",
   "CS2",

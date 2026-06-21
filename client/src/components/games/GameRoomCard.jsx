@@ -4,6 +4,7 @@ import { useToast } from "../../context/ToastContext";
 import gameApi from "../../services/gameApi";
 import { getErrorMessage } from "../../services/api";
 import { shortDateTime } from "../../utils/formatters";
+import { copyText } from "../../utils/clipboard";
 
 const getUserId = (value) => String(value?._id || value || "");
 
@@ -16,6 +17,10 @@ const GameRoomCard = ({ room, user, onUpdated, compact = false }) => {
   const members = room.currentMembers?.filter((member) => member.status !== "left") || [];
   const hasDiscord = Boolean(room.discord?.inviteUrl);
   const isPreview = Boolean(room.isPreview) || String(room._id || "").startsWith("preview-");
+  const maxMembers = room.maxMembers || 5;
+  const isFull = members.length >= maxMembers || room.status === "full";
+  const isOpen = room.status === "open" || !room.status;
+  const joinDisabled = isPreview || loading === "join" || isFull || !isOpen;
 
   const runAction = async (key, action, success) => {
     setLoading(key);
@@ -31,8 +36,8 @@ const GameRoomCard = ({ room, user, onUpdated, compact = false }) => {
   };
 
   const copyInvite = async () => {
-    await navigator.clipboard.writeText(room.discord.inviteUrl);
-    showToast("Discord invite copied.");
+    const copied = await copyText(room.discord?.inviteUrl);
+    showToast(copied ? "Discord invite copied." : "Could not copy invite. Open Discord and copy it manually.", copied ? "success" : "error");
   };
 
   return (
@@ -47,12 +52,12 @@ const GameRoomCard = ({ room, user, onUpdated, compact = false }) => {
           </div>
           <h3 className="truncate text-lg font-black text-white">{room.title}</h3>
           <p className="mt-1 text-sm text-zinc-400">
-            Hosted by {room.hostId?.name || "Player"} · {room.mode || "Open Lobby"} · starts {shortDateTime(room.startsAt)}
+            Hosted by {room.hostId?.name || "Player"} - {room.mode || "Open Lobby"} - starts {shortDateTime(room.startsAt)}
           </p>
           <div className="mt-3 flex flex-wrap gap-2 text-xs text-zinc-300">
-            <span>{room.region}</span>
+            <span>{room.region || "Any region"}</span>
             <span className="text-zinc-600">/</span>
-            <span>{room.language}</span>
+            <span>{room.language || "Any language"}</span>
             <span className="text-zinc-600">/</span>
             <span>{room.rankMin || "Any"} - {room.rankMax || "Any"}</span>
           </div>
@@ -68,7 +73,7 @@ const GameRoomCard = ({ room, user, onUpdated, compact = false }) => {
         </div>
         <div className="shrink-0 text-left lg:text-right">
           <div className="text-2xl font-black text-white">
-            {members.length}/{room.maxMembers || 5}
+            {members.length}/{maxMembers}
           </div>
           <div className="text-xs text-zinc-400">members</div>
         </div>
@@ -79,10 +84,10 @@ const GameRoomCard = ({ room, user, onUpdated, compact = false }) => {
           <button
             type="button"
             className="btn-primary py-2"
-            disabled={isPreview || loading === "join"}
-            onClick={() => !isPreview && runAction("join", () => gameApi.joinRoom(room._id), "Joined room")}
+            disabled={joinDisabled}
+            onClick={() => !joinDisabled && runAction("join", () => gameApi.joinRoom(room._id), "Joined room")}
           >
-            {isPreview ? "Preview Room" : "Join Room"}
+            {isPreview ? "Preview Room" : isFull ? "Full" : loading === "join" ? "Joining..." : "Join Room"}
           </button>
         ) : (
           <button
@@ -91,7 +96,7 @@ const GameRoomCard = ({ room, user, onUpdated, compact = false }) => {
             disabled={loading === "ready"}
             onClick={() => runAction("ready", () => gameApi.readyRoom(room._id, true), "Ready check updated")}
           >
-            Ready
+            {loading === "ready" ? "Updating..." : "Ready"}
           </button>
         )}
         {isHost && !hasDiscord ? (

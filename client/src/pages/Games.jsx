@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import PageShell from "../components/common/PageShell";
 import GameFilters from "../components/games/GameFilters";
+import ErrorState from "../components/common/ErrorState";
 import GameGenreRail from "../components/games/GameGenreRail";
 import GamePosterGrid from "../components/games/GamePosterGrid";
 import GameSkeletonGrid from "../components/games/GameSkeletonGrid";
@@ -15,18 +16,23 @@ const Games = () => {
   const { showToast } = useToast();
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [filters, setFilters] = useState({});
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("Browse");
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
+      setError("");
       try {
         const response = await gameApi.list({ ...filters, search });
         setGames(response.data.data);
       } catch (error) {
-        showToast(getErrorMessage(error), "error");
+        const message = getErrorMessage(error);
+        setError(message);
+        showToast(message, "error");
       } finally {
         setLoading(false);
       }
@@ -34,7 +40,7 @@ const Games = () => {
 
     const id = window.setTimeout(load, 250);
     return () => window.clearTimeout(id);
-  }, [filters, search, showToast]);
+  }, [filters, search, showToast, reloadKey]);
 
   const visibleGames = useMemo(() => {
     if (activeTab === "Trending") return [...games].sort((a, b) => (b.activeRooms || 0) - (a.activeRooms || 0));
@@ -86,7 +92,7 @@ const Games = () => {
             </div>
             <div className="hidden text-sm text-zinc-400 sm:block">{visibleGames.length} games</div>
           </div>
-          {loading ? <GameSkeletonGrid /> : <GamePosterGrid games={visibleGames} />}
+          {error ? <ErrorState message={error} onRetry={() => setReloadKey((value) => value + 1)} /> : loading ? <GameSkeletonGrid /> : <GamePosterGrid games={visibleGames} />}
         </section>
       </div>
     </PageShell>

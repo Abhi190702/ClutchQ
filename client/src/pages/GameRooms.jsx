@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import PageShell from "../components/common/PageShell";
+import ErrorState from "../components/common/ErrorState";
 import ActiveRoomsPanel from "../components/games/ActiveRoomsPanel";
 import GameEmptyState from "../components/games/GameEmptyState";
 import { useAuth } from "../context/AuthContext";
@@ -31,8 +32,10 @@ const GameRooms = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState(() => emptyRoom(slug));
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const load = async () => {
+    setError("");
     try {
       const [gameResponse, roomsResponse] = await Promise.all([gameApi.get(slug), gameApi.rooms(slug)]);
       setGame(gameResponse.data.data);
@@ -45,7 +48,9 @@ const GameRooms = () => {
         neededRoles: gameResponse.data.data.roles?.slice(0, 3) || []
       }));
     } catch (error) {
-      showToast(getErrorMessage(error), "error");
+      const message = getErrorMessage(error);
+      setError(message);
+      showToast(message, "error");
     }
   };
 
@@ -73,7 +78,7 @@ const GameRooms = () => {
     return (
       <PageShell fullWidth>
         <div className="mx-auto max-w-[1480px] py-8">
-          <GameEmptyState title="Loading rooms" description="Preparing game room list." />
+          {error ? <ErrorState message={error} onRetry={load} /> : <GameEmptyState title="Loading rooms" description="Preparing game room list." />}
         </div>
       </PageShell>
     );

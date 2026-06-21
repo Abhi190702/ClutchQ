@@ -55,6 +55,8 @@ server/  Express API, Mongoose models, JWT middleware, controllers, algorithms, 
 docs/    Architecture, API, algorithm, and demo script notes
 ```
 
+For final demo checks, use [docs/final-qa-checklist.md](docs/final-qa-checklist.md).
+
 The backend owns source-of-truth scoring. The frontend renders those explanations as score rings, DNA animations, heatmaps, radar charts, role balance panels, and chemistry graphs.
 
 ## Folder Structure
@@ -250,6 +252,8 @@ Client `.env`:
 
 ```env
 VITE_API_URL=http://localhost:5000/api
+VITE_LOCAL_API_URL=http://localhost:5000/api
+VITE_PRODUCTION_API_URL=https://clutchq-backend.onrender.com/api
 ```
 
 Start MongoDB locally, use MongoDB Atlas, or start the included Docker MongoDB service:

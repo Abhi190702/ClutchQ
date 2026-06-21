@@ -1,0 +1,13 @@
+const ErrorState = ({ title = "Something went wrong", message, onRetry, retryLabel = "Try again", className = "" }) => (
+  <div className={`rounded-md border border-clutch-red/35 bg-clutch-red/10 p-5 text-left ${className}`}>
+    <h3 className="text-lg font-bold text-red-100">{title}</h3>
+    {message ? <p className="mt-2 text-sm leading-6 text-red-100/80">{message}</p> : null}
+    {onRetry ? (
+      <button type="button" className="btn-secondary mt-4 border-clutch-red/35 text-red-50 hover:border-clutch-red/60" onClick={onRetry}>
+        {retryLabel}
+      </button>
+    ) : null}
+  </div>
+);
+
+export default ErrorState;

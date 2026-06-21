@@ -7,6 +7,10 @@ import { shortDateTime } from "../../utils/formatters";
 const LobbyCard = ({ item, onJoin, requested = false }) => {
   const lobby = item.lobby;
   const openSlots = Math.max(0, (lobby.neededPlayers || 5) - (lobby.currentMembers?.length || 0));
+  const isOpen = lobby.status === "open";
+  const isFull = openSlots <= 0 || lobby.status === "full";
+  const joinDisabled = requested || !isOpen || isFull;
+  const joinLabel = isFull ? "Lobby Full" : requested ? "Join Requested" : !isOpen ? "Closed" : "Request Join";
 
   return (
     <article className="card p-5 transition hover:border-clutch-blue/40">
@@ -15,8 +19,8 @@ const LobbyCard = ({ item, onJoin, requested = false }) => {
           <h3 className="text-xl font-semibold text-clutch-text">{lobby.title}</h3>
           <p className="mt-1 text-sm text-clutch-muted">{lobby.game} - {lobby.mode} - {lobby.region}</p>
         </div>
-        <Badge tone={openSlots ? "border-clutch-green/40 bg-clutch-green/10 text-green-200" : "border-clutch-amber/40 bg-clutch-amber/10 text-amber-100"}>
-          {openSlots} slots
+        <Badge tone={isFull ? "warning" : "success"}>
+          {isFull ? "Full" : `${openSlots} slots`}
         </Badge>
       </div>
 
@@ -44,8 +48,8 @@ const LobbyCard = ({ item, onJoin, requested = false }) => {
       )}
 
       <div className="mt-5 flex flex-wrap gap-3">
-        <button type="button" disabled={requested || lobby.status !== "open"} onClick={() => onJoin?.(lobby)} className="btn-primary py-2">
-          {requested ? "Join Requested" : "Request Join"}
+        <button type="button" disabled={joinDisabled} onClick={() => !joinDisabled && onJoin?.(lobby)} className="btn-primary py-2">
+          {joinLabel}
         </button>
         <Link to={`/lobbies/${lobby._id}`} className="btn-secondary py-2">
           View Details

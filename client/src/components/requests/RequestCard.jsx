@@ -27,7 +27,8 @@ const RequestCard = ({ request, direction = "incoming", onAction }) => {
           {direction === "outgoing" && request.status === "pending" && (
             <button className="btn-secondary py-2" onClick={() => onAction(request, "cancelled")} type="button">Cancel</button>
           )}
-          {other && <Link to={`/player/${request.type === "lobby" ? "" : ""}${other._id}`} className="btn-secondary py-2">View User</Link>}
+          {lobby?._id ? <Link to={`/lobbies/${lobby._id}`} className="btn-secondary py-2">View Lobby</Link> : null}
+          {other?._id ? <Link to={`/player/${other._id}`} className="btn-secondary py-2">View User</Link> : null}
         </div>
       </div>
     </div>

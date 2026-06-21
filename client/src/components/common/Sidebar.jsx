@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import ChevronIcon from "./ChevronIcon";
 
 const baseLinks = [
   { to: "/games", label: "Games", hint: "Browse", icon: "games", group: "Play" },
@@ -33,12 +34,26 @@ const SidebarIcon = ({ name }) => (
 
 const Sidebar = () => {
   const { isAdmin } = useAuth();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("clutchq-sidebar-collapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
   const links = isAdmin ? [...baseLinks, { to: "/admin", label: "Admin", hint: "Safety", icon: "admin", group: "Account" }] : baseLinks;
   const groups = links.reduce((map, link) => {
     map[link.group] = [...(map[link.group] || []), link];
     return map;
   }, {});
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("clutchq-sidebar-collapsed", String(collapsed));
+    } catch {
+      // Ignore storage failures in private browsing.
+    }
+  }, [collapsed]);
 
   return (
     <aside className={`hidden shrink-0 border-r border-white/10 bg-[#101014] transition-all duration-300 lg:block ${collapsed ? "w-[82px]" : "w-64"}`}>
@@ -59,7 +74,7 @@ const Sidebar = () => {
             className="grid h-10 w-10 place-items-center rounded-md border border-white/10 text-zinc-400 transition hover:bg-white/[0.06] hover:text-white"
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            <span className="text-lg font-black">{collapsed ? ">" : "<"}</span>
+            <ChevronIcon direction={collapsed ? "right" : "left"} size={18} />
           </button>
         </div>
 

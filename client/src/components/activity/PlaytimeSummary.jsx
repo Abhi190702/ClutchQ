@@ -1,4 +1,4 @@
-const minutesToHours = (minutes = 0) => `${Math.round((minutes / 60) * 10) / 10}h`;
+import { formatHours } from "../../utils/formatters";
 
 const PlaytimeSummary = ({ aggregates = [] }) => {
   const total = aggregates.reduce((sum, item) => sum + (item.totalMinutes || 0), 0);
@@ -9,9 +9,9 @@ const PlaytimeSummary = ({ aggregates = [] }) => {
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {[
-        ["Total Playtime", minutesToHours(total)],
-        ["This Week", minutesToHours(week)],
-        ["This Month", minutesToHours(month)],
+        ["Total Playtime", formatHours(total)],
+        ["This Week", formatHours(week)],
+        ["This Month", formatHours(month)],
         ["Sessions", sessions]
       ].map(([label, value]) => (
         <div key={label} className="rounded-[10px] border border-[#2f2f36] bg-[#202024] p-5">

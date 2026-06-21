@@ -1,4 +1,17 @@
+import EmptyState from "../common/EmptyState";
+
 const SquadChemistryGraph = ({ members = [], pairwiseScores = [] }) => {
+  if (members.length < 2) {
+    return (
+      <EmptyState
+        compact
+        eyebrow="Squad fit"
+        title="Need one more teammate"
+        description="Pairwise chemistry appears after at least two lobby members are present."
+      />
+    );
+  }
+
   const size = 320;
   const center = size / 2;
   const radius = 112;

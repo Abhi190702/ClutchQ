@@ -1,4 +1,4 @@
-const minutesToHours = (minutes = 0) => `${Math.round((minutes / 60) * 10) / 10}h`;
+import { formatHours } from "../../utils/formatters";
 
 const MostPlayedGames = ({ aggregates = [] }) => (
   <section className="rounded-[10px] border border-[#2f2f36] bg-[#202024] p-5">
@@ -11,7 +11,7 @@ const MostPlayedGames = ({ aggregates = [] }) => (
               <div className="font-bold text-white">{index + 1}. {item.gameName}</div>
               <div className="text-sm text-zinc-400">{item.sessionsCount || 0} sessions</div>
             </div>
-            <div className="text-sm font-bold text-zinc-200">{minutesToHours(item.totalMinutes)}</div>
+            <div className="text-sm font-bold text-zinc-200">{formatHours(item.totalMinutes)}</div>
           </div>
         ))
       ) : (

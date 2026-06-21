@@ -1,12 +1,4 @@
-import { API_URL } from "./constants";
-
-export const getApiOrigin = () => {
-  try {
-    return new URL(API_URL).origin;
-  } catch {
-    return "http://localhost:5000";
-  }
-};
+import { getOAuthUrl } from "./constants";
 
 export const startProviderOAuth = (providerId, nextPath = window.location.pathname || "/dashboard") => {
   const token = localStorage.getItem("clutchq_token");
@@ -17,5 +9,5 @@ export const startProviderOAuth = (providerId, nextPath = window.location.pathna
 
   if (token && providerId === "steam") params.set("token", token);
 
-  window.location.href = `${getApiOrigin()}/api/auth/${providerId}?${params.toString()}`;
+  window.location.href = getOAuthUrl(providerId, Object.fromEntries(params));
 };

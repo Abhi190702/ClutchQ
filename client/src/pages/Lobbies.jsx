@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import PageShell from "../components/common/PageShell";
 import EmptyState from "../components/common/EmptyState";
+import ErrorState from "../components/common/ErrorState";
 import SkeletonCard from "../components/common/SkeletonCard";
 import LobbyCard from "../components/lobbies/LobbyCard";
 import LobbyFilters from "../components/lobbies/LobbyFilters";
@@ -12,16 +13,20 @@ const Lobbies = () => {
   const { showToast } = useToast();
   const [lobbies, setLobbies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [requested, setRequested] = useState([]);
   const [filters, setFilters] = useState({ game: "", region: "", language: "", mode: "" });
 
   const load = async () => {
     setLoading(true);
+    setError("");
     try {
       const response = await api.get("/lobbies");
       setLobbies(response.data.data);
     } catch (error) {
-      showToast(getErrorMessage(error), "error");
+      const message = getErrorMessage(error);
+      setError(message);
+      showToast(message, "error");
     } finally {
       setLoading(false);
     }
@@ -65,7 +70,9 @@ const Lobbies = () => {
     >
       <div className="space-y-6">
         <LobbyFilters filters={filters} onChange={setFilters} />
-        {loading ? (
+        {error ? (
+          <ErrorState message={error} onRetry={load} />
+        ) : loading ? (
           <div className="grid gap-4 lg:grid-cols-2">{Array.from({ length: 4 }).map((_, index) => <SkeletonCard key={index} rows={5} />)}</div>
         ) : filtered.length ? (
           <div className="grid gap-4 lg:grid-cols-2">

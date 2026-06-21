@@ -33,6 +33,18 @@ export const createRequest = asyncHandler(async (req, res) => {
       throw new Error("Open lobby not found");
     }
 
+    const memberCount = lobby.currentMembers?.length || 0;
+    if (memberCount >= lobby.neededPlayers) {
+      res.status(400);
+      throw new Error("This lobby is already full");
+    }
+
+    const alreadyMember = lobby.currentMembers?.some((member) => String(member.userId) === String(req.user._id));
+    if (alreadyMember) {
+      res.status(409);
+      throw new Error("You are already in this lobby");
+    }
+
     targetUser = lobby.ownerId;
   }
 
@@ -113,6 +125,11 @@ export const updateRequestStatus = asyncHandler(async (req, res) => {
     throw new Error("Invalid request status");
   }
 
+  if (request.status !== "pending") {
+    res.status(409);
+    throw new Error("This request has already been resolved");
+  }
+
   if (status === "cancelled" && String(request.fromUser) !== String(req.user._id)) {
     res.status(403);
     throw new Error("Only the sender can cancel this request");
@@ -125,6 +142,13 @@ export const updateRequestStatus = asyncHandler(async (req, res) => {
     if (!isTeammateRecipient && !isLobbyOwner) {
       res.status(403);
       throw new Error("Only the recipient or lobby owner can update this request");
+    }
+  }
+
+  if (request.type === "lobby" && status === "accepted" && request.lobbyId) {
+    if (request.lobbyId.status !== "open" || (request.lobbyId.currentMembers?.length || 0) >= request.lobbyId.neededPlayers) {
+      res.status(400);
+      throw new Error("This lobby is already full");
     }
   }
 

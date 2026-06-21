@@ -31,16 +31,24 @@ export const createGameRoom = asyncHandler(async (req, res) => {
     throw new Error("Game, room title, region, and language are required");
   }
 
+  const cleanTitle = String(title).trim().slice(0, 80);
+  if (!cleanTitle) {
+    res.status(400);
+    throw new Error("Room title is required");
+  }
+
   const game = await Game.findOne({ slug: gameSlug, active: true });
   if (!game) {
     res.status(404);
     throw new Error("Game not found");
   }
 
+  const memberLimit = Math.max(2, Math.min(10, Number(maxMembers) || game.teamSize || 5));
+
   const room = await GameRoom.create({
     gameId: game._id,
     gameSlug,
-    title,
+    title: cleanTitle,
     hostId: req.user._id,
     mode: mode || game.supportedModes?.[0] || "Open Lobby",
     region,
@@ -48,10 +56,10 @@ export const createGameRoom = asyncHandler(async (req, res) => {
     rankMin,
     rankMax,
     micRequired: Boolean(micRequired),
-    maxMembers: Number(maxMembers) || game.teamSize || 5,
+    maxMembers: memberLimit,
     currentMembers: [{ userId: req.user._id, role: neededRoles?.[0] || game.roles?.[0] || "Flex", ready: false }],
-    neededRoles: neededRoles || game.roles?.slice(0, 3) || [],
-    tags: tags || [],
+    neededRoles: Array.isArray(neededRoles) ? neededRoles.slice(0, memberLimit) : game.roles?.slice(0, 3) || [],
+    tags: Array.isArray(tags) ? tags.slice(0, 8) : [],
     trustRequirement: Number(req.body.trustRequirement) || 60,
     startsAt
   });
@@ -111,6 +119,11 @@ export const joinGameRoom = asyncHandler(async (req, res) => {
     role: req.body.role || room.neededRoles?.[0] || "Flex",
     ready: false
   });
+
+  if ((room.currentMembers?.filter((member) => member.status !== "left").length || 0) >= room.maxMembers) {
+    room.status = "full";
+  }
+
   await room.save();
 
   res.json({
@@ -133,6 +146,10 @@ export const leaveGameRoom = asyncHandler(async (req, res) => {
   }
 
   room.currentMembers = room.currentMembers.filter((member) => getId(member.userId) !== getId(req.user._id));
+  if (room.status === "full" && (room.currentMembers?.filter((member) => member.status !== "left").length || 0) < room.maxMembers) {
+    room.status = "open";
+  }
+
   await room.save();
 
   res.json({
@@ -181,6 +198,14 @@ export const updateGameRoom = asyncHandler(async (req, res) => {
   allowed.forEach((key) => {
     if (req.body[key] !== undefined) room[key] = req.body[key];
   });
+
+  if (req.body.maxMembers !== undefined) {
+    room.maxMembers = Math.max(2, Math.min(10, Number(req.body.maxMembers) || room.maxMembers || 5));
+    const activeMembers = room.currentMembers?.filter((member) => member.status !== "left").length || 0;
+    if (room.status === "open" && activeMembers >= room.maxMembers) room.status = "full";
+    if (room.status === "full" && activeMembers < room.maxMembers) room.status = "open";
+  }
+
   await room.save();
 
   res.json({

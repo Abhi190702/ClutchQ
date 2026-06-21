@@ -1,6 +1,7 @@
 import Review from "../models/Review.js";
 import GamerProfile from "../models/GamerProfile.js";
 import Report from "../models/Report.js";
+import User from "../models/User.js";
 import { asyncHandler } from "../middleware/errorMiddleware.js";
 import calculateTrustScore from "../utils/calculateTrustScore.js";
 import generateBadges from "../utils/badgeEngine.js";
@@ -36,6 +37,12 @@ export const createReview = asyncHandler(async (req, res) => {
     throw new Error("You cannot review yourself");
   }
 
+  const reviewedUser = await User.exists({ _id: reviewedUserId });
+  if (!reviewedUser) {
+    res.status(404);
+    throw new Error("Reviewed user not found");
+  }
+
   const scores = [communication, teamwork, skill, punctuality, behavior].map(Number);
   if (scores.some((score) => score < 1 || score > 5 || Number.isNaN(score))) {
     res.status(400);
@@ -51,7 +58,7 @@ export const createReview = asyncHandler(async (req, res) => {
     skill,
     punctuality,
     behavior,
-    comment
+    comment: comment ? String(comment).trim().slice(0, 500) : ""
   });
 
   const profile = await updateReviewedUserScores(reviewedUserId);

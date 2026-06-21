@@ -1,8 +1,9 @@
 import jwt from "jsonwebtoken";
+import { getJwtSecret } from "./validateEnv.js";
 
 const generateToken = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET || "dev_secret_replace_me", {
-    expiresIn: "30d"
+  jwt.sign({ id }, getJwtSecret(), {
+    expiresIn: process.env.JWT_EXPIRES_IN || "7d"
   });
 
 export default generateToken;

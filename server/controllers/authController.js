@@ -9,6 +9,7 @@ import { createDemoProfile } from "../utils/seedData.js";
 import { buildDiscordAuthUrl, handleDiscordOAuthCallback, isDiscordOAuthConfigured } from "../services/oauth/discordOAuthService.js";
 import { buildGoogleAuthUrl, handleGoogleOAuthCallback, isGoogleOAuthConfigured } from "../services/oauth/googleOAuthService.js";
 import { buildSteamAuthUrl, getPlayerSummary, verifySteamOpenId } from "../services/steamService.js";
+import { getJwtSecret } from "../utils/validateEnv.js";
 
 const isLocalDev = process.env.npm_lifecycle_event === "dev" || process.env.NODE_ENV === "development";
 const useSecureCookies = process.env.NODE_ENV === "production" && !isLocalDev;
@@ -197,7 +198,7 @@ const getLinkUserFromRequest = async (req) => {
   if (!token) return null;
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || "dev_secret_replace_me");
+    const decoded = jwt.verify(token, getJwtSecret());
     return User.findById(decoded.id);
   } catch {
     return null;

@@ -7,11 +7,13 @@ export const notFound = (req, res, next) => {
 export const errorHandler = (err, req, res, next) => {
   const statusCode = err.statusCode || (res.statusCode === 200 ? 500 : res.statusCode);
   const message = err.name === "CastError" ? "Resource not found" : err.message;
+  const isProduction = process.env.NODE_ENV === "production";
+  const safeMessage = isProduction && statusCode >= 500 ? "Server error. Please try again." : message;
 
   res.status(statusCode).json({
     success: false,
-    message,
-    stack: process.env.NODE_ENV === "production" ? undefined : err.stack
+    message: safeMessage,
+    stack: isProduction ? undefined : err.stack
   });
 };
 

@@ -2,15 +2,23 @@ import { useEffect, useState } from "react";
 
 const ScoreRing = ({ score = 0, size = 88, label = "Match" }) => {
   const [animatedScore, setAnimatedScore] = useState(0);
+  const safeScore = Math.max(0, Math.min(100, Number.isFinite(Number(score)) ? Math.round(Number(score)) : 0));
   const stroke = 8;
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (animatedScore / 100) * circumference;
 
   useEffect(() => {
-    const id = window.requestAnimationFrame(() => setAnimatedScore(Math.round(score)));
-    return () => window.cancelAnimationFrame(id);
-  }, [score]);
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    if (reduceMotion) {
+      setAnimatedScore(safeScore);
+      return undefined;
+    }
+
+    setAnimatedScore(0);
+    const timeout = window.setTimeout(() => setAnimatedScore(safeScore), 50);
+    return () => window.clearTimeout(timeout);
+  }, [safeScore]);
 
   return (
     <div className="relative inline-grid place-items-center" style={{ width: size, height: size }}>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useToast } from "../../context/ToastContext";
 import api, { getErrorMessage } from "../../services/api";
+import { copyText } from "../../utils/clipboard";
 
 const hasInvite = (room) => Boolean(room?.inviteUrl);
 
@@ -89,13 +90,14 @@ const DiscordVoiceRoom = ({ lobby, isOwner, isMember, onUpdated }) => {
   const copyInvite = async () => {
     if (!discordRoom?.inviteUrl) return;
 
-    try {
-      await navigator.clipboard.writeText(discordRoom.inviteUrl);
+    const copiedInvite = await copyText(discordRoom.inviteUrl);
+    if (copiedInvite) {
       setCopied(true);
       showToast("Discord invite copied.");
       window.setTimeout(() => setCopied(false), 1800);
-    } catch {
+    } else {
       setError("Could not copy invite. Open the room and copy it from Discord.");
+      showToast("Could not copy invite. Select and copy manually.", "error");
     }
   };
 

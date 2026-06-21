@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import PageShell from "../components/common/PageShell";
+import ErrorState from "../components/common/ErrorState";
 import SkeletonCard from "../components/common/SkeletonCard";
 import IncomingRequests from "../components/requests/IncomingRequests";
 import OutgoingRequests from "../components/requests/OutgoingRequests";
@@ -13,14 +14,18 @@ const Requests = () => {
   const [active, setActive] = useState(tabs[0]);
   const [data, setData] = useState({ incoming: [], outgoing: [], history: [] });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const load = async () => {
     setLoading(true);
+    setError("");
     try {
       const response = await api.get("/requests");
       setData(response.data.data);
     } catch (error) {
-      showToast(getErrorMessage(error), "error");
+      const message = getErrorMessage(error);
+      setError(message);
+      showToast(message, "error");
     } finally {
       setLoading(false);
     }
@@ -60,7 +65,9 @@ const Requests = () => {
             </button>
           ))}
         </div>
-        {loading ? (
+        {error ? (
+          <ErrorState message={error} onRetry={load} />
+        ) : loading ? (
           <SkeletonCard rows={8} />
         ) : active === "Outgoing Requests" ? (
           <OutgoingRequests requests={outgoing} onAction={update} />

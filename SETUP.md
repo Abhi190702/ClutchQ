@@ -74,6 +74,14 @@ The bot must be installed in that Discord server with Manage Channels, Create In
 
 ## Check Commands
 
+Client `.env` should keep the localhost fallback while still supporting deployed builds:
+
+```env
+VITE_API_URL=http://localhost:5000/api
+VITE_LOCAL_API_URL=http://localhost:5000/api
+VITE_PRODUCTION_API_URL=https://clutchq-backend.onrender.com/api
+```
+
 Frontend build:
 
 ```powershell

@@ -1,36 +1,6 @@
-export const formatDate = (value) => {
-  if (!value) return "Not synced yet";
-  return new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(new Date(value));
-};
-
-export const formatShortDate = (value) => {
-  if (!value) return "No date";
-  return new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(new Date(value));
-};
-
-export const formatMinutes = (minutes = 0) => {
-  const safeMinutes = Number(minutes || 0);
-  if (safeMinutes < 60) return `${safeMinutes}m`;
-  const hours = Math.floor(safeMinutes / 60);
-  const rest = safeMinutes % 60;
-  return rest ? `${hours}h ${rest}m` : `${hours}h`;
-};
-
-export const formatHours = (minutes = 0) => {
-  const hours = Math.round((Number(minutes || 0) / 60) * 10) / 10;
-  return `${hours.toLocaleString()}h`;
-};
+export { formatDate, formatHours, formatMinutes, formatShortDate, getInitials } from "../../utils/formatters";
 
 export const getGameImage = (game) => game?.logoUrl || game?.iconUrl || game?.image || "";
-
-export const getInitials = (name = "Player") =>
-  name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase() || "CQ";
 
 export const providerStatusLabel = (status) => {
   const map = {

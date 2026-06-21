@@ -66,7 +66,7 @@ const gameRoomSchema = new mongoose.Schema(
     tags: [String],
     status: {
       type: String,
-      enum: ["open", "starting", "in_game", "completed", "cancelled"],
+      enum: ["open", "full", "starting", "in_game", "completed", "cancelled"],
       default: "open",
       index: true
     },

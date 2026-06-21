@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import api, { getErrorMessage } from "../services/api";
 
 const AuthContext = createContext(null);
@@ -23,16 +23,17 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => (localStorage.getItem("clutchq_token") ? readStoredJson("clutchq_user") : null));
   const [profile, setProfile] = useState(() => (localStorage.getItem("clutchq_token") ? readStoredJson("clutchq_profile") : null));
   const [loading, setLoading] = useState(() => Boolean(localStorage.getItem("clutchq_token")));
+  const mountedRef = useRef(true);
 
-  const persistSession = (nextUser, nextProfile) => {
+  const persistSession = useCallback((nextUser, nextProfile) => {
     if (nextUser) localStorage.setItem("clutchq_user", JSON.stringify(nextUser));
     else localStorage.removeItem("clutchq_user");
 
     if (nextProfile) localStorage.setItem("clutchq_profile", JSON.stringify(nextProfile));
     else localStorage.removeItem("clutchq_profile");
-  };
+  }, []);
 
-  const applySession = (payload) => {
+  const applySession = useCallback((payload) => {
     if (payload?.token) {
       localStorage.setItem("clutchq_token", payload.token);
       setToken(payload.token);
@@ -40,44 +41,90 @@ export const AuthProvider = ({ children }) => {
     setUser(payload?.user || null);
     setProfile(payload?.profile || null);
     persistSession(payload?.user, payload?.profile);
-  };
+  }, [persistSession]);
 
-  const refresh = async () => {
+  const resetSession = useCallback(() => {
+    clearStoredSession();
+    setToken(null);
+    setUser(null);
+    setProfile(null);
+  }, []);
+
+  const refresh = useCallback(async () => {
     if (!localStorage.getItem("clutchq_token")) {
-      clearStoredSession();
-      setToken(null);
-      setUser(null);
-      setProfile(null);
-      setLoading(false);
+      if (mountedRef.current) {
+        resetSession();
+        setLoading(false);
+      }
       return null;
     }
 
-    setLoading(true);
+    if (mountedRef.current) setLoading(true);
     try {
       const response = await Promise.race([
         api.get("/auth/me"),
         new Promise((_, reject) => window.setTimeout(() => reject(new Error("Auth refresh timed out")), 8000))
       ]);
+      if (!mountedRef.current) return response.data.data;
       setUser(response.data.data.user);
       setProfile(response.data.data.profile);
       persistSession(response.data.data.user, response.data.data.profile);
       return response.data.data;
     } catch (error) {
-      if (error?.response?.status === 401 || error?.response?.status === 403) {
-        clearStoredSession();
-        setToken(null);
-        setUser(null);
-        setProfile(null);
+      if (mountedRef.current && (error?.response?.status === 401 || error?.response?.status === 403)) {
+        resetSession();
       }
       return null;
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
-  };
+  }, [persistSession, resetSession]);
 
   useEffect(() => {
+    mountedRef.current = true;
     refresh();
-  }, []);
+    return () => {
+      mountedRef.current = false;
+    };
+  }, [refresh]);
+
+  const login = useCallback(async (credentials) => {
+    const response = await api.post("/auth/login", credentials);
+    applySession(response.data.data);
+    return response.data.data;
+  }, [applySession]);
+
+  const register = useCallback(async (payload) => {
+    const response = await api.post("/auth/register", payload);
+    applySession(response.data.data);
+    return response.data.data;
+  }, [applySession]);
+
+  const demoLogin = useCallback(async () => {
+    const response = await api.post("/auth/demo");
+    applySession(response.data.data);
+    return response.data.data;
+  }, [applySession]);
+
+  const saveProfile = useCallback(async (payload) => {
+    try {
+      const response = await api.put("/profiles/me", payload);
+      setProfile(response.data.data);
+      persistSession(user, response.data.data);
+      return response.data.data;
+    } catch (error) {
+      throw new Error(getErrorMessage(error));
+    }
+  }, [persistSession, user]);
+
+  const logout = useCallback(async () => {
+    try {
+      await api.post("/auth/logout");
+    } finally {
+      resetSession();
+      setLoading(false);
+    }
+  }, [resetSession]);
 
   const value = useMemo(
     () => ({
@@ -86,48 +133,14 @@ export const AuthProvider = ({ children }) => {
       profile,
       loading,
       isAdmin: user?.role === "admin",
-      login: async (credentials) => {
-        const response = await api.post("/auth/login", credentials);
-        applySession(response.data.data);
-        return response.data.data;
-      },
-      register: async (payload) => {
-        const response = await api.post("/auth/register", payload);
-        applySession(response.data.data);
-        return response.data.data;
-      },
-      demoLogin: async () => {
-        const response = await api.post("/auth/demo");
-        applySession(response.data.data);
-        return response.data.data;
-      },
-      saveProfile: async (payload) => {
-        const previous = profile;
-        setProfile({ ...previous, ...payload });
-        try {
-          const response = await api.put("/profiles/me", payload);
-          setProfile(response.data.data);
-          persistSession(user, response.data.data);
-          return response.data.data;
-        } catch (error) {
-          setProfile(previous);
-          throw new Error(getErrorMessage(error));
-        }
-      },
+      login,
+      register,
+      demoLogin,
+      saveProfile,
       refresh,
-      logout: async () => {
-        try {
-          await api.post("/auth/logout");
-        } finally {
-          clearStoredSession();
-          setToken(null);
-          setUser(null);
-          setProfile(null);
-          setLoading(false);
-        }
-      }
+      logout
     }),
-    [token, user, profile, loading]
+    [token, user, profile, loading, login, register, demoLogin, saveProfile, refresh, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

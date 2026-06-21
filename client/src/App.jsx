@@ -23,9 +23,13 @@ import Register from "./pages/Register";
 import Requests from "./pages/Requests";
 import Reviews from "./pages/Reviews";
 import Squad from "./pages/Squad";
+import usePageTitle from "./hooks/usePageTitle";
 
-const App = () => (
-  <Routes>
+const App = () => {
+  usePageTitle();
+
+  return (
+    <Routes>
     <Route path="/" element={<Landing />} />
     <Route path="/login" element={<Login />} />
     <Route path="/register" element={<Register />} />
@@ -57,8 +61,9 @@ const App = () => (
       </Route>
     </Route>
 
-    <Route path="*" element={<NotFound />} />
-  </Routes>
-);
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+};
 
 export default App;

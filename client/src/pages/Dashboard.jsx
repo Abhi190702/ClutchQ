@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import PageShell from "../components/common/PageShell";
+import ErrorState from "../components/common/ErrorState";
 import StatCard from "../components/common/StatCard";
 import FindSquadNow from "../components/dashboard/FindSquadNow";
 import LiveDNAVisualizer from "../components/dashboard/LiveDNAVisualizer";
@@ -16,16 +17,20 @@ const Dashboard = () => {
   const { showToast } = useToast();
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [filters, setFilters] = useState({ game: "", region: "", role: "" });
   const [requestedIds, setRequestedIds] = useState([]);
 
   const load = async () => {
     setLoading(true);
+    setError("");
     try {
       const response = await api.get("/matchmaking/recommendations");
       setRecommendations(response.data.data);
     } catch (error) {
-      showToast(getErrorMessage(error), "error");
+      const message = getErrorMessage(error);
+      setError(message);
+      showToast(message, "error");
     } finally {
       setLoading(false);
     }
@@ -79,6 +84,7 @@ const Dashboard = () => {
           <StatCard label="Trust score" value={profile?.trustScore || 0} suffix="%" accent="violet" />
           <StatCard label="Availability hours" value={profile?.availability?.length || 0} accent="amber" />
         </div>
+        {error ? <ErrorState message={error} onRetry={load} /> : null}
         <div className="grid gap-6 xl:grid-cols-[0.78fr_1.22fr]">
           <div className="space-y-6">
             <FindSquadNow />

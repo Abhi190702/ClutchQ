@@ -41,7 +41,7 @@ const MatchAnalyticsPanel = ({ insights, recentActivitySummary }) => {
                     <h3 className="font-bold text-clutch-text">{item.gameName || "ClutchQ Session"}</h3>
                     <span className="text-sm font-bold text-clutch-blue">{item.matchRating || "--"}</span>
                   </div>
-                  <p className="mt-2 text-sm text-clutch-muted">Communication {item.communicationScore || "--"} · Teamwork {item.teamworkScore || "--"} · Trust {item.trustImpact ? `${item.trustImpact > 0 ? "+" : ""}${item.trustImpact}` : "0"}</p>
+                  <p className="mt-2 text-sm text-clutch-muted">Communication {item.communicationScore || "--"} - Teamwork {item.teamworkScore || "--"} - Trust {item.trustImpact ? `${item.trustImpact > 0 ? "+" : ""}${item.trustImpact}` : "0"}</p>
                 </div>
               ))}
             </div>
@@ -52,7 +52,7 @@ const MatchAnalyticsPanel = ({ insights, recentActivitySummary }) => {
               {sessions.slice(0, 4).map((item) => (
                 <div key={item._id || `${item.gameName}-${item.startedAt}`} className="rounded-md border border-clutch-border bg-clutch-bg/40 p-4">
                   <h3 className="font-bold text-clutch-text">{item.gameName || item.gameSlug || "ClutchQ Session"}</h3>
-                  <p className="mt-2 text-sm text-clutch-muted">{formatMinutes(item.durationMinutes || 0)} · {item.status || "completed"}</p>
+                  <p className="mt-2 text-sm text-clutch-muted">{formatMinutes(item.durationMinutes || 0)} - {item.status || "completed"}</p>
                 </div>
               ))}
             </div>

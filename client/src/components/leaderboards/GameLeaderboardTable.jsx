@@ -1,4 +1,4 @@
-const minutesToHours = (minutes = 0) => `${Math.round((minutes / 60) * 10) / 10}h`;
+import { formatHours } from "../../utils/formatters";
 
 const GameLeaderboardTable = ({ rows = [] }) => (
   <div className="overflow-hidden rounded-[10px] border border-[#2f2f36] bg-[#202024]">
@@ -12,14 +12,14 @@ const GameLeaderboardTable = ({ rows = [] }) => (
             <div className="text-lg font-black text-zinc-500">#{row.rank}</div>
             <div className="flex min-w-0 items-center gap-3">
               <div className="h-14 w-10 overflow-hidden rounded bg-[#18181c]">
-                {row.game?.posterUrl ? <img src={row.game.posterUrl} alt={row.game.title} className="h-full w-full object-cover" /> : null}
+                {row.game?.posterUrl ? <img src={row.game.posterUrl} alt={row.game.title} loading="lazy" className="h-full w-full object-cover" /> : null}
               </div>
               <div className="min-w-0">
                 <div className="truncate font-bold text-white">{row.game?.title}</div>
-                <div className="text-sm text-zinc-400">{row.sessions || 0} sessions · {row.activePlayers || 0} players</div>
+                <div className="text-sm text-zinc-400">{row.sessions || 0} sessions - {row.activePlayers || 0} players</div>
               </div>
             </div>
-            <div className="text-right font-bold text-white">{minutesToHours(row.totalMinutes)}</div>
+            <div className="text-right font-bold text-white">{formatHours(row.totalMinutes)}</div>
           </div>
         ))
       ) : (

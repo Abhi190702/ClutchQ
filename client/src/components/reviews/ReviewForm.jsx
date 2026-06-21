@@ -6,6 +6,7 @@ const fields = ["communication", "teamwork", "skill", "punctuality", "behavior"]
 
 const ReviewForm = ({ players = [], onCreated }) => {
   const { showToast } = useToast();
+  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     reviewedUserId: "",
     communication: 5,
@@ -13,17 +14,25 @@ const ReviewForm = ({ players = [], onCreated }) => {
     skill: 4,
     punctuality: 5,
     behavior: 5,
-    comment: "Good comms, role clarity, and reliable queue timing."
+    comment: ""
   });
 
   const submit = async (event) => {
     event.preventDefault();
+    if (!form.reviewedUserId) {
+      showToast("Select a teammate before submitting a review.", "error");
+      return;
+    }
+
+    setSaving(true);
     try {
-      const response = await api.post("/reviews", form);
+      const response = await api.post("/reviews", { ...form, comment: form.comment.trim() });
       showToast("Review submitted");
       onCreated?.(response.data.data.review);
     } catch (error) {
       showToast(getErrorMessage(error), "error");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -32,7 +41,7 @@ const ReviewForm = ({ players = [], onCreated }) => {
       <h3 className="text-lg font-semibold">Review completed teammate</h3>
       <label>
         <span className="form-label">Player</span>
-        <select className="form-input" value={form.reviewedUserId} onChange={(event) => setForm({ ...form, reviewedUserId: event.target.value })}>
+        <select className="form-input" required value={form.reviewedUserId} onChange={(event) => setForm({ ...form, reviewedUserId: event.target.value })}>
           <option value="">Select player</option>
           {players.map((player) => <option key={player.userId?._id || player.userId} value={player.userId?._id || player.userId}>{player.displayName}</option>)}
         </select>
@@ -41,15 +50,15 @@ const ReviewForm = ({ players = [], onCreated }) => {
         {fields.map((field) => (
           <label key={field}>
             <span className="form-label capitalize">{field}</span>
-            <input className="form-input" type="number" min="1" max="5" value={form[field]} onChange={(event) => setForm({ ...form, [field]: Number(event.target.value) })} />
+            <input className="form-input" type="number" min="1" max="5" value={form[field]} onChange={(event) => setForm({ ...form, [field]: Math.max(1, Math.min(5, Number(event.target.value) || 1)) })} />
           </label>
         ))}
       </div>
       <label>
         <span className="form-label">Comment</span>
-        <textarea className="form-input min-h-24" value={form.comment} onChange={(event) => setForm({ ...form, comment: event.target.value })} />
+        <textarea className="form-input min-h-24" maxLength="500" placeholder="Optional: what made this teammate good to queue with?" value={form.comment} onChange={(event) => setForm({ ...form, comment: event.target.value })} />
       </label>
-      <button className="btn-primary" type="submit">Submit review</button>
+      <button className="btn-primary" type="submit" disabled={saving}>{saving ? "Submitting..." : "Submit review"}</button>
     </form>
   );
 };

@@ -1,16 +1,8 @@
 import { useToast } from "../../context/ToastContext";
-import { API_URL } from "../../utils/constants";
+import { getServerBaseUrl } from "../../utils/constants";
 import { AUTH_PROVIDERS } from "../../utils/authProviders";
 
 const profileProviders = ["google", "discord", "steam", "epic", "microsoft", "psn", "nintendo"];
-
-const getServerBaseUrl = () => {
-  try {
-    return new URL(API_URL).origin;
-  } catch {
-    return API_URL.replace(/\/api\/?$/, "");
-  }
-};
 
 const statusForProvider = (provider, authProviders = {}) => {
   if (provider.id === "google" && authProviders.google?.id) return "Connected";

@@ -12,7 +12,7 @@ const SteamFriendsPanel = ({ friends = [] }) => {
           <h2 className="mt-2 text-2xl font-bold text-clutch-text">Friend graph</h2>
           <p className="mt-2 text-sm text-clutch-muted">Public Steam friends, with ClutchQ matches highlighted when possible.</p>
         </div>
-        <div className="text-sm font-semibold text-clutch-muted">{friends.length} synced · {onClutchQ} on ClutchQ</div>
+        <div className="text-sm font-semibold text-clutch-muted">{friends.length} synced - {onClutchQ} on ClutchQ</div>
       </div>
       {!friends.length ? (
         <div className="mt-5">

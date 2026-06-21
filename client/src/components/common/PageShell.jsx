@@ -1,12 +1,13 @@
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
+import MobileBottomNav from "./MobileBottomNav";
 
 const PageShell = ({ children, title, eyebrow, actions, fullWidth = false, hideSidebar = false }) => (
   <div className="noise-bg min-h-screen text-clutch-text">
     <Navbar />
     <div className="flex">
       {!hideSidebar && <Sidebar />}
-      <main className={`mx-auto min-w-0 flex-1 ${fullWidth ? "" : "max-w-[1180px]"} px-4 py-6 md:px-6`}>
+      <main className={`mx-auto min-w-0 flex-1 ${fullWidth ? "" : "max-w-[1180px]"} px-4 pb-28 pt-6 md:px-6 lg:pb-6`}>
         {(title || eyebrow || actions) && (
           <div className="mb-5 flex flex-col gap-3 border-b border-clutch-border pb-5 md:flex-row md:items-end md:justify-between">
             <div>
@@ -19,6 +20,7 @@ const PageShell = ({ children, title, eyebrow, actions, fullWidth = false, hideS
         {children}
       </main>
     </div>
+    {!hideSidebar && <MobileBottomNav />}
   </div>
 );
 
