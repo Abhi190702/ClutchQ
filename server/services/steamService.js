@@ -93,6 +93,10 @@ export const getPlayerAchievements = async (steamId, appId) => {
 
 export const getSteamProvider = (user) => user?.authProviders?.steam || null;
 const shouldUseDemoSteamData = (user) => isDemoUser(user) && !getSteamProvider(user)?.steamId;
+const steamDataQueryForUser = (user) => {
+  const provider = getSteamProvider(user);
+  return provider?.steamId ? { userId: user._id, steamId: provider.steamId } : { userId: user._id };
+};
 
 const normalizeUrlValue = (value) => {
   if (!value) return null;
@@ -355,7 +359,7 @@ export const syncSteamForUser = async (user) => {
       warnings.push("Steam returned no friends. Your friends list may be private or empty.");
     }
 
-    const storedGames = await SteamGame.find({ userId: user._id }).sort({ playtimeForeverMinutes: -1 }).limit(10);
+    const storedGames = await SteamGame.find({ userId: user._id, steamId: provider.steamId }).sort({ playtimeForeverMinutes: -1 }).limit(10);
     counts.achievements = await upsertAchievements(user._id, provider.steamId, storedGames);
 
     if (storedGames.length && !counts.achievements) {
@@ -406,8 +410,9 @@ export const getSteamIdentityForUser = async (user) => {
 };
 
 export const getSteamLibraryForUser = async (user) => {
-  if (shouldUseDemoSteamData(user) && !(await SteamGame.exists({ userId: user._id }))) return demoSteamGames;
-  return SteamGame.find({ userId: user._id }).sort({ playtimeForeverMinutes: -1 }).limit(200);
+  const query = steamDataQueryForUser(user);
+  if (shouldUseDemoSteamData(user) && !(await SteamGame.exists(query))) return demoSteamGames;
+  return SteamGame.find(query).sort({ playtimeForeverMinutes: -1 }).limit(200);
 };
 
 export const getSteamRecentForUser = async (user) => {
@@ -419,13 +424,15 @@ export const getSteamRecentForUser = async (user) => {
 };
 
 export const getSteamAchievementsForUser = async (user) => {
-  if (shouldUseDemoSteamData(user) && !(await SteamAchievement.exists({ userId: user._id }))) return demoSteamAchievements;
-  return SteamAchievement.find({ userId: user._id }).sort({ achieved: -1, unlockTime: -1 }).limit(300);
+  const query = steamDataQueryForUser(user);
+  if (shouldUseDemoSteamData(user) && !(await SteamAchievement.exists(query))) return demoSteamAchievements;
+  return SteamAchievement.find(query).sort({ achieved: -1, unlockTime: -1 }).limit(300);
 };
 
 export const getSteamFriendsForUser = async (user) => {
-  if (shouldUseDemoSteamData(user) && !(await SteamFriend.exists({ userId: user._id }))) return demoSteamFriends;
-  return SteamFriend.find({ userId: user._id }).sort({ onClutchQ: -1, displayName: 1 }).limit(80);
+  const query = steamDataQueryForUser(user);
+  if (shouldUseDemoSteamData(user) && !(await SteamFriend.exists(query))) return demoSteamFriends;
+  return SteamFriend.find(query).sort({ onClutchQ: -1, displayName: 1 }).limit(80);
 };
 
 export const getSteamSyncStatusForUser = async (user) => {

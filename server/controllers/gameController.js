@@ -93,6 +93,11 @@ export const getGameRooms = asyncHandler(async (req, res) => {
     .limit(80);
   const dbGame = await Game.findOne({ slug: req.params.slug, active: true });
   const game = dbGame ? toGameObject(dbGame) : getGameBySlug(req.params.slug);
+  if (!game) {
+    res.status(404);
+    throw new Error("Game not found");
+  }
+
   const demoRooms = rooms.length ? [] : buildDemoRooms(game);
 
   res.json({
@@ -109,6 +114,11 @@ export const getGameStats = asyncHandler(async (req, res) => {
     Game.findOne({ slug: req.params.slug, active: true })
   ]);
   const game = dbGame ? toGameObject(dbGame) : getGameBySlug(req.params.slug);
+  if (!game) {
+    res.status(404);
+    throw new Error("Game not found");
+  }
+
   const demoRooms = rooms.length ? [] : buildDemoRooms(game);
   const visibleRooms = rooms.length ? rooms : demoRooms;
 
@@ -124,6 +134,12 @@ export const getGameStats = asyncHandler(async (req, res) => {
 });
 
 export const getTopPlayers = asyncHandler(async (req, res) => {
+  const game = (await Game.findOne({ slug: req.params.slug, active: true })) || getGameBySlug(req.params.slug);
+  if (!game) {
+    res.status(404);
+    throw new Error("Game not found");
+  }
+
   const aggregates = await GamePlaytimeAggregate.find({ gameSlug: req.params.slug })
     .populate("userId", "name avatar")
     .sort({ totalMinutes: -1, sessionsCount: -1 })
@@ -144,6 +160,12 @@ export const getTopPlayers = asyncHandler(async (req, res) => {
 });
 
 export const findSquadNow = asyncHandler(async (req, res) => {
+  const game = (await Game.findOne({ slug: req.params.slug, active: true })) || getGameBySlug(req.params.slug);
+  if (!game) {
+    res.status(404);
+    throw new Error("Game not found");
+  }
+
   const profile = await GamerProfile.findOne({ userId: req.user._id });
   const rooms = await GameRoom.find({ gameSlug: req.params.slug, status: "open" })
     .populate("hostId", "name avatar")

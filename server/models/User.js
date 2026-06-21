@@ -25,7 +25,9 @@ const authProviderSchema = new mongoose.Schema(
       displayName: String,
       avatar: String,
       profileUrl: String,
-      connectedAt: Date
+      level: Number,
+      connectedAt: Date,
+      lastSyncedAt: Date
     },
     epic: {
       accountId: String,

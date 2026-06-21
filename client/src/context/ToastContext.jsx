@@ -9,7 +9,7 @@ export const ToastProvider = ({ children }) => {
   const value = useMemo(
     () => ({
       showToast: (message, type = "success") => {
-        const id = crypto.randomUUID();
+        const id = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
         setToasts((current) => [...current, { id, message, type }]);
         window.setTimeout(() => {
           setToasts((current) => current.filter((toast) => toast.id !== id));

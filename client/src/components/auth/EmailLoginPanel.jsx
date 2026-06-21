@@ -15,7 +15,10 @@ const EmailLoginPanel = forwardRef(function EmailLoginPanel(_, ref) {
   const location = useLocation();
 
   const redirectAfterAuth = (profile) => {
-    navigate(profile ? location.state?.from?.pathname || "/dashboard" : "/onboarding", { replace: true });
+    const from = location.state?.from;
+    const fromPath = `${from?.pathname || ""}${from?.search || ""}`;
+    const nextPath = fromPath.startsWith("/") && !fromPath.startsWith("//") ? fromPath : "/dashboard";
+    navigate(profile ? nextPath : "/onboarding", { replace: true });
   };
 
   const submit = async (event) => {

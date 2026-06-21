@@ -31,21 +31,26 @@ export const createGameRoom = asyncHandler(async (req, res) => {
     throw new Error("Game, room title, region, and language are required");
   }
 
-  const game = await Game.findOne({ slug: gameSlug });
+  const game = await Game.findOne({ slug: gameSlug, active: true });
+  if (!game) {
+    res.status(404);
+    throw new Error("Game not found");
+  }
+
   const room = await GameRoom.create({
-    gameId: game?._id,
+    gameId: game._id,
     gameSlug,
     title,
     hostId: req.user._id,
-    mode: mode || game?.supportedModes?.[0] || "Open Lobby",
+    mode: mode || game.supportedModes?.[0] || "Open Lobby",
     region,
     language,
     rankMin,
     rankMax,
     micRequired: Boolean(micRequired),
-    maxMembers: Number(maxMembers) || game?.teamSize || 5,
-    currentMembers: [{ userId: req.user._id, role: neededRoles?.[0] || game?.roles?.[0] || "Flex", ready: false }],
-    neededRoles: neededRoles || game?.roles?.slice(0, 3) || [],
+    maxMembers: Number(maxMembers) || game.teamSize || 5,
+    currentMembers: [{ userId: req.user._id, role: neededRoles?.[0] || game.roles?.[0] || "Flex", ready: false }],
+    neededRoles: neededRoles || game.roles?.slice(0, 3) || [],
     tags: tags || [],
     trustRequirement: Number(req.body.trustRequirement) || 60,
     startsAt

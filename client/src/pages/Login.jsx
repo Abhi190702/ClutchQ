@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import AuthDivider from "../components/auth/AuthDivider";
 import AuthNotice from "../components/auth/AuthNotice";
 import AuthProviderGrid from "../components/auth/AuthProviderGrid";
@@ -20,6 +21,7 @@ const Login = () => {
   const emailPanelRef = useRef(null);
   const emailPanelWrapRef = useRef(null);
   const { showToast } = useToast();
+  const location = useLocation();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -33,7 +35,12 @@ const Login = () => {
 
   const handleProviderClick = (provider) => {
     if (provider.status === "oauth" && provider.route) {
-      const params = new URLSearchParams({ returnTo: window.location.origin });
+      const from = location.state?.from;
+      const nextPath = `${from?.pathname || "/dashboard"}${from?.search || ""}`;
+      const params = new URLSearchParams({
+        returnTo: window.location.origin,
+        next: nextPath.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/dashboard"
+      });
       window.location.href = `${getServerBaseUrl()}${provider.route}?${params.toString()}`;
       return;
     }

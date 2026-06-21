@@ -20,13 +20,16 @@ const clearStoredSession = () => {
 
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(() => localStorage.getItem("clutchq_token"));
-  const [user, setUser] = useState(() => readStoredJson("clutchq_user"));
-  const [profile, setProfile] = useState(() => readStoredJson("clutchq_profile"));
+  const [user, setUser] = useState(() => (localStorage.getItem("clutchq_token") ? readStoredJson("clutchq_user") : null));
+  const [profile, setProfile] = useState(() => (localStorage.getItem("clutchq_token") ? readStoredJson("clutchq_profile") : null));
   const [loading, setLoading] = useState(() => Boolean(localStorage.getItem("clutchq_token")));
 
   const persistSession = (nextUser, nextProfile) => {
     if (nextUser) localStorage.setItem("clutchq_user", JSON.stringify(nextUser));
+    else localStorage.removeItem("clutchq_user");
+
     if (nextProfile) localStorage.setItem("clutchq_profile", JSON.stringify(nextProfile));
+    else localStorage.removeItem("clutchq_profile");
   };
 
   const applySession = (payload) => {
@@ -41,8 +44,12 @@ export const AuthProvider = ({ children }) => {
 
   const refresh = async () => {
     if (!localStorage.getItem("clutchq_token")) {
+      clearStoredSession();
+      setToken(null);
+      setUser(null);
+      setProfile(null);
       setLoading(false);
-      return { user, profile };
+      return null;
     }
 
     setLoading(true);

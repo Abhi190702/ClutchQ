@@ -27,6 +27,7 @@ const OAuthSuccess = () => {
         const { user, profile } = response.data.data;
         localStorage.setItem("clutchq_user", JSON.stringify(user));
         if (profile) localStorage.setItem("clutchq_profile", JSON.stringify(profile));
+        else localStorage.removeItem("clutchq_profile");
         await refresh();
         navigate(nextPath || (profile ? "/dashboard" : "/onboarding"), { replace: true });
       } catch {

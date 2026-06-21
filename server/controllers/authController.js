@@ -29,6 +29,9 @@ const oauthStateCookieOptions = {
 
 const oauthStateCookieName = (provider) => `clutchq_${provider}_oauth_state`;
 const oauthReturnCookieName = (provider) => `clutchq_${provider}_oauth_return_to`;
+const oauthNextCookieName = (provider) => `clutchq_${provider}_oauth_next`;
+const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
+const safeNextPath = (value) => (typeof value === "string" && value.startsWith("/") && !value.startsWith("//") ? value : null);
 
 const normalizeUrl = (value) => {
   if (!value) return null;
@@ -93,10 +96,18 @@ const getStoredClientOrigin = (req, res, provider) => {
   return isAllowedClientOrigin(stored) ? stored : configuredClientOrigin();
 };
 
+const getStoredNextPath = (req, res, provider) => {
+  const cookieName = oauthNextCookieName(provider);
+  const stored = safeNextPath(req.cookies?.[cookieName]);
+  res.clearCookie(cookieName, oauthStateCookieOptions);
+  return stored;
+};
+
 const getClientRedirect = (path, clientOrigin = configuredClientOrigin()) => `${clientOrigin}${path}`;
 
 const redirectOAuthError = (req, res, provider, error = "oauth_failed") => {
   const clientOrigin = provider ? getStoredClientOrigin(req, res, provider) : getRequestClientOrigin(req);
+  if (provider) getStoredNextPath(req, res, provider);
   res.redirect(getClientRedirect(`/login?error=${encodeURIComponent(error)}`, clientOrigin));
 };
 
@@ -104,6 +115,8 @@ const createOAuthState = (req, res, provider) => {
   const state = crypto.randomBytes(24).toString("hex");
   res.cookie(oauthStateCookieName(provider), state, oauthStateCookieOptions);
   res.cookie(oauthReturnCookieName(provider), getRequestClientOrigin(req), oauthStateCookieOptions);
+  const nextPath = safeNextPath(req.query.next);
+  if (nextPath) res.cookie(oauthNextCookieName(provider), nextPath, oauthStateCookieOptions);
   return state;
 };
 
@@ -170,13 +183,11 @@ const createOrUpdateOAuthUser = async ({ provider, providerData }) => {
   });
 };
 
-const safeNextPath = (value) => (typeof value === "string" && value.startsWith("/") && !value.startsWith("//") ? value : null);
-
 const redirectOAuthSuccess = (req, res, provider, user, nextPath = null) => {
   const clientOrigin = provider ? getStoredClientOrigin(req, res, provider) : getRequestClientOrigin(req);
   const token = issueToken(res, user);
   const params = new URLSearchParams({ token });
-  const safeNext = safeNextPath(nextPath || req.query.next);
+  const safeNext = safeNextPath(nextPath) || (provider ? getStoredNextPath(req, res, provider) : null) || safeNextPath(req.query.next);
   if (safeNext) params.set("next", safeNext);
   res.redirect(getClientRedirect(`/oauth/success?${params.toString()}`, clientOrigin));
 };
@@ -250,8 +261,9 @@ const createOrUpdateSteamUser = async ({ req, steamId, summary }) => {
 
 export const register = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
+  const normalizedEmail = normalizeEmail(email);
 
-  if (!name || !email || !password) {
+  if (!name || !normalizedEmail || !password) {
     res.status(400);
     throw new Error("Name, email, and password are required");
   }
@@ -261,7 +273,7 @@ export const register = asyncHandler(async (req, res) => {
     throw new Error("Password must be at least 6 characters");
   }
 
-  const existingUser = await User.findOne({ email });
+  const existingUser = await User.findOne({ email: normalizedEmail });
   if (existingUser) {
     res.status(409);
     throw new Error("An account with this email already exists");
@@ -269,10 +281,10 @@ export const register = asyncHandler(async (req, res) => {
 
   const passwordHash = await bcrypt.hash(password, 10);
   const user = await User.create({
-    name,
-    email,
+    name: String(name).trim(),
+    email: normalizedEmail,
     passwordHash,
-    avatar: `https://api.dicebear.com/8.x/identicon/svg?seed=${encodeURIComponent(email)}`
+    avatar: `https://api.dicebear.com/8.x/identicon/svg?seed=${encodeURIComponent(normalizedEmail)}`
   });
 
   res.status(201);
@@ -281,13 +293,14 @@ export const register = asyncHandler(async (req, res) => {
 
 export const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
+  const normalizedEmail = normalizeEmail(email);
 
-  if (!email || !password) {
+  if (!normalizedEmail || !password) {
     res.status(400);
     throw new Error("Email and password are required");
   }
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email: normalizedEmail });
   if (!user) {
     res.status(401);
     throw new Error("Invalid email or password");
