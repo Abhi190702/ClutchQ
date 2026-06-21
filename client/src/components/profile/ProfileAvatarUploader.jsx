@@ -53,7 +53,7 @@ const compressAvatar = async (file) => {
   return output;
 };
 
-const ProfileAvatarUploader = ({ user, profile, steamSummary, onUpload, onRemove, compact = false }) => {
+const ProfileAvatarUploader = ({ user, profile, steamSummary, onUpload, onRemove, compact = false, variant = "default" }) => {
   const inputRef = useRef(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -77,6 +77,27 @@ const ProfileAvatarUploader = ({ user, profile, steamSummary, onUpload, onRemove
       setSaving(false);
     }
   };
+
+  if (variant === "hero") {
+    return (
+      <div className="relative mx-auto w-fit">
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          className="group relative grid h-40 w-40 shrink-0 place-items-center overflow-hidden rounded-full border border-white/10 bg-clutch-panelSoft text-5xl font-black text-clutch-text transition hover:border-white/25 md:h-44 md:w-44"
+          aria-label="Upload profile avatar"
+          disabled={saving}
+        >
+          {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : getInitials(displayName)}
+          <span className="absolute inset-x-0 bottom-0 bg-black/70 px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-white opacity-0 transition group-hover:opacity-100">
+            {saving ? "Saving" : "Edit"}
+          </span>
+        </button>
+        <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleFile} />
+        {error && <p className="mt-3 max-w-44 text-center text-xs leading-5 text-clutch-red">{error}</p>}
+      </div>
+    );
+  }
 
   return (
     <div className={`flex ${compact ? "flex-col items-center gap-3" : "flex-col items-center gap-4"}`}>

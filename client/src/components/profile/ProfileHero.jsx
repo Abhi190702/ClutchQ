@@ -1,60 +1,75 @@
 import { Link } from "react-router-dom";
 import { startProviderOAuth } from "../../utils/oauthLinks";
 import ProfileAvatarUploader from "./ProfileAvatarUploader";
-import ProfileStatCards from "./ProfileStatCards";
 
-const ProfileHero = ({ bundle, libraryCount, steamLinked, onAvatarUpload, onAvatarRemove, onSyncSteam, syncing, minimal = false }) => {
+const ProfileHero = ({ bundle, libraryCount, steamLinked, onAvatarUpload, onAvatarRemove, onSyncSteam, syncing }) => {
   const { user, profile, steamSummary, playerScore } = bundle;
   const displayName = profile?.displayName || user?.name || steamSummary?.displayName || "ClutchQ Player";
   const tag = profile?.playerCode || profile?.clutchTag || `CLQ-${String(user?._id || "PLAYER").slice(-5).toUpperCase()}`;
   const primaryGame = profile?.games?.find((game) => game.isPrimary) || profile?.games?.[0];
   const roles = primaryGame?.roles?.slice(0, 3) || [];
+  const trust = profile?.trustScore ?? profile?.averageRatings?.overall ?? null;
+  const meta = [
+    profile?.region || "Region not set",
+    primaryGame?.gameName || "Primary game not set",
+    ...roles
+  ].filter(Boolean);
 
   return (
-    <section id="overview" className="card overflow-hidden">
-      <div className={`${minimal ? "" : "border-b border-clutch-border"} bg-[#18181c] px-5 py-5 md:px-7 md:py-6`}>
-        <div className={minimal ? "grid gap-6 md:grid-cols-[180px_minmax(0,1fr)] md:items-start" : "flex flex-col gap-6 md:flex-row md:items-center"}>
-          <ProfileAvatarUploader user={user} profile={profile} steamSummary={steamSummary} onUpload={onAvatarUpload} onRemove={onAvatarRemove} compact={minimal} />
-          <div className="min-w-0 flex-1 md:pt-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-clutch-border bg-clutch-panel px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-clutch-muted">
+    <section id="overview" className="overflow-hidden rounded-md border border-white/10 bg-[#18181c]">
+      <div className="relative px-5 py-6 md:px-8 md:py-8">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(53,184,255,0.13),transparent_34%),linear-gradient(135deg,rgba(255,255,255,0.055),transparent_45%)]" />
+        <div className="relative grid gap-7 lg:grid-cols-[210px_minmax(0,1fr)_auto] lg:items-center">
+          <ProfileAvatarUploader
+            user={user}
+            profile={profile}
+            steamSummary={steamSummary}
+            onUpload={onAvatarUpload}
+            onRemove={onAvatarRemove}
+            variant="hero"
+          />
+
+          <div className="min-w-0 text-center lg:text-left">
+            <div className="flex flex-wrap justify-center gap-2 lg:justify-start">
+              <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-clutch-muted">
                 {steamLinked ? "Steam connected" : steamSummary?.demo ? "Demo Steam preview" : "ClutchQ account"}
               </span>
               {profile?.micAvailable && <span className="rounded-full border border-clutch-green/30 bg-clutch-green/10 px-3 py-1 text-xs font-bold text-emerald-200">Mic ready</span>}
+              {trust !== null && <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-bold text-clutch-muted">Trust {Math.round(trust)}%</span>}
             </div>
-            <h1 className={`mt-3 break-words font-black tracking-tight text-clutch-text ${minimal ? "text-4xl md:text-5xl" : "text-4xl md:text-5xl"}`}>{displayName}</h1>
-            <p className="mt-1 text-base font-bold tracking-wide text-zinc-300">{tag}</p>
-            <p className={`mt-3 max-w-4xl text-base leading-7 text-zinc-300 ${minimal ? "line-clamp-2" : ""}`}>
+
+            <h1 className="mt-4 break-words text-5xl font-black tracking-tight text-clutch-text md:text-6xl">{displayName}</h1>
+            <p className="mt-2 text-sm font-black uppercase tracking-[0.18em] text-zinc-400">{tag}</p>
+            <p className="mt-4 max-w-4xl text-base leading-7 text-zinc-300 md:text-lg">
               {profile?.bio || "Build your Steam-powered ClutchQ identity with games, achievements, friends, reliable lobbies, and teammate reviews."}
             </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <span className="rounded-md border border-clutch-border bg-clutch-panel px-3 py-2 text-sm text-clutch-muted">{profile?.region || "Region not set"}</span>
-              <span className="rounded-md border border-clutch-border bg-clutch-panel px-3 py-2 text-sm text-clutch-muted">{primaryGame?.gameName || "Primary game not set"}</span>
-              {roles.map((role) => (
-                <span key={role} className="rounded-md border border-clutch-border bg-clutch-panel px-3 py-2 text-sm text-clutch-muted">{role}</span>
+
+            <div className="mt-5 flex flex-wrap justify-center gap-2 lg:justify-start">
+              {meta.map((item) => (
+                <span key={item} className="rounded-md border border-white/10 bg-black/15 px-3 py-2 text-sm font-semibold text-clutch-muted">{item}</span>
               ))}
-            </div>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Link to="/onboarding" className="btn-secondary">Edit profile</Link>
-              <Link to="/dashboard" className="btn-primary">Find matches</Link>
-              {steamLinked ? (
-                <button type="button" className="btn-secondary" onClick={onSyncSteam} disabled={syncing}>
-                  {syncing ? "Syncing..." : "Sync Steam"}
-                </button>
-              ) : (
-                <button type="button" className="btn-secondary" onClick={() => startProviderOAuth("steam", "/profile")}>
-                  Connect Steam
-                </button>
+              <span className="rounded-md border border-white/10 bg-black/15 px-3 py-2 text-sm font-semibold text-clutch-muted">{libraryCount} Steam games</span>
+              {typeof playerScore?.overall === "number" && (
+                <span className="rounded-md border border-white/10 bg-black/15 px-3 py-2 text-sm font-semibold text-clutch-muted">Score {Math.round(playerScore.overall)}</span>
               )}
             </div>
           </div>
+
+          <div className="flex flex-wrap justify-center gap-3 lg:w-40 lg:flex-col">
+            <Link to="/dashboard" className="btn-primary">Find matches</Link>
+            <Link to="/onboarding" className="btn-secondary">Edit profile</Link>
+            {steamLinked ? (
+              <button type="button" className="btn-secondary" onClick={onSyncSteam} disabled={syncing}>
+                {syncing ? "Syncing..." : "Sync Steam"}
+              </button>
+            ) : (
+              <button type="button" className="btn-secondary" onClick={() => startProviderOAuth("steam", "/profile")}>
+                Connect Steam
+              </button>
+            )}
+          </div>
         </div>
       </div>
-      {!minimal && (
-        <div className="p-5 md:p-7">
-          <ProfileStatCards profile={profile} playerScore={playerScore} libraryCount={libraryCount} />
-        </div>
-      )}
     </section>
   );
 };
