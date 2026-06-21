@@ -1,5 +1,5 @@
 import { startProviderOAuth } from "../../utils/oauthLinks";
-import { formatDate } from "./profileDisplay";
+import { formatDate } from "../../utils/formatters";
 
 const statusTone = (status) => {
   if (status === "success") return "border-clutch-green/30 bg-clutch-green/10 text-emerald-200";

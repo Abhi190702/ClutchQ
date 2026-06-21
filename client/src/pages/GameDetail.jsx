@@ -10,6 +10,7 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import gameApi from "../services/gameApi";
 import { getErrorMessage } from "../services/api";
+import { formatHours, formatPercentage, safeNumber } from "../utils/formatters";
 
 const GameDetail = () => {
   const { slug } = useParams();
@@ -109,7 +110,9 @@ const GameDetail = () => {
                 {topPlayers.slice(0, 6).map((row) => (
                   <div key={row.user?._id || row.playtime?._id} className="rounded-md border border-[#33333a] bg-[#18181c] p-3">
                     <div className="font-bold text-white">{row.user?.name || "Player"}</div>
-                    <div className="text-sm text-zinc-400">Trust {row.profile?.trustScore || 70} - {Math.round((row.playtime?.totalMinutes || 0) / 60)}h</div>
+                    <div className="text-sm text-zinc-400">
+                      {Number.isNaN(safeNumber(row.profile?.trustScore, NaN)) ? "No trust data" : `Trust ${formatPercentage(row.profile.trustScore)}`} - {formatHours(row.playtime?.totalMinutes)}
+                    </div>
                   </div>
                 ))}
               </div>

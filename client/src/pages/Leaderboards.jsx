@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import PageShell from "../components/common/PageShell";
+import ErrorState from "../components/common/ErrorState";
 import GameLeaderboardTable from "../components/leaderboards/GameLeaderboardTable";
 import TopPlayersTable from "../components/leaderboards/TopPlayersTable";
 import TrendingGamesPanel from "../components/leaderboards/TrendingGamesPanel";
@@ -19,22 +20,27 @@ const Leaderboards = () => {
   const [games, setGames] = useState([]);
   const [players, setPlayers] = useState([]);
   const [trending, setTrending] = useState([]);
+  const [error, setError] = useState("");
+
+  const load = async () => {
+    setError("");
+    try {
+      const [gamesResponse, playersResponse, trendingResponse] = await Promise.all([
+        leaderboardApi.games({ range }),
+        leaderboardApi.players({ range }),
+        leaderboardApi.trendingGames()
+      ]);
+      setGames(gamesResponse.data.data);
+      setPlayers(playersResponse.data.data);
+      setTrending(trendingResponse.data.data);
+    } catch (error) {
+      const message = getErrorMessage(error);
+      setError(message);
+      showToast(message, "error");
+    }
+  };
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const [gamesResponse, playersResponse, trendingResponse] = await Promise.all([
-          leaderboardApi.games({ range }),
-          leaderboardApi.players({ range }),
-          leaderboardApi.trendingGames()
-        ]);
-        setGames(gamesResponse.data.data);
-        setPlayers(playersResponse.data.data);
-        setTrending(trendingResponse.data.data);
-      } catch (error) {
-        showToast(getErrorMessage(error), "error");
-      }
-    };
     load();
   }, [range, showToast]);
 
@@ -54,6 +60,7 @@ const Leaderboards = () => {
             ))}
           </div>
         </div>
+        {error ? <ErrorState message={error} onRetry={load} /> : null}
         <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
           <div className="space-y-6">
             <GameLeaderboardTable rows={games} />

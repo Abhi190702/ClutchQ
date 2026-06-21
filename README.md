@@ -32,6 +32,8 @@ ClutchQ matches gamers using rank, role, region, language, availability, playsty
 - Teammate requests and lobby join requests
 - Owner-created Discord voice rooms for accepted lobby members
 - Game-first browse hub with poster cards, filters, game detail pages, and room queues
+- Steam-powered profile identity, library, recent activity, achievements, friends, heatmap, and player score
+- Profile account menu, mobile bottom navigation, retryable error states, and safer empty states
 - Manual playtime tracking with session timer, match ratings, and match analysis
 - Game and player leaderboards for weekly, monthly, and all-time activity
 - Admin analytics and report moderation
@@ -41,8 +43,8 @@ ClutchQ matches gamers using rank, role, region, language, availability, playsty
 
 - Frontend: ReactJS, Vite, JavaScript, Tailwind CSS, React Router DOM, Axios
 - Backend: Node.js, Express.js, MongoDB, Mongoose
-- Auth: JWT, bcryptjs, Google OAuth, and Discord OAuth
-- Integrations: Discord Bot API for lobby voice rooms
+- Auth: JWT, bcryptjs, Google OAuth, Discord OAuth, and Steam OpenID
+- Integrations: Steam Web API and Discord Bot API for lobby voice rooms
 - Tooling: nodemon and concurrently
 
 No Angular, Vue, Next.js, Bootstrap, Material UI, Chakra, ShadCN, chart libraries, or external UI component libraries are used.
@@ -142,9 +144,16 @@ Final Score = clamp(0, 100)
 - `GET /api/auth/google/callback`
 - `GET /api/auth/discord`
 - `GET /api/auth/discord/callback`
+- `GET /api/auth/steam`
+- `GET /api/auth/steam/callback`
 - `GET /api/profiles`
 - `GET /api/profiles/me`
 - `PUT /api/profiles/me`
+- `PATCH /api/profiles/me`
+- `POST /api/profiles/avatar`
+- `DELETE /api/profiles/avatar`
+- `GET /api/profiles/summary`
+- `GET /api/profiles/player-score`
 - `GET /api/matchmaking/recommendations`
 - `GET /api/matchmaking/compare/:profileId`
 - `POST /api/matchmaking/find-squad-now`
@@ -184,6 +193,17 @@ Final Score = clamp(0, 100)
 - `DELETE /api/game-rooms/:id`
 - `POST /api/game-rooms/:id/discord/create`
 - `GET /api/game-rooms/:id/discord`
+- `GET /api/steam/me`
+- `POST /api/steam/sync`
+- `GET /api/steam/sync-status`
+- `GET /api/steam/library`
+- `GET /api/steam/recent`
+- `GET /api/steam/favorites`
+- `GET /api/steam/achievements`
+- `GET /api/steam/friends`
+- `GET /api/steam/heatmap`
+- `GET /api/steam/player-score`
+- `GET /api/steam/match-insights`
 - `POST /api/activity/start`
 - `POST /api/activity/:id/stop`
 - `GET /api/activity/me`
@@ -246,6 +266,9 @@ DISCORD_CALLBACK_URL=http://localhost:5000/api/auth/discord/callback
 DISCORD_BOT_TOKEN=
 DISCORD_GUILD_ID=
 DISCORD_CATEGORY_ID=
+STEAM_API_KEY=
+STEAM_REALM=http://localhost:5000
+STEAM_CALLBACK_URL=http://localhost:5000/api/auth/steam/callback
 ```
 
 Client `.env`:
@@ -304,6 +327,27 @@ Manual test:
 5. Refresh the lobby and create again; the existing room should be reused.
 6. Check as a non-member; the invite should not be visible.
 
+## Steam Integration
+
+Steam login uses OpenID, and Steam profile/library data is fetched only by the backend with `STEAM_API_KEY`. Never put the Steam API key in `client/.env`.
+
+Local server values:
+
+```env
+STEAM_API_KEY=your_steam_web_api_key
+STEAM_REALM=http://localhost:5000
+STEAM_CALLBACK_URL=http://localhost:5000/api/auth/steam/callback
+```
+
+Production Render values:
+
+```env
+STEAM_REALM=https://clutchq-backend.onrender.com
+STEAM_CALLBACK_URL=https://clutchq-backend.onrender.com/api/auth/steam/callback
+```
+
+Steam privacy matters: library, friends, achievements, and recent activity only sync when the connected Steam profile exposes that data publicly.
+
 ## Demo Credentials
 
 Demo User:
@@ -337,7 +381,8 @@ See [docs/demo-script.md](docs/demo-script.md).
 ## Future Scope
 
 - Real-time lobby chat and ready checks with WebSockets
-- Steam, Epic Games, Microsoft, PlayStation, Xbox, and Nintendo account linking
+- Epic Games, Microsoft, PlayStation, Xbox, and Nintendo account linking
+- Deeper Steam achievement rarity analysis
 - Anti-toxicity reputation weighting
 - Tournament team builder mode
 - ML-assisted role recommendation
@@ -366,7 +411,7 @@ git push
 - MongoDB connection failed: start local MongoDB or set `MONGO_URI` to Atlas.
 - Demo login not found: run `npm run seed`.
 - Game browse is empty: run `npm run seed:games`, or the app will fall back to the built-in catalog until MongoDB has game rows.
-- Vite cannot reach API: confirm `server/.env` `PORT=5000` and `client/.env` `VITE_API_URL=http://localhost:5000/api`.
+- Vite cannot reach API: confirm `server/.env` `PORT=5000` and `client/.env` `VITE_LOCAL_API_URL=http://localhost:5000/api`.
 - JWT errors after changing secrets: log out, clear local storage, and log in again.
 
 ## License

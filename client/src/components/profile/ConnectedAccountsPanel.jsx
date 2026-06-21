@@ -1,6 +1,7 @@
 import { startProviderOAuth } from "../../utils/oauthLinks";
 import PlatformIcon from "../platformIcons/PlatformIcon";
-import { formatDate, providerStatusClass, providerStatusLabel } from "./profileDisplay";
+import { formatDate } from "../../utils/formatters";
+import { providerStatusClass, providerStatusLabel } from "./profileDisplay";
 
 const providerCopy = {
   google: "Login identity",

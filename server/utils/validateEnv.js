@@ -6,7 +6,9 @@ const optionalIntegrations = [
   ["Google OAuth", ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"]],
   ["Discord OAuth", ["DISCORD_CLIENT_ID", "DISCORD_CLIENT_SECRET"]],
   ["Discord voice rooms", ["DISCORD_BOT_TOKEN", "DISCORD_GUILD_ID"]],
-  ["Steam integration", ["STEAM_API_KEY"]]
+  ["Steam integration", ["STEAM_API_KEY"]],
+  ["Epic Games OAuth", ["EPIC_CLIENT_ID", "EPIC_CLIENT_SECRET"]],
+  ["Microsoft OAuth", ["MICROSOFT_CLIENT_ID", "MICROSOFT_CLIENT_SECRET"]]
 ];
 
 const present = (key) => Boolean(String(process.env[key] || "").trim());

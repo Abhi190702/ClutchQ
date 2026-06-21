@@ -28,7 +28,7 @@ const LobbyCard = ({ item, onJoin, requested = false }) => {
         <RankBadge rank={`${lobby.rankMin} - ${lobby.rankMax}`} />
         <Badge>{lobby.language}</Badge>
         <Badge>{lobby.micRequired ? "Mic Required" : "Mic Optional"}</Badge>
-        <Badge>{shortDateTime(lobby.startTime)}</Badge>
+        <Badge>{shortDateTime(lobby.startTime, "Starts when full")}</Badge>
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">

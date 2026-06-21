@@ -65,6 +65,9 @@ Required backend env values:
 DISCORD_BOT_TOKEN=
 DISCORD_GUILD_ID=
 DISCORD_CATEGORY_ID=
+STEAM_API_KEY=
+STEAM_REALM=https://clutchq-backend.onrender.com
+STEAM_CALLBACK_URL=https://clutchq-backend.onrender.com/api/auth/steam/callback
 ```
 
 Confirm:

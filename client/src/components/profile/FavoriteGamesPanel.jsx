@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { formatHours, getGameImage } from "./profileDisplay";
+import { formatHours } from "../../utils/formatters";
+import { getGameImage } from "./profileDisplay";
 import ProfileEmptyState from "./ProfileEmptyState";
 
 const FavoriteGamesPanel = ({ favorites = [] }) => (

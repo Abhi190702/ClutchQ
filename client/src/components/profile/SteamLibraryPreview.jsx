@@ -1,4 +1,5 @@
-import { formatDate, formatHours, getGameImage } from "./profileDisplay";
+import { formatDate, formatHours } from "../../utils/formatters";
+import { getGameImage } from "./profileDisplay";
 import ProfileEmptyState from "./ProfileEmptyState";
 
 const GameTile = ({ game }) => {
@@ -21,9 +22,9 @@ const GameTile = ({ game }) => {
 const SteamLibraryPreview = ({ library = [], recent = [], steamLinked = false, syncStatus, isDemo = false }) => {
   const totalMinutes = library.reduce((sum, game) => sum + (game.playtimeForeverMinutes || 0), 0);
   const unplayed = library.filter((game) => !game.playtimeForeverMinutes).length;
-  const emptyTitle = steamLinked ? "Steam returned no real library games yet." : "Steam library is private or unavailable.";
+  const emptyTitle = steamLinked ? "Steam connected. Your public library is hidden or empty." : "Steam library is private or unavailable.";
   const emptyDescription = steamLinked
-    ? syncStatus?.warnings?.[0] || "Click Sync Steam. If this stays empty, set Steam Profile and Game Details to Public, then sync again."
+    ? syncStatus?.warnings?.[0] || "Set Steam Profile and Game Details to Public, then sync again."
     : "Connect Steam or make your Steam game details public, then sync again.";
 
   return (
@@ -33,7 +34,7 @@ const SteamLibraryPreview = ({ library = [], recent = [], steamLinked = false, s
           <div className="eyebrow">Steam library</div>
           <h2 className="mt-2 text-2xl font-bold text-clutch-text">{isDemo ? "Demo library preview" : "Library preview"}</h2>
           <p className="mt-2 text-sm text-clutch-muted">
-            {isDemo ? "Sample Steam data shown only until a real Steam account is connected." : "A compact snapshot of your public Steam games."}
+            {isDemo ? "Sample Steam data shown until a Steam account is connected." : "A compact snapshot of your public Steam games."}
           </p>
         </div>
         <div className="grid grid-cols-3 gap-2 text-center">

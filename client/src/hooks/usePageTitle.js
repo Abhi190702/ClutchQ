@@ -30,12 +30,13 @@ const getRouteTitle = (pathname) => {
   return "Page not found";
 };
 
-const usePageTitle = () => {
+const usePageTitle = (title) => {
   const location = useLocation();
 
   useEffect(() => {
-    document.title = `${getRouteTitle(location.pathname)} | ClutchQ`;
-  }, [location.pathname]);
+    const pageTitle = title || getRouteTitle(location.pathname);
+    document.title = pageTitle === "ClutchQ" ? "ClutchQ" : `${pageTitle} | ClutchQ`;
+  }, [location.pathname, title]);
 };
 
 export default usePageTitle;

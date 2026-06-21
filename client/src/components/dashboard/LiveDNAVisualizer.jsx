@@ -1,7 +1,28 @@
+import { useEffect, useState } from "react";
 import ScoreRing from "../common/ScoreRing";
 import EmptyState from "../common/EmptyState";
 
+const clampScore = (value) => Math.max(0, Math.min(100, Number(value) || 0));
+
 const LiveDNAVisualizer = ({ breakdown = [], totalScore = 0 }) => {
+  const [mounted, setMounted] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    const shouldReduce = Boolean(media?.matches);
+    setReduceMotion(shouldReduce);
+    setMounted(false);
+
+    if (shouldReduce) {
+      setMounted(true);
+      return undefined;
+    }
+
+    const id = window.requestAnimationFrame(() => setMounted(true));
+    return () => window.cancelAnimationFrame(id);
+  }, [breakdown]);
+
   if (!breakdown.length) {
     return (
       <EmptyState
@@ -23,12 +44,15 @@ const LiveDNAVisualizer = ({ breakdown = [], totalScore = 0 }) => {
       </div>
       <div className="space-y-2">
         {breakdown.map((item, index) => {
-          const score = Math.max(0, Math.min(100, Number(item.score) || 0));
+          const score = clampScore(item.score);
+          const revealDelay = reduceMotion ? "0ms" : `${index * 90}ms`;
+          const barDelay = reduceMotion ? "0ms" : `${index * 90 + 120}ms`;
+
           return (
           <div
             key={item.key}
-            className="flex items-center justify-between rounded-md border border-clutch-border bg-clutch-panelSoft p-3 text-clutch-text"
-            style={{ animationDelay: `${index * 60}ms` }}
+            className={`flex items-center justify-between rounded-md border border-clutch-border bg-clutch-panelSoft p-3 text-clutch-text transition-all duration-500 ${mounted ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"}`}
+            style={{ transitionDelay: revealDelay }}
           >
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-3">
@@ -36,7 +60,13 @@ const LiveDNAVisualizer = ({ breakdown = [], totalScore = 0 }) => {
                 <span className="text-sm font-semibold">+{score}</span>
               </div>
               <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/25">
-                <div className="h-full rounded-full bg-clutch-blue transition-all duration-700" style={{ width: `${score}%` }} />
+                <div
+                  className="h-full rounded-full bg-clutch-blue transition-all duration-700"
+                  style={{
+                    width: mounted || reduceMotion ? `${score}%` : "0%",
+                    transitionDelay: barDelay
+                  }}
+                />
               </div>
             </div>
           </div>

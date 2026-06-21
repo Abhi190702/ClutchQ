@@ -1,4 +1,4 @@
-import { formatDate } from "./profileDisplay";
+import { formatDate } from "../../utils/formatters";
 import ProfileEmptyState from "./ProfileEmptyState";
 
 const AchievementShowcase = ({ summary }) => {

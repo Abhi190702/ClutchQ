@@ -1,4 +1,4 @@
-import { formatHours } from "../../utils/formatters";
+import { formatHours, formatPercentage, safeNumber } from "../../utils/formatters";
 
 const TopPlayersTable = ({ rows = [] }) => (
   <div className="overflow-hidden rounded-[10px] border border-[#2f2f36] bg-[#202024]">
@@ -13,7 +13,7 @@ const TopPlayersTable = ({ rows = [] }) => (
             <div className="min-w-0">
               <div className="truncate font-bold text-white">{row.user?.name || "Player"}</div>
               <div className="text-sm text-zinc-400">
-                {row.profile?.clutchTag || row.profile?.playerCode || "ClutchQ Player"} - Trust {row.profile?.trustScore || 70}
+                {row.profile?.clutchTag || row.profile?.playerCode || "ClutchQ Player"} - {Number.isNaN(safeNumber(row.profile?.trustScore, NaN)) ? "No trust data" : `Trust ${formatPercentage(row.profile.trustScore)}`}
               </div>
             </div>
             <div className="text-right font-bold text-white">{formatHours(row.playtime?.totalMinutes)}</div>

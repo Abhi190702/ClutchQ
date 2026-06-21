@@ -52,7 +52,7 @@ const GameRoomCard = ({ room, user, onUpdated, compact = false }) => {
           </div>
           <h3 className="truncate text-lg font-black text-white">{room.title}</h3>
           <p className="mt-1 text-sm text-zinc-400">
-            Hosted by {room.hostId?.name || "Player"} - {room.mode || "Open Lobby"} - starts {shortDateTime(room.startsAt)}
+            Hosted by {room.hostId?.name || "Player"} - {room.mode || "Open Lobby"} - starts {shortDateTime(room.startsAt, "when full")}
           </p>
           <div className="mt-3 flex flex-wrap gap-2 text-xs text-zinc-300">
             <span>{room.region || "Any region"}</span>

@@ -1,4 +1,4 @@
-import { formatMinutes, formatShortDate } from "./profileDisplay";
+import { formatMinutes, formatShortDate } from "../../utils/formatters";
 import ProfileEmptyState from "./ProfileEmptyState";
 
 const intensityClasses = [
@@ -36,8 +36,8 @@ const SteamActivityHeatmap = ({ days = [] }) => {
     return (
       <section id="heatmap" className="card p-5 md:p-6">
         <ProfileEmptyState
-          title="Steam activity is private or unavailable."
-          description="Start ClutchQ sessions or sync a public Steam profile to build your gaming heatmap."
+          title="Recent Steam activity is unavailable."
+          description="Set Steam Profile and Game Details to Public, then sync again. ClutchQ sessions can also build this heatmap."
         />
       </section>
     );

@@ -1,4 +1,4 @@
-import { formatDate, formatHours } from "./profileDisplay";
+import { formatDate, formatHours, formatPercentage, safeNumber } from "../../utils/formatters";
 
 const SnapshotMetric = ({ value, label, helper }) => (
   <div className="min-w-0 py-4">
@@ -12,12 +12,12 @@ const PlayerSnapshot = ({ bundle, library = [], steamSummary, syncStatus }) => {
   const { profile, playerScore } = bundle;
   const primaryGame = profile?.games?.find((game) => game.isPrimary) || profile?.games?.[0];
   const totalMinutes = library.reduce((sum, game) => sum + (game.playtimeForeverMinutes || 0), 0);
-  const trust = profile?.trustScore ?? profile?.averageRatings?.overall ?? 0;
+  const trust = safeNumber(profile?.trustScore ?? profile?.averageRatings?.overall, NaN);
   const lastSynced = syncStatus?.lastSyncedAt || steamSummary?.lastSyncedAt;
 
   const metrics = [
     { value: Math.round(playerScore?.overall ?? 0), label: "ClutchQ score", helper: playerScore?.explanation || "Player profile score" },
-    { value: `${Math.round(trust)}%`, label: "Trust", helper: `${profile?.totalReviews || 0} teammate reviews` },
+    { value: Number.isNaN(trust) ? "No data" : formatPercentage(trust), label: "Trust", helper: `${profile?.totalReviews || 0} teammate reviews` },
     { value: primaryGame?.gameName || "Not set", label: "Main game", helper: primaryGame?.rank || primaryGame?.tier || "Complete onboarding" },
     { value: library.length, label: "Steam library", helper: library.length ? `${formatHours(totalMinutes)} total playtime` : "Sync public games" },
     { value: lastSynced ? formatDate(lastSynced) : "Not synced", label: "Last Steam sync", helper: syncStatus?.status || steamSummary?.syncStatus || "Connect or sync Steam" }

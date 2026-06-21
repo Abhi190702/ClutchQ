@@ -66,7 +66,18 @@ const PlatformIcon = ({ provider = "default", size = 42, className = "" }) => {
       style={{ width: size, height: size }}
       aria-hidden="true"
     >
-      {image ? <img src={image} alt="" className="h-full w-full object-cover" /> : glyph}
+      {image ? (
+        <img
+          src={image}
+          alt=""
+          className="h-full w-full object-cover"
+          onError={(event) => {
+            event.currentTarget.style.display = "none";
+            event.currentTarget.nextElementSibling?.classList.remove("hidden");
+          }}
+        />
+      ) : null}
+      <span className={image ? "hidden" : ""}>{glyph}</span>
     </span>
   );
 };

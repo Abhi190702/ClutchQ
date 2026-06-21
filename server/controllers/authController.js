@@ -31,6 +31,8 @@ const oauthStateCookieOptions = {
 const oauthStateCookieName = (provider) => `clutchq_${provider}_oauth_state`;
 const oauthReturnCookieName = (provider) => `clutchq_${provider}_oauth_return_to`;
 const oauthNextCookieName = (provider) => `clutchq_${provider}_oauth_next`;
+const DEMO_EMAIL = "demo@clutchq.com";
+const DEMO_PASSWORD = "demo123";
 const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
 const safeNextPath = (value) => (typeof value === "string" && value.startsWith("/") && !value.startsWith("//") ? value : null);
 
@@ -312,7 +314,13 @@ export const login = asyncHandler(async (req, res) => {
     throw new Error("This account is suspended");
   }
 
-  const isMatch = await bcrypt.compare(password, user.passwordHash);
+  let isMatch = await bcrypt.compare(password, user.passwordHash);
+  if (!isMatch && normalizedEmail === DEMO_EMAIL && password === DEMO_PASSWORD) {
+    user.passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
+    await user.save();
+    isMatch = true;
+  }
+
   if (!isMatch) {
     res.status(401);
     throw new Error("Invalid email or password");
@@ -322,13 +330,13 @@ export const login = asyncHandler(async (req, res) => {
 });
 
 export const demoLogin = asyncHandler(async (req, res) => {
-  let user = await User.findOne({ email: "demo@clutchq.com" });
+  let user = await User.findOne({ email: DEMO_EMAIL });
 
   if (!user) {
-    const passwordHash = await bcrypt.hash("demo123", 10);
+    const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
     user = await User.create({
       name: "Abhijeet",
-      email: "demo@clutchq.com",
+      email: DEMO_EMAIL,
       passwordHash,
       role: "user",
       avatar: "/clutchq-logo.svg"

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { startProviderOAuth } from "../../utils/oauthLinks";
+import { formatPercentage, safeNumber } from "../../utils/formatters";
 import ProfileAvatarUploader from "./ProfileAvatarUploader";
 
 const ProfileHero = ({ bundle, libraryCount, steamLinked, onAvatarUpload, onAvatarRemove, onSyncSteam, syncing }) => {
@@ -8,7 +9,7 @@ const ProfileHero = ({ bundle, libraryCount, steamLinked, onAvatarUpload, onAvat
   const tag = profile?.playerCode || profile?.clutchTag || `CLQ-${String(user?._id || "PLAYER").slice(-5).toUpperCase()}`;
   const primaryGame = profile?.games?.find((game) => game.isPrimary) || profile?.games?.[0];
   const roles = primaryGame?.roles?.slice(0, 3) || [];
-  const trust = profile?.trustScore ?? profile?.averageRatings?.overall ?? null;
+  const trust = safeNumber(profile?.trustScore ?? profile?.averageRatings?.overall, NaN);
   const meta = [
     profile?.region || "Region not set",
     primaryGame?.gameName || "Primary game not set",
@@ -39,7 +40,7 @@ const ProfileHero = ({ bundle, libraryCount, steamLinked, onAvatarUpload, onAvat
                 {steamLinked ? "Steam connected" : steamSummary?.demo ? "Demo Steam preview" : "ClutchQ account"}
               </span>
               {profile?.micAvailable && <span className="rounded-full border border-clutch-green/30 bg-clutch-green/10 px-3 py-1 text-xs font-bold text-emerald-200">Mic ready</span>}
-              {trust !== null && <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-bold text-clutch-muted">Trust {Math.round(trust)}%</span>}
+              {!Number.isNaN(trust) && <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-bold text-clutch-muted">Trust {formatPercentage(trust)}</span>}
             </div>
 
             <h1 className="mt-4 break-words text-5xl font-black tracking-tight text-clutch-text md:text-6xl">{displayName}</h1>

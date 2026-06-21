@@ -1,4 +1,4 @@
-import { shortDateTime } from "../../utils/formatters";
+import { formatMinutes, formatRating, formatSafeDateTime } from "../../utils/formatters";
 
 const RecentSessions = ({ sessions = [] }) => (
   <section className="rounded-[10px] border border-[#2f2f36] bg-[#202024] p-5">
@@ -9,9 +9,9 @@ const RecentSessions = ({ sessions = [] }) => (
           <div key={session._id} className="flex flex-col gap-2 rounded-md border border-[#33333a] bg-[#18181c] p-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="font-bold text-white">{session.gameName}</div>
-              <div className="text-sm text-zinc-400">{shortDateTime(session.startedAt)} - {session.durationMinutes || 0} min</div>
+              <div className="text-sm text-zinc-400">{formatSafeDateTime(session.startedAt, "Start time unknown")} - {formatMinutes(session.durationMinutes)}</div>
             </div>
-            <div className="text-sm font-bold text-zinc-200">Rating {session.matchRating || 0}</div>
+            <div className="text-sm font-bold text-zinc-200">Rating {formatRating(session.matchRating)}</div>
           </div>
         ))
       ) : (

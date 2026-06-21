@@ -1,4 +1,4 @@
-import { formatHours } from "./profileDisplay";
+import { formatHours } from "../../utils/formatters";
 
 const palette = ["#35B8FF", "#34D399", "#FBBF24", "#A78BFA", "#71717A"];
 

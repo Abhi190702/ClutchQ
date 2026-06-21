@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PlatformIcon from "../platformIcons/PlatformIcon";
-import { getInitials } from "../profile/profileDisplay";
+import { getInitials } from "../../utils/formatters";
 
 const menuGroups = [
   [

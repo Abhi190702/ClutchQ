@@ -1,4 +1,4 @@
-import { formatDate } from "./profileDisplay";
+import { formatDate } from "../../utils/formatters";
 import ProfileEmptyState from "./ProfileEmptyState";
 
 const AchievementRow = ({ achievement }) => (
@@ -32,7 +32,7 @@ const SteamAchievementsPanel = ({ summary }) => {
       </div>
       {!total ? (
         <div className="mt-5">
-          <ProfileEmptyState title="No Steam achievements found yet." description="Sync Steam or play supported public games to fill this panel." />
+          <ProfileEmptyState title="No public Steam achievements found yet." description="Achievements depend on game support and Steam privacy." />
         </div>
       ) : (
         <>

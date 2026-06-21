@@ -3,7 +3,7 @@ import PlatformIcon from "../platformIcons/PlatformIcon";
 import AchievementShowcase from "./AchievementShowcase";
 import FriendGraphPreview from "./FriendGraphPreview";
 import SteamLibraryShelf from "./SteamLibraryShelf";
-import { formatDate, formatHours } from "./profileDisplay";
+import { formatDate, formatHours } from "../../utils/formatters";
 
 const SteamMetric = ({ value, label }) => (
   <div>

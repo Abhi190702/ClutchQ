@@ -1,9 +1,10 @@
-import { formatDate, formatHours, getGameImage } from "./profileDisplay";
+import { formatDate, formatHours } from "../../utils/formatters";
+import { getGameImage } from "./profileDisplay";
 import ProfileEmptyState from "./ProfileEmptyState";
 
 const SteamLibraryShelf = ({ library = [], recent = [], steamLinked, syncStatus, onSyncSteam, syncing }) => {
   const source = library.length ? library : recent;
-  const emptyTitle = steamLinked ? "Steam returned no public games yet." : "Steam is not connected yet.";
+  const emptyTitle = steamLinked ? "Steam connected. Your public library is hidden or empty." : "Steam is not connected yet.";
   const emptyDescription = steamLinked
     ? syncStatus?.warnings?.[0] || "Set Steam Profile and Game Details to Public, then sync again."
     : "Connect Steam to make your game library part of your ClutchQ identity.";

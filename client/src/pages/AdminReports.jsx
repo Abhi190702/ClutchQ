@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import PageShell from "../components/common/PageShell";
+import ErrorState from "../components/common/ErrorState";
 import SkeletonCard from "../components/common/SkeletonCard";
 import AdminReportsTable from "../components/admin/AdminReportsTable";
 import { useToast } from "../context/ToastContext";
@@ -9,14 +10,18 @@ const AdminReports = () => {
   const { showToast } = useToast();
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const load = async () => {
     setLoading(true);
+    setError("");
     try {
       const response = await api.get("/admin/reports");
       setReports(response.data.data);
     } catch (error) {
-      showToast(getErrorMessage(error), "error");
+      const message = getErrorMessage(error);
+      setError(message);
+      showToast(message, "error");
     } finally {
       setLoading(false);
     }
@@ -41,7 +46,7 @@ const AdminReports = () => {
 
   return (
     <PageShell title="Admin Reports" eyebrow="Moderation queue">
-      {loading ? <SkeletonCard rows={8} /> : <AdminReportsTable reports={reports} onAction={action} />}
+      {error ? <ErrorState message={error} onRetry={load} /> : loading ? <SkeletonCard rows={8} /> : <AdminReportsTable reports={reports} onAction={action} />}
     </PageShell>
   );
 };

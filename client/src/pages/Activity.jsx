@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import PageShell from "../components/common/PageShell";
+import ErrorState from "../components/common/ErrorState";
 import ActiveSessionTimer from "../components/activity/ActiveSessionTimer";
 import MostPlayedGames from "../components/activity/MostPlayedGames";
 import PlaytimeSummary from "../components/activity/PlaytimeSummary";
@@ -17,15 +18,19 @@ const Activity = () => {
   const [sessions, setSessions] = useState([]);
   const [ending, setEnding] = useState(null);
   const [form, setForm] = useState({ result: "completed", teamworkScore: 75, communicationScore: 75, performanceScore: 75, notes: "" });
+  const [error, setError] = useState("");
 
   const load = async () => {
+    setError("");
     try {
       const [gamesResponse, summaryResponse, sessionsResponse] = await Promise.all([gameApi.list(), activityApi.summary(), activityApi.me()]);
       setGames(gamesResponse.data.data);
       setSummary(summaryResponse.data.data);
       setSessions(sessionsResponse.data.data);
     } catch (error) {
-      showToast(getErrorMessage(error), "error");
+      const message = getErrorMessage(error);
+      setError(message);
+      showToast(message, "error");
     }
   };
 
@@ -52,6 +57,7 @@ const Activity = () => {
           <h1 className="text-4xl font-black tracking-tight text-white">Activity</h1>
           <p className="mt-3 max-w-2xl text-zinc-400">Track playtime, end sessions with match notes, and build a useful ClutchQ history.</p>
         </div>
+        {error ? <ErrorState message={error} onRetry={load} /> : null}
         <PlaytimeSummary aggregates={summary.aggregates} />
         <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
           <div className="space-y-6">

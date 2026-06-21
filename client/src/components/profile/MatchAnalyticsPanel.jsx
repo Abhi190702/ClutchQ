@@ -1,4 +1,4 @@
-import { formatMinutes } from "./profileDisplay";
+import { formatMinutes } from "../../utils/formatters";
 import ProfileEmptyState from "./ProfileEmptyState";
 
 const MatchAnalyticsPanel = ({ insights, recentActivitySummary }) => {

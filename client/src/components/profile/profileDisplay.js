@@ -1,6 +1,18 @@
-export { formatDate, formatHours, formatMinutes, formatShortDate, getInitials } from "../../utils/formatters";
-
 export const getGameImage = (game) => game?.logoUrl || game?.iconUrl || game?.image || "";
+
+export const providerDisplayName = (provider) => {
+  const map = {
+    google: "Google",
+    discord: "Discord",
+    steam: "Steam",
+    epic: "Epic Games",
+    microsoft: "Microsoft",
+    playstation: "PlayStation Network",
+    xbox: "Xbox Network",
+    nintendo: "Nintendo Account"
+  };
+  return map[provider] || provider || "Platform";
+};
 
 export const providerStatusLabel = (status) => {
   const map = {
@@ -10,6 +22,12 @@ export const providerStatusLabel = (status) => {
     manual_soon: "Manual soon"
   };
   return map[status] || status || "Not connected";
+};
+
+export const providerStatusTone = (status) => {
+  if (status === "connected") return "success";
+  if (status === "coming_soon" || status === "manual_soon") return "warning";
+  return "default";
 };
 
 export const providerStatusClass = (status) => {

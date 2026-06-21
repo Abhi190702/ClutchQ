@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { getInitials } from "./profileDisplay";
+import { getInitials } from "../../utils/formatters";
 
 const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 

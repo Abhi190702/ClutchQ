@@ -1,14 +1,42 @@
 import { Link } from "react-router-dom";
 
+const FallbackArt = ({ title = "Game" }) => (
+  <div className="grid h-full w-full place-items-center bg-[#18181c] px-4 text-center text-3xl font-black uppercase text-white/80">
+    {title.slice(0, 2)}
+  </div>
+);
+
 const GameHero = ({ game, onFindSquad, onCreateRoom, finding }) => (
   <section className="relative overflow-hidden rounded-[10px] border border-[#2f2f36] bg-[#202024]">
     <div className="absolute inset-0 opacity-35">
-      {game.coverUrl ? <img src={game.coverUrl} alt="" className="h-full w-full object-cover" /> : null}
+      {game.coverUrl ? (
+        <img
+          src={game.coverUrl}
+          alt=""
+          className="h-full w-full object-cover"
+          onError={(event) => {
+            event.currentTarget.style.display = "none";
+          }}
+        />
+      ) : null}
       <div className="absolute inset-0 bg-gradient-to-r from-[#121216] via-[#121216]/85 to-[#121216]/50" />
     </div>
     <div className="relative grid gap-6 p-5 md:grid-cols-[180px_1fr] md:p-8">
       <div className="aspect-[3/4] overflow-hidden rounded-[10px] bg-[#18181c]">
-        {game.posterUrl ? <img src={game.posterUrl} alt={game.title} className="h-full w-full object-cover" /> : null}
+        {game.posterUrl ? (
+          <img
+            src={game.posterUrl}
+            alt={game.title}
+            className="h-full w-full object-cover"
+            onError={(event) => {
+              event.currentTarget.style.display = "none";
+              event.currentTarget.nextElementSibling?.classList.remove("hidden");
+            }}
+          />
+        ) : null}
+        <div className={game.posterUrl ? "hidden h-full" : "h-full"}>
+          <FallbackArt title={game.title} />
+        </div>
       </div>
       <div className="flex min-w-0 flex-col justify-end">
         <div className="mb-3 text-sm font-semibold text-zinc-300">{game.category}</div>

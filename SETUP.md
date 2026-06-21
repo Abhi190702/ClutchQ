@@ -72,6 +72,25 @@ DISCORD_CATEGORY_ID=1517824708668817499
 
 The bot must be installed in that Discord server with Manage Channels, Create Invite, View Channels, Connect, and Speak permissions.
 
+## Steam Setup
+
+Steam login and sync use server-only env values. Put these in `server/.env` locally or Render environment variables in production:
+
+```env
+STEAM_API_KEY=your_steam_web_api_key
+STEAM_REALM=http://localhost:5000
+STEAM_CALLBACK_URL=http://localhost:5000/api/auth/steam/callback
+```
+
+For Render:
+
+```env
+STEAM_REALM=https://clutchq-backend.onrender.com
+STEAM_CALLBACK_URL=https://clutchq-backend.onrender.com/api/auth/steam/callback
+```
+
+Do not put `STEAM_API_KEY` in `client/.env` or Vercel. Steam library, friends, achievements, and recent activity depend on the connected Steam account privacy settings. Set Steam Profile and Game Details to Public, then sync again.
+
 ## Check Commands
 
 Client `.env` should keep the localhost fallback while still supporting deployed builds:

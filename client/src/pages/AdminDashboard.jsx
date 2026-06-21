@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PageShell from "../components/common/PageShell";
+import ErrorState from "../components/common/ErrorState";
 import SkeletonCard from "../components/common/SkeletonCard";
 import AdminStats from "../components/admin/AdminStats";
 import DiscordSetupStatus from "../components/admin/DiscordSetupStatus";
@@ -15,19 +16,32 @@ const AdminDashboard = () => {
   const { showToast } = useToast();
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
+  const [error, setError] = useState("");
+
+  const load = async () => {
+    setError("");
+    try {
+      const [statsResponse, usersResponse] = await Promise.all([api.get("/admin/stats"), api.get("/admin/users")]);
+      setStats(statsResponse.data.data);
+      setUsers(usersResponse.data.data);
+    } catch (error) {
+      const message = getErrorMessage(error);
+      setError(message);
+      showToast(message, "error");
+    }
+  };
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const [statsResponse, usersResponse] = await Promise.all([api.get("/admin/stats"), api.get("/admin/users")]);
-        setStats(statsResponse.data.data);
-        setUsers(usersResponse.data.data);
-      } catch (error) {
-        showToast(getErrorMessage(error), "error");
-      }
-    };
     load();
   }, []);
+
+  if (error) {
+    return (
+      <PageShell title="Admin Dashboard" eyebrow="Safety analytics">
+        <ErrorState message={error} onRetry={load} />
+      </PageShell>
+    );
+  }
 
   if (!stats) {
     return (

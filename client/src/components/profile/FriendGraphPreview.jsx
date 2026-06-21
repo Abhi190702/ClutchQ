@@ -1,4 +1,4 @@
-import { formatDate, getInitials } from "./profileDisplay";
+import { formatDate, getInitials } from "../../utils/formatters";
 import ProfileEmptyState from "./ProfileEmptyState";
 
 const FriendGraphPreview = ({ friends = [] }) => {
