@@ -7,7 +7,7 @@ import { asyncHandler } from "../middleware/errorMiddleware.js";
 import { normalizeGameRank } from "../utils/rankLogic.js";
 import generateBadges from "../utils/badgeEngine.js";
 import { summarizeReviewRatings } from "../utils/calculateTrustScore.js";
-import { calculatePlayerScore, getSteamIdentityForUser } from "../services/steamService.js";
+import { calculatePlayerScore, getSteamIdentityForUser, getSteamSyncStatusForUser } from "../services/steamService.js";
 
 const completenessFields = [
   "displayName",
@@ -66,9 +66,10 @@ const connectedAccountsForUser = (user) => {
 };
 
 const buildProfileBundle = async (req) => {
-  const [profile, steamSummary, playerScore, recentActivity, recentAnalysis] = await Promise.all([
+  const [profile, steamSummary, steamSyncStatus, playerScore, recentActivity, recentAnalysis] = await Promise.all([
     GamerProfile.findOne({ userId: req.user._id }).populate("userId", "name email avatar role createdAt"),
     getSteamIdentityForUser(req.user),
+    getSteamSyncStatusForUser(req.user),
     calculatePlayerScore(req.user),
     GameActivity.find({ userId: req.user._id }).sort({ startedAt: -1 }).limit(8),
     MatchAnalysis.find({ userId: req.user._id }).sort({ createdAt: -1 }).limit(6)
@@ -79,6 +80,7 @@ const buildProfileBundle = async (req) => {
     profile,
     connectedAccounts: connectedAccountsForUser(req.user),
     steamSummary,
+    steamSyncStatus,
     playerScore,
     recentActivitySummary: {
       sessions: recentActivity,

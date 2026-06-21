@@ -12,6 +12,7 @@ const clean = async (request) => {
 export const steamApi = {
   getSteamMe: () => clean(api.get("/steam/me")),
   syncSteam: () => clean(api.post("/steam/sync")),
+  getSteamSyncStatus: () => clean(api.get("/steam/sync-status")),
   getSteamLibrary: () => clean(api.get("/steam/library")),
   getSteamRecent: () => clean(api.get("/steam/recent")),
   getSteamFavorites: () => clean(api.get("/steam/favorites")),

@@ -34,7 +34,8 @@ const steamSyncLogSchema = new mongoose.Schema(
       friends: { type: Number, default: 0 },
       recentGames: { type: Number, default: 0 }
     },
-    privateSections: [String]
+    privateSections: [String],
+    warnings: [String]
   },
   { timestamps: true }
 );

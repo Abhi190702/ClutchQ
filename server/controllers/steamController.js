@@ -9,6 +9,7 @@ import {
   getSteamIdentityForUser,
   getSteamLibraryForUser,
   getSteamRecentForUser,
+  getSteamSyncStatusForUser,
   syncSteamForUser,
   SteamServiceError
 } from "../services/steamService.js";
@@ -44,7 +45,8 @@ export const syncSteam = asyncHandler(async (req, res) => {
         recentSynced: result.counts.recentGames,
         friendsSynced: result.counts.friends,
         achievementsSynced: result.counts.achievements,
-        privateSections: result.privateSections
+        privateSections: result.privateSections,
+        warnings: result.warnings
       }
     });
   } catch (error) {
@@ -121,5 +123,14 @@ export const getSteamMatchInsights = asyncHandler(async (req, res) => {
     success: true,
     message: "Match insights loaded",
     data: insights
+  });
+});
+
+export const getSteamSyncStatus = asyncHandler(async (req, res) => {
+  const status = await getSteamSyncStatusForUser(req.user);
+  res.json({
+    success: true,
+    message: "Steam sync status loaded",
+    data: status
   });
 });

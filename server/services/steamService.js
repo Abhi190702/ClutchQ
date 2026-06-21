@@ -28,6 +28,9 @@ const isDemoUser = (user) => user?.email === "demo@clutchq.com";
 const minutesToHours = (minutes = 0) => Math.round((minutes / 60) * 10) / 10;
 const clamp = (value, min = 0, max = 100) => Math.max(min, Math.min(max, Math.round(value)));
 const getApiKey = () => process.env.STEAM_API_KEY;
+const pushUnique = (items, value) => {
+  if (value && !items.includes(value)) items.push(value);
+};
 
 const steamImage = (appId, hash) => (hash ? `https://media.steampowered.com/steamcommunity/public/images/apps/${appId}/${hash}.jpg` : "");
 
@@ -89,6 +92,7 @@ export const getPlayerAchievements = async (steamId, appId) => {
 };
 
 export const getSteamProvider = (user) => user?.authProviders?.steam || null;
+const shouldUseDemoSteamData = (user) => isDemoUser(user) && !getSteamProvider(user)?.steamId;
 
 const normalizeUrlValue = (value) => {
   if (!value) return null;
@@ -287,6 +291,7 @@ export const syncSteamForUser = async (user) => {
 
   const log = await SteamSyncLog.create({ userId: user._id, steamId: provider.steamId, syncType: "full", status: "running" });
   const privateSections = [];
+  const warnings = [];
   const counts = { games: 0, achievements: 0, friends: 0, recentGames: 0 };
 
   try {
@@ -304,9 +309,21 @@ export const syncSteamForUser = async (user) => {
     const recentGames = recentResult.status === "fulfilled" ? recentResult.value : [];
     const friends = friendsResult.status === "fulfilled" ? friendsResult.value : [];
 
-    if (gamesResult.status === "rejected") privateSections.push("library");
-    if (recentResult.status === "rejected") privateSections.push("recent");
-    if (friendsResult.status === "rejected") privateSections.push("friends");
+    if (gamesResult.status === "rejected") {
+      pushUnique(privateSections, "library");
+    } else if (!games.length) {
+      warnings.push("Steam returned no library games. Set Steam Profile and Game Details to Public, then sync again.");
+    }
+
+    if (recentResult.status === "rejected") {
+      pushUnique(privateSections, "recent activity");
+    } else if (!recentGames.length && games.length) {
+      warnings.push("Steam returned no recent games. This is normal if you have not played recently or recent activity is private.");
+    }
+
+    if (friendsResult.status === "rejected") {
+      pushUnique(privateSections, "friends");
+    }
 
     user.authProviders = {
       ...(user.authProviders?.toObject?.() || user.authProviders || {}),
@@ -331,26 +348,34 @@ export const syncSteamForUser = async (user) => {
         const data = await steamFetch("ISteamUser/GetPlayerSummaries/v0002/", { steamids: friendIds });
         friendSummaries = data?.response?.players || [];
       } catch {
-        privateSections.push("friend profiles");
+        pushUnique(privateSections, "friend profiles");
       }
       counts.friends = await upsertSteamFriends(user._id, provider.steamId, friends.slice(0, 80), friendSummaries);
+    } else if (friendsResult.status === "fulfilled") {
+      warnings.push("Steam returned no friends. Your friends list may be private or empty.");
     }
 
     const storedGames = await SteamGame.find({ userId: user._id }).sort({ playtimeForeverMinutes: -1 }).limit(10);
     counts.achievements = await upsertAchievements(user._id, provider.steamId, storedGames);
 
-    log.status = privateSections.length ? "partial" : "success";
-    log.message = privateSections.length ? "Steam synced with private sections skipped." : "Steam synced successfully.";
+    if (storedGames.length && !counts.achievements) {
+      warnings.push("Steam achievements were unavailable for the synced top games.");
+    }
+
+    log.status = privateSections.length || warnings.length ? "partial" : "success";
+    log.message = privateSections.length || warnings.length ? "Steam synced with some unavailable sections." : "Steam synced successfully.";
     log.privateSections = privateSections;
+    log.warnings = warnings;
     log.counts = counts;
     log.finishedAt = new Date();
     await log.save();
 
-    return { counts, privateSections, message: log.message };
+    return { counts, privateSections, warnings, message: log.message };
   } catch (error) {
     log.status = "failed";
     log.message = error.message || "Steam sync failed.";
     log.privateSections = privateSections;
+    log.warnings = warnings;
     log.counts = counts;
     log.finishedAt = new Date();
     await log.save();
@@ -359,7 +384,7 @@ export const syncSteamForUser = async (user) => {
 };
 
 export const getSteamIdentityForUser = async (user) => {
-  if (isDemoUser(user) && !getSteamProvider(user)?.steamId) return demoSteamIdentity;
+  if (shouldUseDemoSteamData(user)) return demoSteamIdentity;
   const provider = getSteamProvider(user);
   if (!provider?.steamId) return { connected: false };
   const lastLog = await SteamSyncLog.findOne({ userId: user._id }).sort({ startedAt: -1 });
@@ -372,12 +397,16 @@ export const getSteamIdentityForUser = async (user) => {
     profileUrl: provider.profileUrl,
     level: provider.level,
     lastSyncedAt: provider.lastSyncedAt || provider.connectedAt,
-    privacyStatus: lastLog?.privateSections?.length ? `Private: ${lastLog.privateSections.join(", ")}` : "Public or partially public"
+    privacyStatus: lastLog?.privateSections?.length ? `Private: ${lastLog.privateSections.join(", ")}` : "Public or partially public",
+    syncStatus: lastLog?.status || "never_synced",
+    syncMessage: lastLog?.message,
+    warnings: lastLog?.warnings || [],
+    privateSections: lastLog?.privateSections || []
   };
 };
 
 export const getSteamLibraryForUser = async (user) => {
-  if (isDemoUser(user) && !(await SteamGame.exists({ userId: user._id }))) return demoSteamGames;
+  if (shouldUseDemoSteamData(user) && !(await SteamGame.exists({ userId: user._id }))) return demoSteamGames;
   return SteamGame.find({ userId: user._id }).sort({ playtimeForeverMinutes: -1 }).limit(200);
 };
 
@@ -390,13 +419,41 @@ export const getSteamRecentForUser = async (user) => {
 };
 
 export const getSteamAchievementsForUser = async (user) => {
-  if (isDemoUser(user) && !(await SteamAchievement.exists({ userId: user._id }))) return demoSteamAchievements;
+  if (shouldUseDemoSteamData(user) && !(await SteamAchievement.exists({ userId: user._id }))) return demoSteamAchievements;
   return SteamAchievement.find({ userId: user._id }).sort({ achieved: -1, unlockTime: -1 }).limit(300);
 };
 
 export const getSteamFriendsForUser = async (user) => {
-  if (isDemoUser(user) && !(await SteamFriend.exists({ userId: user._id }))) return demoSteamFriends;
+  if (shouldUseDemoSteamData(user) && !(await SteamFriend.exists({ userId: user._id }))) return demoSteamFriends;
   return SteamFriend.find({ userId: user._id }).sort({ onClutchQ: -1, displayName: 1 }).limit(80);
+};
+
+export const getSteamSyncStatusForUser = async (user) => {
+  const provider = getSteamProvider(user);
+  if (!provider?.steamId) {
+    return shouldUseDemoSteamData(user)
+      ? { connected: false, demo: true, status: "demo", message: "Showing demo Steam data until a real Steam account is connected." }
+      : { connected: false, status: "not_connected", message: "Connect Steam before syncing." };
+  }
+
+  const [lastLog, games, achievements, friends] = await Promise.all([
+    SteamSyncLog.findOne({ userId: user._id, steamId: provider.steamId }).sort({ startedAt: -1 }),
+    SteamGame.countDocuments({ userId: user._id, steamId: provider.steamId }),
+    SteamAchievement.countDocuments({ userId: user._id, steamId: provider.steamId }),
+    SteamFriend.countDocuments({ userId: user._id, steamId: provider.steamId })
+  ]);
+
+  return {
+    connected: true,
+    steamId: provider.steamId,
+    status: lastLog?.status || "never_synced",
+    message: lastLog?.message || "Steam connected. Run Sync Steam to import your public Steam data.",
+    lastSyncedAt: lastLog?.finishedAt || provider.lastSyncedAt || provider.connectedAt,
+    counts: lastLog?.counts || { games, achievements, friends, recentGames: 0 },
+    storedCounts: { games, achievements, friends },
+    privateSections: lastLog?.privateSections || [],
+    warnings: lastLog?.warnings || []
+  };
 };
 
 export const getFavoriteGamesForUser = async (user) => {

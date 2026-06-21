@@ -9,6 +9,7 @@ import {
   getSteamMe,
   getSteamPlayerScore,
   getSteamRecent,
+  getSteamSyncStatus,
   syncSteam
 } from "../controllers/steamController.js";
 import { protect } from "../middleware/authMiddleware.js";
@@ -18,6 +19,7 @@ const router = express.Router();
 router.use(protect);
 router.get("/me", getSteamMe);
 router.post("/sync", syncSteam);
+router.get("/sync-status", getSteamSyncStatus);
 router.get("/library", getSteamLibrary);
 router.get("/recent", getSteamRecent);
 router.get("/favorites", getSteamFavorites);

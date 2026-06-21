@@ -18,17 +18,23 @@ const GameTile = ({ game }) => {
   );
 };
 
-const SteamLibraryPreview = ({ library = [], recent = [] }) => {
+const SteamLibraryPreview = ({ library = [], recent = [], steamLinked = false, syncStatus, isDemo = false }) => {
   const totalMinutes = library.reduce((sum, game) => sum + (game.playtimeForeverMinutes || 0), 0);
   const unplayed = library.filter((game) => !game.playtimeForeverMinutes).length;
+  const emptyTitle = steamLinked ? "Steam returned no real library games yet." : "Steam library is private or unavailable.";
+  const emptyDescription = steamLinked
+    ? syncStatus?.warnings?.[0] || "Click Sync Steam. If this stays empty, set Steam Profile and Game Details to Public, then sync again."
+    : "Connect Steam or make your Steam game details public, then sync again.";
 
   return (
     <section id="library" className="card p-5 md:p-6">
       <div className="flex flex-col gap-3 border-b border-clutch-border pb-4 md:flex-row md:items-end md:justify-between">
         <div>
           <div className="eyebrow">Steam library</div>
-          <h2 className="mt-2 text-2xl font-bold text-clutch-text">Library preview</h2>
-          <p className="mt-2 text-sm text-clutch-muted">A compact snapshot of your public Steam games.</p>
+          <h2 className="mt-2 text-2xl font-bold text-clutch-text">{isDemo ? "Demo library preview" : "Library preview"}</h2>
+          <p className="mt-2 text-sm text-clutch-muted">
+            {isDemo ? "Sample Steam data shown only until a real Steam account is connected." : "A compact snapshot of your public Steam games."}
+          </p>
         </div>
         <div className="grid grid-cols-3 gap-2 text-center">
           <div className="rounded-md border border-clutch-border px-3 py-2">
@@ -47,7 +53,7 @@ const SteamLibraryPreview = ({ library = [], recent = [] }) => {
       </div>
       {!library.length ? (
         <div className="mt-5">
-          <ProfileEmptyState title="Steam library is private or unavailable." description="Make your Steam game details public, then sync again." />
+          <ProfileEmptyState title={emptyTitle} description={emptyDescription} />
         </div>
       ) : (
         <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_0.8fr]">

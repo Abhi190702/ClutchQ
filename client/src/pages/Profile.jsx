@@ -30,7 +30,8 @@ const defaultSteamData = {
   achievements: null,
   friends: [],
   heatmap: [],
-  insights: null
+  insights: null,
+  syncStatus: null
 };
 
 const Profile = () => {
@@ -47,9 +48,10 @@ const Profile = () => {
     setError("");
 
     try {
-      const [profileResult, libraryResult, recentResult, favoritesResult, achievementsResult, friendsResult, heatmapResult, insightsResult] =
+      const [profileResult, syncStatusResult, libraryResult, recentResult, favoritesResult, achievementsResult, friendsResult, heatmapResult, insightsResult] =
         await Promise.allSettled([
           profileApi.getProfile(),
+          steamApi.getSteamSyncStatus(),
           steamApi.getSteamLibrary(),
           steamApi.getSteamRecent(),
           steamApi.getSteamFavorites(),
@@ -64,6 +66,7 @@ const Profile = () => {
 
       setBundle(nextBundle);
       setSteam({
+        syncStatus: fromResult(syncStatusResult, nextBundle.steamSyncStatus || null),
         library: fromResult(libraryResult, []),
         recent: fromResult(recentResult, []),
         favorites: fromResult(favoritesResult, []),
@@ -101,7 +104,8 @@ const Profile = () => {
     setSyncing(true);
     try {
       const response = await steamApi.syncSteam();
-      showToast(response.data.message || "Steam synced successfully.", "success");
+      const warnings = response.data.data?.warnings || [];
+      showToast(warnings[0] || response.data.message || "Steam synced successfully.", warnings.length ? "info" : "success");
       await loadProfile({ silent: true });
     } catch (syncError) {
       showToast(getErrorMessage(syncError), "error");
@@ -128,6 +132,7 @@ const Profile = () => {
 
   const score = bundle.playerScore || {};
   const steamLinked = bundle.connectedAccounts?.some((account) => account.id === "steam" && account.status === "connected");
+  const steamSyncStatus = steam.syncStatus || bundle.steamSyncStatus;
 
   return (
     <ProfileShell actions={<Link to="/onboarding" className="btn-secondary">Edit profile</Link>}>
@@ -141,11 +146,11 @@ const Profile = () => {
         syncing={syncing}
       />
       <ConnectedAccountsPanel accounts={bundle.connectedAccounts} steamSummary={bundle.steamSummary} onSyncSteam={handleSteamSync} syncing={syncing} />
-      <SteamIdentityCard steamSummary={bundle.steamSummary} steamLinked={steamLinked} />
+      <SteamIdentityCard steamSummary={bundle.steamSummary} steamLinked={steamLinked} syncStatus={steamSyncStatus} />
       <PlayerScorePanel score={score} />
       <SteamActivityHeatmap days={steam.heatmap} />
       <FavoriteGamesPanel favorites={steam.favorites} />
-      <SteamLibraryPreview library={steam.library} recent={steam.recent} />
+      <SteamLibraryPreview library={steam.library} recent={steam.recent} steamLinked={steamLinked} syncStatus={steamSyncStatus} isDemo={bundle.steamSummary?.demo} />
       <SteamAchievementsPanel summary={steam.achievements} />
       <SteamFriendsPanel friends={steam.friends} />
       <MatchAnalyticsPanel insights={steam.insights} recentActivitySummary={bundle.recentActivitySummary} />
