@@ -79,19 +79,19 @@ const ProfileAvatarUploader = ({ user, profile, steamSummary, onUpload, onRemove
   };
 
   return (
-    <div className={`flex ${compact ? "items-center gap-3" : "flex-col items-center gap-4"}`}>
+    <div className={`flex ${compact ? "flex-col items-center gap-3" : "flex-col items-center gap-4"}`}>
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        className={`grid shrink-0 place-items-center overflow-hidden rounded-full border border-clutch-border bg-clutch-panelSoft text-3xl font-bold text-clutch-text transition hover:border-zinc-500 ${
-          compact ? "h-16 w-16" : "h-32 w-32 md:h-36 md:w-36"
+        className={`grid shrink-0 place-items-center overflow-hidden rounded-full border border-clutch-border bg-clutch-panelSoft font-bold text-clutch-text transition hover:border-zinc-500 ${
+          compact ? "h-32 w-32 text-4xl md:h-36 md:w-36" : "h-32 w-32 text-3xl md:h-36 md:w-36"
         }`}
         aria-label="Upload profile avatar"
       >
         {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : getInitials(displayName)}
       </button>
       <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleFile} />
-      <div className={compact ? "min-w-0" : "text-center"}>
+      <div className={compact ? "w-full min-w-0 text-center" : "text-center"}>
         <div className="flex flex-wrap justify-center gap-2">
           <button type="button" className="btn-secondary px-3 py-2 text-xs" onClick={() => inputRef.current?.click()} disabled={saving}>
             {saving ? "Saving..." : "Upload photo"}

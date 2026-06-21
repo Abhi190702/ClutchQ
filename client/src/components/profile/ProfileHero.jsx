@@ -12,19 +12,19 @@ const ProfileHero = ({ bundle, libraryCount, steamLinked, onAvatarUpload, onAvat
 
   return (
     <section id="overview" className="card overflow-hidden">
-      <div className={`${minimal ? "" : "border-b border-clutch-border"} bg-[#18181c] px-5 py-6 md:px-7`}>
-        <div className={`flex flex-col gap-6 ${minimal ? "md:flex-row md:items-center" : "md:flex-row md:items-center"}`}>
+      <div className={`${minimal ? "" : "border-b border-clutch-border"} bg-[#18181c] px-5 py-5 md:px-7 md:py-6`}>
+        <div className={minimal ? "grid gap-6 md:grid-cols-[180px_minmax(0,1fr)] md:items-start" : "flex flex-col gap-6 md:flex-row md:items-center"}>
           <ProfileAvatarUploader user={user} profile={profile} steamSummary={steamSummary} onUpload={onAvatarUpload} onRemove={onAvatarRemove} compact={minimal} />
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 md:pt-1">
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full border border-clutch-border bg-clutch-panel px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-clutch-muted">
                 {steamLinked ? "Steam connected" : steamSummary?.demo ? "Demo Steam preview" : "ClutchQ account"}
               </span>
               {profile?.micAvailable && <span className="rounded-full border border-clutch-green/30 bg-clutch-green/10 px-3 py-1 text-xs font-bold text-emerald-200">Mic ready</span>}
             </div>
-            <h1 className={`mt-4 break-words font-black tracking-tight text-clutch-text ${minimal ? "text-3xl md:text-4xl" : "text-4xl md:text-5xl"}`}>{displayName}</h1>
-            <p className="mt-2 text-sm font-semibold text-clutch-muted">{tag}</p>
-            <p className={`mt-4 max-w-3xl text-base leading-7 text-zinc-300 ${minimal ? "line-clamp-2" : ""}`}>
+            <h1 className={`mt-3 break-words font-black tracking-tight text-clutch-text ${minimal ? "text-4xl md:text-5xl" : "text-4xl md:text-5xl"}`}>{displayName}</h1>
+            <p className="mt-1 text-base font-bold tracking-wide text-zinc-300">{tag}</p>
+            <p className={`mt-3 max-w-4xl text-base leading-7 text-zinc-300 ${minimal ? "line-clamp-2" : ""}`}>
               {profile?.bio || "Build your Steam-powered ClutchQ identity with games, achievements, friends, reliable lobbies, and teammate reviews."}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
@@ -34,7 +34,7 @@ const ProfileHero = ({ bundle, libraryCount, steamLinked, onAvatarUpload, onAvat
                 <span key={role} className="rounded-md border border-clutch-border bg-clutch-panel px-3 py-2 text-sm text-clutch-muted">{role}</span>
               ))}
             </div>
-            <div className="mt-6 flex flex-wrap gap-3">
+            <div className="mt-5 flex flex-wrap gap-3">
               <Link to="/onboarding" className="btn-secondary">Edit profile</Link>
               <Link to="/dashboard" className="btn-primary">Find matches</Link>
               {steamLinked ? (
