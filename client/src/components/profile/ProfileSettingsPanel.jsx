@@ -15,15 +15,15 @@ const ProfileSettingsPanel = ({ bundle, onAvatarUpload, onAvatarRemove }) => {
   const { user, profile, steamSummary } = bundle;
 
   return (
-    <section className="rounded-md border border-white/10 bg-[#1b1b20] p-5 md:p-6">
+    <section className="border-b border-white/10 py-8 md:py-10">
       <div className="grid gap-7 lg:grid-cols-[260px_minmax(0,1fr)]">
         <div>
           <div className="eyebrow">Settings</div>
-          <h2 className="mt-2 text-2xl font-black text-clutch-text">Profile controls</h2>
-          <p className="mt-3 text-sm leading-6 text-clutch-muted">
+          <h2 className="mt-2 text-3xl font-black tracking-tight text-clutch-text md:text-4xl">Profile controls</h2>
+          <p className="mt-3 text-base leading-7 text-clutch-muted">
             Keep high-friction controls here so the public profile stays clean.
           </p>
-          <div className="mt-6 rounded-md bg-black/15 p-4">
+          <div className="mt-6">
             <ProfileAvatarUploader
               user={user}
               profile={profile}
@@ -34,7 +34,7 @@ const ProfileSettingsPanel = ({ bundle, onAvatarUpload, onAvatarRemove }) => {
           </div>
         </div>
 
-        <div className="rounded-md bg-black/15 px-4">
+        <div className="px-0 lg:px-4">
           <SettingRow
             title="Identity and matchmaking basics"
             description="Edit display name, bio, region, main game, roles, availability, and mic status from the onboarding editor."

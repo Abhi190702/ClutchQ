@@ -44,20 +44,20 @@ const GamingActivityVisual = ({ heatmap = [], library = [], recentActivitySummar
   let offset = 25;
 
   return (
-    <section className="rounded-md border border-white/10 bg-[#1b1b20] p-5 md:p-6">
+    <section className="border-b border-white/10 py-8 md:py-10">
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
           <div className="eyebrow">Activity</div>
-          <h2 className="mt-2 text-2xl font-black text-clutch-text">Gaming rhythm</h2>
+          <h2 className="mt-2 text-3xl font-black tracking-tight text-clutch-text md:text-4xl">Gaming rhythm</h2>
         </div>
-        <div className="text-sm text-clutch-muted">
+        <div className="text-base text-clutch-muted">
           <span className="font-black text-clutch-text">{formatHours(totalMinutes)}</span> tracked - {activeDays} active days
         </div>
       </div>
 
-      <div className={`mt-6 grid gap-6 ${compact ? "lg:grid-cols-[1fr_260px]" : "lg:grid-cols-[minmax(0,1fr)_320px]"}`}>
+      <div className={`mt-8 grid gap-8 ${compact ? "lg:grid-cols-[1fr_260px]" : "lg:grid-cols-[minmax(0,1fr)_320px]"}`}>
         <div className="min-w-0">
-          <div className="overflow-hidden rounded-md bg-black/15 p-4">
+          <div className="overflow-hidden">
             <svg viewBox="0 0 520 180" className="h-48 w-full" preserveAspectRatio="none" aria-label="Gaming rhythm chart">
               <path d={`${path} L 520 180 L 0 180 Z`} fill="rgba(53,184,255,0.08)" />
               <path d={path} fill="none" stroke={hasRhythm ? "#35B8FF" : "#52525B"} strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" />
@@ -78,8 +78,8 @@ const GamingActivityVisual = ({ heatmap = [], library = [], recentActivitySummar
           </div>
         </div>
 
-        <div className="rounded-md bg-black/15 p-4">
-          <div className="text-sm font-bold uppercase tracking-[0.16em] text-clutch-muted">Game time split</div>
+        <div className="border-l border-white/10 pl-0 lg:pl-8">
+          <div className="text-sm font-black uppercase tracking-[0.16em] text-clutch-muted">Game time split</div>
           <div className="mt-5 flex items-center justify-center">
             <svg viewBox="0 0 42 42" className="h-36 w-36 -rotate-90">
               <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#2a2a30" strokeWidth="5" />

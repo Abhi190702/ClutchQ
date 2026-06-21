@@ -43,7 +43,7 @@ const OAuthSuccess = () => {
   return (
     <main className="grid min-h-screen place-items-center bg-[#101116] px-4 text-white">
       <div className="w-full max-w-sm rounded-md border border-[#2d2e35] bg-[#1b1c22] p-6 text-center">
-        <img src="/clutchq-logo.svg" alt="ClutchQ" className="mx-auto h-12 w-12 rounded-xl" />
+        <img src="/brand/clutchq-logo.png" alt="ClutchQ" className="mx-auto h-14 w-14 rounded-2xl object-cover" />
         <h1 className="mt-5 text-2xl font-semibold">Completing sign in...</h1>
         <p className="mt-2 text-sm leading-6 text-slate-400">Hold tight while ClutchQ secures your session.</p>
       </div>

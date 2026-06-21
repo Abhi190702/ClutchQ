@@ -7,8 +7,8 @@ import { formatDate, formatHours } from "./profileDisplay";
 
 const SteamMetric = ({ value, label }) => (
   <div>
-    <div className="text-xl font-black text-clutch-text">{value}</div>
-    <div className="mt-1 text-xs font-bold uppercase tracking-[0.14em] text-clutch-muted">{label}</div>
+    <div className="text-3xl font-black text-clutch-text">{value}</div>
+    <div className="mt-1 text-xs font-black uppercase tracking-[0.16em] text-clutch-muted">{label}</div>
   </div>
 );
 
@@ -31,16 +31,16 @@ const SteamProfileSection = ({
   const hasSteam = steamLinked || steamSummary?.connected;
 
   return (
-    <section className="rounded-md border border-white/10 bg-[#1b1b20]">
-      <div className="grid gap-5 border-b border-white/10 p-5 md:grid-cols-[minmax(0,1fr)_auto] md:p-6">
+    <section className="border-b border-white/10 py-8 md:py-10">
+      <div className="grid gap-6 border-b border-white/10 pb-7 md:grid-cols-[minmax(0,1fr)_auto]">
         <div className="flex min-w-0 gap-4">
-          <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-full bg-clutch-panelSoft">
-            {steamSummary?.avatar ? <img src={steamSummary.avatar} alt="" className="h-full w-full object-cover" /> : <PlatformIcon provider="steam" size={64} />}
+          <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-full bg-clutch-panelSoft">
+            {steamSummary?.avatar ? <img src={steamSummary.avatar} alt="" className="h-full w-full object-cover" /> : <PlatformIcon provider="steam" size={80} />}
           </div>
           <div className="min-w-0">
             <div className="eyebrow">Steam identity</div>
-            <h2 className="mt-2 break-words text-3xl font-black text-clutch-text">{hasSteam ? steamSummary?.displayName || "Steam Player" : "Connect Steam"}</h2>
-            <p className="mt-2 text-sm leading-6 text-clutch-muted">
+            <h2 className="mt-2 break-words text-4xl font-black tracking-tight text-clutch-text md:text-5xl">{hasSteam ? steamSummary?.displayName || "Steam Player" : "Connect Steam"}</h2>
+            <p className="mt-3 text-base leading-7 text-clutch-muted">
               {hasSteam
                 ? `SteamID64 ${steamSummary?.steamId || syncStatus?.steamId || "available after sync"}`
                 : "Bring in public library, playtime, achievements, and friends for a richer ClutchQ profile."}
@@ -66,8 +66,8 @@ const SteamProfileSection = ({
         </div>
       </div>
 
-      <div className="p-5 md:p-6">
-        <div className="grid gap-5 border-b border-white/10 pb-5 md:grid-cols-6">
+      <div className="pt-7">
+        <div className="grid gap-6 border-b border-white/10 pb-7 md:grid-cols-6">
           <SteamMetric value={library.length} label="Games owned" />
           <SteamMetric value={formatHours(totalMinutes)} label="Total playtime" />
           <SteamMetric value={formatHours(recentMinutes)} label="Last two weeks" />
@@ -77,16 +77,16 @@ const SteamProfileSection = ({
         </div>
 
         {warning && (
-          <div className="mt-5 rounded-md border border-clutch-amber/25 bg-clutch-amber/10 px-4 py-3 text-sm font-semibold text-amber-100">
+          <div className="mt-5 border-l-2 border-clutch-amber/70 bg-clutch-amber/10 px-4 py-3 text-sm font-semibold text-amber-100">
             {warning}
           </div>
         )}
 
         <div className="mt-6">
-          <div className="mb-4 flex items-end justify-between gap-4">
+          <div className="mb-5 flex items-end justify-between gap-4">
             <div>
               <div className="eyebrow">Library shelf</div>
-              <h3 className="mt-2 text-2xl font-black text-clutch-text">Games that define this profile</h3>
+              <h3 className="mt-2 text-3xl font-black tracking-tight text-clutch-text">Games that define this profile</h3>
             </div>
           </div>
           <SteamLibraryShelf library={library} recent={recent} steamLinked={hasSteam} syncStatus={syncStatus} onSyncSteam={onSyncSteam} syncing={syncing} />
@@ -95,19 +95,19 @@ const SteamProfileSection = ({
         {!!favorites.length && (
           <div className="mt-7">
             <div className="eyebrow">Detected favorites</div>
-            <div className="mt-4 grid gap-3 md:grid-cols-5">
+            <div className="mt-4 grid divide-y divide-white/10 md:grid-cols-5 md:divide-x md:divide-y-0">
               {favorites.slice(0, 5).map((item) => (
-                <div key={item.label} className="rounded-md bg-black/15 p-3">
-                  <div className="text-xs font-bold uppercase tracking-[0.14em] text-clutch-muted">{item.label}</div>
-                  <div className="mt-2 line-clamp-1 font-black text-clutch-text">{item.game?.name || "Not enough data"}</div>
-                  <div className="mt-1 line-clamp-2 text-xs leading-5 text-clutch-muted">{item.reason}</div>
+                <div key={item.label} className="py-4 md:px-4 first:md:pl-0">
+                  <div className="text-xs font-black uppercase tracking-[0.16em] text-clutch-muted">{item.label}</div>
+                  <div className="mt-2 line-clamp-1 text-lg font-black text-clutch-text">{item.game?.name || "Not enough data"}</div>
+                  <div className="mt-1 line-clamp-2 text-sm leading-5 text-clutch-muted">{item.reason}</div>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        <div className="mt-7 grid gap-4 xl:grid-cols-2">
+        <div className="mt-8 grid gap-8 xl:grid-cols-2">
           <AchievementShowcase summary={achievements} />
           <FriendGraphPreview friends={friends} />
         </div>

@@ -16,8 +16,8 @@ const ProfileHero = ({ bundle, libraryCount, steamLinked, onAvatarUpload, onAvat
   ].filter(Boolean);
 
   return (
-    <section id="overview" className="overflow-hidden rounded-md border border-white/10 bg-[#18181c]">
-      <div className="relative px-5 py-6 md:px-8 md:py-8">
+    <section id="overview" className="overflow-hidden bg-[#18181c]">
+      <div className="relative px-5 py-7 md:px-8 md:py-10">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(53,184,255,0.13),transparent_34%),linear-gradient(135deg,rgba(255,255,255,0.055),transparent_45%)]" />
         <div className="relative grid gap-7 lg:grid-cols-[210px_minmax(0,1fr)_auto] lg:items-center">
           <ProfileAvatarUploader
@@ -31,6 +31,10 @@ const ProfileHero = ({ bundle, libraryCount, steamLinked, onAvatarUpload, onAvat
 
           <div className="min-w-0 text-center lg:text-left">
             <div className="flex flex-wrap justify-center gap-2 lg:justify-start">
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/[0.04] px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-clutch-muted">
+                <img src="/brand/clutchq-logo.png" alt="" className="h-5 w-5 rounded-md object-cover" />
+                Official ClutchQ profile
+              </span>
               <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-clutch-muted">
                 {steamLinked ? "Steam connected" : steamSummary?.demo ? "Demo Steam preview" : "ClutchQ account"}
               </span>
@@ -46,11 +50,11 @@ const ProfileHero = ({ bundle, libraryCount, steamLinked, onAvatarUpload, onAvat
 
             <div className="mt-5 flex flex-wrap justify-center gap-2 lg:justify-start">
               {meta.map((item) => (
-                <span key={item} className="rounded-md border border-white/10 bg-black/15 px-3 py-2 text-sm font-semibold text-clutch-muted">{item}</span>
+                <span key={item} className="rounded-full bg-white/[0.055] px-3 py-2 text-sm font-semibold text-clutch-muted">{item}</span>
               ))}
-              <span className="rounded-md border border-white/10 bg-black/15 px-3 py-2 text-sm font-semibold text-clutch-muted">{libraryCount} Steam games</span>
+              <span className="rounded-full bg-white/[0.055] px-3 py-2 text-sm font-semibold text-clutch-muted">{libraryCount} Steam games</span>
               {typeof playerScore?.overall === "number" && (
-                <span className="rounded-md border border-white/10 bg-black/15 px-3 py-2 text-sm font-semibold text-clutch-muted">Score {Math.round(playerScore.overall)}</span>
+                <span className="rounded-full bg-white/[0.055] px-3 py-2 text-sm font-semibold text-clutch-muted">Score {Math.round(playerScore.overall)}</span>
               )}
             </div>
           </div>

@@ -11,6 +11,13 @@ const iconStyles = {
   default: "bg-clutch-panelSoft text-clutch-text"
 };
 
+const imageIcons = {
+  google: "/brand/google.png",
+  discord: "/brand/discord.png",
+  steam: "/brand/steam.png",
+  clutchq: "/brand/clutchq-logo.png"
+};
+
 const MicrosoftGlyph = () => (
   <span className="grid h-5 w-5 grid-cols-2 gap-0.5">
     <span className="bg-[#f25022]" />
@@ -51,14 +58,15 @@ const glyphMap = {
 const PlatformIcon = ({ provider = "default", size = 42, className = "" }) => {
   const key = String(provider).toLowerCase();
   const glyph = glyphMap[key] || <span className="text-sm font-black">{key.slice(0, 1).toUpperCase() || "C"}</span>;
+  const image = imageIcons[key];
 
   return (
     <span
-      className={`inline-grid shrink-0 place-items-center rounded-full ${iconStyles[key] || iconStyles.default} ${className}`}
+      className={`inline-grid shrink-0 place-items-center overflow-hidden rounded-full ${image ? "bg-white" : iconStyles[key] || iconStyles.default} ${className}`}
       style={{ width: size, height: size }}
       aria-hidden="true"
     >
-      {glyph}
+      {image ? <img src={image} alt="" className="h-full w-full object-cover" /> : glyph}
     </span>
   );
 };

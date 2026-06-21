@@ -44,7 +44,7 @@ export const AUTH_PROVIDERS = [
     route: "/api/auth/google",
     description: "Continue with Google",
     tone: "white",
-    logoUrl: "https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg",
+    logoUrl: "/brand/google.png",
     logoBg: "white"
   },
   {
@@ -56,7 +56,7 @@ export const AUTH_PROVIDERS = [
     route: "/api/auth/discord",
     description: "Continue with Discord",
     tone: "violet",
-    logoUrl: "https://cdn.simpleicons.org/discord/FFFFFF",
+    logoUrl: "/brand/discord.png",
     logoBg: "violet"
   },
   {
@@ -68,7 +68,7 @@ export const AUTH_PROVIDERS = [
     route: "/api/auth/steam",
     description: "Continue with Steam",
     tone: "sky",
-    logoUrl: "https://cdn.simpleicons.org/steam/FFFFFF",
+    logoUrl: "/brand/steam.png",
     logoBg: "sky"
   },
   {
@@ -104,7 +104,7 @@ export const AUTH_PROVIDERS = [
     route: null,
     description: "Try ClutchQ instantly",
     tone: "cyan",
-    logoUrl: "/clutchq-logo.svg",
+    logoUrl: "/brand/clutchq-logo.png",
     logoBg: "dark"
   }
 ];

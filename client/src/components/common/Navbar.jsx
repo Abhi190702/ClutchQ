@@ -33,8 +33,8 @@ const Navbar = () => {
     <header className="sticky top-0 z-40 border-b border-clutch-border bg-clutch-bg/95 backdrop-blur">
       <div className="mx-auto flex max-w-[1480px] items-center justify-between px-4 py-3 md:px-6">
         <Link to="/" className="flex items-center gap-3">
-          <img src="/clutchq-logo.svg" alt="ClutchQ" className="h-8 w-8 rounded-md bg-black" />
-          <div className="text-xl font-black tracking-tight text-clutch-text">ClutchQ</div>
+          <img src="/brand/clutchq-logo.png" alt="ClutchQ" className="h-10 w-10 rounded-xl object-cover" />
+          <div className="text-2xl font-black tracking-tight text-clutch-text">ClutchQ</div>
         </Link>
 
         <nav className="hidden items-center gap-7 text-sm font-semibold text-clutch-muted lg:flex">
