@@ -34,10 +34,11 @@ const LiveDNAVisualizer = ({ breakdown = [], totalScore = 0 }) => {
   }
 
   return (
-    <div className="card p-5">
+    <section className="border-b border-white/10 pb-6">
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
-          <h3 className="text-lg font-semibold text-clutch-text">Top match breakdown</h3>
+          <div className="eyebrow mb-2">Match read</div>
+          <h3 className="text-xl font-black text-clutch-text">Top match breakdown</h3>
           <p className="mt-1 text-sm text-clutch-muted">A plain view of why the top recommendation is a good fit.</p>
         </div>
         <ScoreRing score={totalScore} label="Match" />
@@ -51,7 +52,7 @@ const LiveDNAVisualizer = ({ breakdown = [], totalScore = 0 }) => {
           return (
           <div
             key={item.key}
-            className={`flex items-center justify-between rounded-md border border-clutch-border bg-clutch-panelSoft p-3 text-clutch-text transition-all duration-500 ${mounted ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"}`}
+            className={`flex items-center justify-between border-b border-white/10 py-3 text-clutch-text transition-all duration-500 last:border-b-0 ${mounted ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"}`}
             style={{ transitionDelay: revealDelay }}
           >
             <div className="min-w-0 flex-1">
@@ -73,7 +74,7 @@ const LiveDNAVisualizer = ({ breakdown = [], totalScore = 0 }) => {
           );
         })}
       </div>
-    </div>
+    </section>
   );
 };
 

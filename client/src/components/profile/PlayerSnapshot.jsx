@@ -1,12 +1,6 @@
 import { formatDate, formatHours, formatPercentage, safeNumber } from "../../utils/formatters";
-
-const SnapshotMetric = ({ value, label, helper }) => (
-  <div className="min-w-0 py-4">
-    <div className="truncate text-4xl font-black tracking-tight text-clutch-text md:text-5xl">{value}</div>
-    <div className="mt-2 text-xs font-black uppercase tracking-[0.18em] text-clutch-muted">{label}</div>
-    {helper && <div className="mt-2 line-clamp-2 text-sm leading-5 text-zinc-500">{helper}</div>}
-  </div>
-);
+import MetricStrip from "../common/MetricStrip";
+import SectionHeader from "../common/SectionHeader";
 
 const PlayerSnapshot = ({ bundle, library = [], steamSummary, syncStatus }) => {
   const { profile, playerScore } = bundle;
@@ -24,24 +18,14 @@ const PlayerSnapshot = ({ bundle, library = [], steamSummary, syncStatus }) => {
   ];
 
   return (
-    <section className="border-b border-white/10 py-8 md:py-10">
-      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-        <div>
-          <div className="eyebrow">Player snapshot</div>
-          <h2 className="mt-2 text-3xl font-black tracking-tight text-clutch-text md:text-4xl">The useful profile facts, all in one place.</h2>
-        </div>
-        <p className="max-w-xl text-base leading-7 text-clutch-muted">
-          A compact read of identity, trust, Steam depth, and current matchmaking fit.
-        </p>
-      </div>
-
-      <div className="mt-8 grid gap-x-8 divide-y divide-white/10 md:grid-cols-5 md:divide-x md:divide-y-0">
-        {metrics.map((metric) => (
-          <div key={metric.label} className="md:px-6 first:md:pl-0 last:md:pr-0">
-            <SnapshotMetric {...metric} />
-          </div>
-        ))}
-      </div>
+    <section className="border-b border-white/10 py-6 md:py-8">
+      <SectionHeader
+        eyebrow="Player snapshot"
+        title="Profile signals"
+        description="A compact read of identity, trust, Steam depth, and current matchmaking fit."
+        compact
+      />
+      <MetricStrip metrics={metrics} className="mt-6" />
     </section>
   );
 };

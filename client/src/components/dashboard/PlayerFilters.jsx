@@ -12,7 +12,7 @@ const PlayerFilters = ({ filters, onChange }) => {
   );
 
   return (
-    <div className="card grid gap-4 p-5 md:grid-cols-3">
+    <div className="grid gap-4 border-y border-white/10 py-5 md:grid-cols-3">
       {field("game", "Game", GAMES)}
       {field("region", "Region", REGIONS)}
       {field("role", "Role", ROLES)}

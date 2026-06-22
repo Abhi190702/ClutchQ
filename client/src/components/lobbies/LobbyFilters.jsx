@@ -14,7 +14,7 @@ const LobbyFilters = ({ filters, onChange }) => {
   );
 
   return (
-    <div className="sticky top-[65px] z-20 rounded-3xl border border-white/10 bg-[#17171b]/90 p-4 backdrop-blur">
+    <div className="sticky top-[65px] z-20 border-y border-white/10 bg-clutch-bg/90 py-4 backdrop-blur">
       <div className="flex flex-col gap-4 lg:flex-row">
       {field("game", "Game", GAMES)}
       {field("region", "Region", REGIONS)}

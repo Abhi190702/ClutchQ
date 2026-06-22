@@ -64,7 +64,7 @@ const MatchBreakdown = ({ match }) => {
           return (
           <div
             key={item.key}
-            className={`rounded-lg border border-clutch-border bg-clutch-panelSoft p-3 transition-all duration-500 ${mounted ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"}`}
+            className={`border-b border-white/10 py-3 transition-all duration-500 last:border-b-0 ${mounted ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"}`}
             style={{ transitionDelay: revealDelay }}
           >
             <div className="flex items-center justify-between gap-3">

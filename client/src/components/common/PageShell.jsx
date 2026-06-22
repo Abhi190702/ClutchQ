@@ -49,7 +49,7 @@ const PageShell = ({ children, title, eyebrow, actions, fullWidth = false, hideS
                 <div className="mb-8 flex flex-col gap-4 border-b border-white/10 pb-6 md:flex-row md:items-end md:justify-between">
                   <div>
                     {eyebrow && <div className="eyebrow mb-3">{eyebrow}</div>}
-                    {title && <h1 className="text-3xl font-black tracking-tight md:text-5xl">{title}</h1>}
+                    {title && <h1 className="text-3xl font-black tracking-tight md:text-4xl">{title}</h1>}
                   </div>
                   {actions && <div className="flex flex-wrap gap-3">{actions}</div>}
                 </div>

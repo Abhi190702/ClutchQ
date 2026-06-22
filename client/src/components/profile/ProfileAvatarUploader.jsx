@@ -84,7 +84,7 @@ const ProfileAvatarUploader = ({ user, profile, steamSummary, onUpload, onRemove
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="group relative grid h-40 w-40 shrink-0 place-items-center overflow-hidden rounded-full border border-white/10 bg-clutch-panelSoft text-5xl font-black text-clutch-text transition hover:border-white/25 md:h-44 md:w-44"
+          className="group relative grid h-32 w-32 shrink-0 place-items-center overflow-hidden rounded-full border border-white/10 bg-clutch-panelSoft text-4xl font-black text-clutch-text transition hover:border-white/25 md:h-36 md:w-36"
           aria-label="Upload profile avatar"
           disabled={saving}
         >

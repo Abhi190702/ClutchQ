@@ -24,10 +24,11 @@ const FindSquadNow = () => {
   };
 
   return (
-    <div className="card p-5">
+    <section className="border-b border-white/10 pb-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h3 className="text-lg font-semibold">Quick squad suggestion</h3>
+          <div className="eyebrow mb-2">Squad engine</div>
+          <h3 className="text-xl font-black">Quick squad suggestion</h3>
           <p className="mt-1 text-sm text-clutch-muted">Find the best players and lobby from your current profile.</p>
         </div>
         <button type="button" disabled={loading} onClick={run} className="btn-primary">
@@ -47,7 +48,7 @@ const FindSquadNow = () => {
       {result && (
         <div className="mt-5 grid gap-4 lg:grid-cols-[auto_1fr]">
           <ScoreRing score={result.squadCompatibilityScore} label="Squad" />
-          <div className="rounded-md border border-clutch-border bg-clutch-panelSoft p-4">
+          <div className="border-l border-white/10 pl-4">
             <div className="text-sm font-semibold text-clutch-blue">Best squad found</div>
             <h4 className="mt-1 text-xl font-semibold">Squad compatibility: {result.squadCompatibilityScore}%</h4>
             <div className="mt-3 grid gap-2 text-sm text-clutch-muted">
@@ -62,7 +63,7 @@ const FindSquadNow = () => {
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 };
 

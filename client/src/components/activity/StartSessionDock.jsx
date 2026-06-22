@@ -25,7 +25,7 @@ const StartSessionDock = ({ games = [], active, onStarted, showToast }) => {
   };
 
   return (
-    <section className="rounded-3xl bg-white/[0.035] p-4">
+    <section className="border-b border-white/10 pb-5">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="text-sm font-black text-white">{active ? `Tracking ${active.gameName}` : "Start a session"}</div>

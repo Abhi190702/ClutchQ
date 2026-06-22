@@ -3,7 +3,7 @@ import { formatMinutes, formatRating, formatSafeDateTime } from "../../utils/for
 import { gameInitials, getGameArt } from "../../utils/gameArt";
 
 const RecentGameTimeline = ({ sessions = [] }) => (
-  <section className="rounded-3xl bg-white/[0.035] p-6">
+  <section className="border-b border-white/10 pb-6">
     <div className="flex items-end justify-between gap-4">
       <div>
         <div className="eyebrow mb-3">Previous games</div>
@@ -49,7 +49,7 @@ const RecentGameTimeline = ({ sessions = [] }) => (
         })}
       </div>
     ) : (
-      <EmptyState compact className="mt-5 border-white/10 bg-transparent" title="No sessions yet." description="Start a session to build a timeline of games, ratings, and notes." />
+      <EmptyState compact className="mt-5" title="No sessions yet." description="Start a session to build a timeline of games, ratings, and notes." />
     )}
   </section>
 );

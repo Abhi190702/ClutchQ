@@ -83,7 +83,7 @@ const Requests = () => {
       <div className="space-y-7">
         <section className="border-b border-white/10 pb-8">
           <div className="eyebrow mb-3">Inbox</div>
-          <h1 className="text-4xl font-black tracking-tight text-white md:text-6xl">Requests</h1>
+          <h1 className="text-4xl font-black tracking-tight text-white md:text-5xl">Requests</h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-400">
             Manage teammate invites, lobby applications, and squad responses.
           </p>

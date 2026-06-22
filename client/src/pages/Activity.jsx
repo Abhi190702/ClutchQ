@@ -96,7 +96,7 @@ const Activity = () => {
         <ActivityHero snapshot={snapshot} active={summary.active} onEndActive={setEnding} />
         {error ? <ErrorState message={error} onRetry={load} /> : null}
         {loading ? (
-          <div className="rounded-3xl bg-white/[0.035] p-8 text-sm font-semibold text-zinc-400">Loading activity rhythm...</div>
+          <div className="border-l border-white/10 py-5 pl-4 text-sm font-semibold text-zinc-400">Loading activity rhythm...</div>
         ) : null}
         <ActivitySnapshotStrip snapshot={snapshot} />
         <StartSessionDock games={games} active={summary.active} onStarted={load} showToast={showToast} />

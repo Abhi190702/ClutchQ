@@ -67,7 +67,7 @@ const Lobbies = () => {
         <section className="flex flex-col gap-5 border-b border-white/10 pb-8 md:flex-row md:items-end md:justify-between">
           <div>
             <div className="eyebrow mb-3">Squad Finder</div>
-            <h1 className="text-4xl font-black tracking-tight text-white md:text-6xl">Open Lobbies</h1>
+            <h1 className="text-4xl font-black tracking-tight text-white md:text-5xl">Open Lobbies</h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-400">
               Join ranked stacks, casual squads, and active voice-ready rooms.
             </p>

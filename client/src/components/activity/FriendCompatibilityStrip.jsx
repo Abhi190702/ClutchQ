@@ -3,11 +3,11 @@ import EmptyState from "../common/EmptyState";
 import { getInitials } from "../../utils/formatters";
 
 const FriendCompatibilityStrip = ({ friends = [] }) => (
-  <section className="rounded-3xl bg-white/[0.035] p-6">
+  <section className="border-b border-white/10 pb-6">
     <div className="flex items-end justify-between gap-4">
       <div>
         <div className="eyebrow mb-3">Squad fit</div>
-        <h2 className="text-2xl font-black text-white">Compatible teammates</h2>
+        <h2 className="text-2xl font-black text-white">Best teammate rhythm</h2>
       </div>
       <Link to="/dashboard" className="hidden text-sm font-bold text-clutch-blue hover:text-sky-300 sm:inline">
         Find squad
@@ -15,9 +15,9 @@ const FriendCompatibilityStrip = ({ friends = [] }) => (
     </div>
 
     {friends.length ? (
-      <div className="mt-6 grid gap-3 lg:grid-cols-3">
+      <div className="mt-6 grid gap-x-6 lg:grid-cols-3">
         {friends.slice(0, 6).map((friend) => (
-          <div key={friend.id} className="flex items-center gap-3 rounded-2xl bg-black/20 p-3">
+          <div key={friend.id} className="flex items-center gap-3 border-b border-white/10 py-3">
             <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full bg-white/[0.08] text-sm font-black text-white">
               {friend.avatar ? <img src={friend.avatar} alt="" className="h-full w-full object-cover" /> : getInitials(friend.name)}
             </span>
@@ -35,7 +35,7 @@ const FriendCompatibilityStrip = ({ friends = [] }) => (
     ) : (
       <EmptyState
         compact
-        className="mt-5 border-white/10 bg-transparent"
+        className="mt-5"
         title="No teammate compatibility yet."
         description="Join lobbies or add teammates to build compatibility history."
       />

@@ -9,7 +9,7 @@ const ActivityInsightPanel = ({ snapshot, split = [] }) => {
     : "Start one tracked session or sync Steam to build reliable recommendations.";
 
   return (
-    <section className="rounded-3xl bg-white/[0.035] p-6">
+    <section className="border-b border-white/10 pb-6">
       <div className="eyebrow mb-3">Insight</div>
       <h2 className="text-2xl font-black text-white">What this activity says</h2>
       <div className="mt-6 space-y-5">

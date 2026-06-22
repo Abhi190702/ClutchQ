@@ -16,10 +16,10 @@ const PlayerCard = ({ item, onSendRequest, requested = false }) => {
   const game = getPrimaryGame(profile);
 
   return (
-    <article className="card p-5 transition hover:border-clutch-blue/40">
+    <article className="group border-b border-white/10 py-5 transition hover:bg-white/[0.025]">
       <div className="flex items-start justify-between gap-4">
         <div className="flex gap-3">
-          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-md border border-clutch-border bg-clutch-panelSoft font-semibold text-clutch-blue">
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-white/[0.055] font-semibold text-clutch-blue">
             {initials(profile?.displayName)}
           </div>
           <div>
@@ -36,15 +36,9 @@ const PlayerCard = ({ item, onSendRequest, requested = false }) => {
         <ScoreRing score={match?.totalScore} size={82} label="Match" />
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-3">
-        <div className="rounded-md border border-clutch-border bg-clutch-panelSoft p-3">
-          <div className="text-xs text-clutch-muted">Reliability</div>
-          <div className="text-lg font-semibold text-clutch-text">{profile?.reliabilityScore || 0}%</div>
-        </div>
-        <div className="rounded-md border border-clutch-border bg-clutch-panelSoft p-3">
-          <div className="text-xs text-clutch-muted">Overlap</div>
-          <div className="text-lg font-semibold text-clutch-text">{match?.availability?.overlapHours || 0}h</div>
-        </div>
+      <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+        <span className="text-clutch-muted">Reliability <span className="font-black text-clutch-text">{profile?.reliabilityScore || 0}%</span></span>
+        <span className="text-clutch-muted">Overlap <span className="font-black text-clutch-text">{match?.availability?.overlapHours || 0}h</span></span>
         <MatchConfidence confidence={match?.confidence} />
       </div>
 
@@ -65,7 +59,7 @@ const PlayerCard = ({ item, onSendRequest, requested = false }) => {
       </div>
 
       {open && (
-        <div className="mt-5 border-t border-clutch-border pt-5">
+        <div className="mt-5 border-t border-white/10 pt-5">
           <MatchBreakdown match={match} />
         </div>
       )}

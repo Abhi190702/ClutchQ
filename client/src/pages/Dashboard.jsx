@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import PageShell from "../components/common/PageShell";
 import ErrorState from "../components/common/ErrorState";
-import StatCard from "../components/common/StatCard";
+import MetricStrip from "../components/common/MetricStrip";
+import SectionHeader from "../components/common/SectionHeader";
 import FindSquadNow from "../components/dashboard/FindSquadNow";
 import LiveDNAVisualizer from "../components/dashboard/LiveDNAVisualizer";
 import PlayerFilters from "../components/dashboard/PlayerFilters";
@@ -70,23 +71,35 @@ const Dashboard = () => {
   };
 
   const best = filtered[0];
+  const primaryGame = getPrimaryGame(profile);
+  const metrics = [
+    { label: "Recommended", value: filtered.length, helper: "players ready" },
+    { label: "Best match", value: `${best?.match?.totalScore || 0}%`, helper: best?.profile?.displayName || "Build profile data" },
+    { label: "Trust", value: `${profile?.trustScore || 0}%`, helper: `${profile?.totalReviews || 0} reviews` },
+    { label: "Availability", value: `${profile?.availability?.length || 0}h`, helper: "weekly overlap" },
+    { label: "Primary game", value: primaryGame?.gameName || "Not set", helper: primaryGame?.rank || "Complete onboarding" }
+  ];
 
   return (
-    <PageShell
-      title={profile?.displayName ? `Welcome, ${profile.displayName}` : "Dashboard"}
-      eyebrow="Overview"
-      actions={<Link to="/lobbies/create" className="btn-primary">Create Lobby</Link>}
-    >
-      <div className="grid gap-6">
-        <div className="grid gap-4 md:grid-cols-4">
-          <StatCard label="Recommended players" value={filtered.length} />
-          <StatCard label="Best match score" value={best?.match?.totalScore || 0} suffix="%" accent="green" />
-          <StatCard label="Trust score" value={profile?.trustScore || 0} suffix="%" accent="violet" />
-          <StatCard label="Availability hours" value={profile?.availability?.length || 0} accent="amber" />
-        </div>
+    <PageShell fullWidth>
+      <div className="grid gap-7">
+        <section className="border-b border-white/10 pb-7">
+          <SectionHeader
+            eyebrow="Overview"
+            title={profile?.displayName ? `Welcome, ${profile.displayName}` : "Dashboard"}
+            description={`${filtered.length} strong squad matches available · Best match ${best?.match?.totalScore || 0}% · Trust ${profile?.trustScore || 0}%`}
+            actions={
+              <>
+                <Link to="/lobbies/create" className="btn-primary">Create Lobby</Link>
+                <a href="#squad-controls" className="btn-secondary">Find Squad Now</a>
+              </>
+            }
+          />
+          <MetricStrip metrics={metrics} className="mt-6" />
+        </section>
         {error ? <ErrorState message={error} onRetry={load} /> : null}
-        <div className="grid gap-6 xl:grid-cols-[0.78fr_1.22fr]">
-          <div className="space-y-6">
+        <div className="grid gap-8 xl:grid-cols-[0.38fr_0.62fr]">
+          <div id="squad-controls" className="space-y-6">
             <FindSquadNow />
             <PlayerFilters filters={filters} onChange={setFilters} />
             {best && <LiveDNAVisualizer breakdown={best.match.breakdown} totalScore={best.match.totalScore} />}

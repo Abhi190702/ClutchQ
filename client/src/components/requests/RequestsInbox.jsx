@@ -7,7 +7,6 @@ const RequestsInbox = ({ requests = [], direction, onAction, emptyTitle, emptyDe
     return (
       <EmptyState
         compact
-        className="border-white/10 bg-white/[0.035]"
         title={emptyTitle}
         description={emptyDescription}
         action={
@@ -21,7 +20,7 @@ const RequestsInbox = ({ requests = [], direction, onAction, emptyTitle, emptyDe
   }
 
   return (
-    <section className="rounded-3xl bg-white/[0.035] px-5">
+    <section>
       {requests.map((request) => (
         <RequestRow key={request._id} request={request} direction={request.direction || direction} onAction={onAction} />
       ))}

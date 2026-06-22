@@ -3,13 +3,13 @@ import { formatHours, safeNumber } from "../../utils/formatters";
 
 const GamingRhythmChart = ({ series = [] }) => {
   const width = 760;
-  const height = 260;
+  const height = 230;
   const padding = 28;
   const maxMinutes = Math.max(...series.map((item) => safeNumber(item.minutes)), 0);
 
   if (!series.some((item) => safeNumber(item.minutes) > 0)) {
     return (
-      <section className="rounded-3xl bg-white/[0.035] p-6">
+      <section className="border-b border-white/10 pb-6">
         <div className="eyebrow mb-3">Rhythm</div>
         <h2 className="text-2xl font-black text-white">Playtime trend</h2>
         <EmptyState
@@ -31,7 +31,7 @@ const GamingRhythmChart = ({ series = [] }) => {
   const area = `${line} L ${width - padding} ${height - padding} L ${padding} ${height - padding} Z`;
 
   return (
-    <section className="rounded-3xl bg-white/[0.035] p-6">
+    <section className="border-b border-white/10 pb-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="eyebrow mb-3">Rhythm</div>

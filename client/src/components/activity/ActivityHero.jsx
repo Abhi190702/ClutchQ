@@ -3,14 +3,14 @@ import { formatHours, formatNumber } from "../../utils/formatters";
 const ActivityHero = ({ snapshot, active, onEndActive }) => (
   <section className="flex flex-col gap-6 border-b border-white/10 pb-8 lg:flex-row lg:items-end lg:justify-between">
     <div>
-      <div className="eyebrow mb-3">Gaming rhythm</div>
-      <h1 className="max-w-3xl text-4xl font-black tracking-tight text-white md:text-6xl">Gaming Activity</h1>
+      <div className="eyebrow mb-3">Activity</div>
+      <h1 className="max-w-3xl text-4xl font-black tracking-tight text-white md:text-5xl">Gaming rhythm</h1>
       <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-400">
-        Your play rhythm, sessions, squad fit, and match history in one clean read.
+        Your recent sessions, squad fit, and game consistency in one clean read.
       </p>
     </div>
 
-    <div className="min-w-[280px] rounded-2xl bg-white/[0.045] p-4">
+    <div className="min-w-[280px] border-y border-white/10 py-4 lg:border-y-0 lg:border-l lg:pl-6">
       {active ? (
         <div className="flex items-center justify-between gap-4">
           <div>
