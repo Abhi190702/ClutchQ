@@ -10,10 +10,14 @@ import Review from "../models/Review.js";
 import GameActivity from "../models/GameActivity.js";
 import GamePlaytimeAggregate from "../models/GamePlaytimeAggregate.js";
 import MatchAnalysis from "../models/MatchAnalysis.js";
+import GameplayGraph from "../models/GameplayGraph.js";
+import ScorecardAnalysis from "../models/ScorecardAnalysis.js";
+import ScorecardUpload from "../models/ScorecardUpload.js";
 import SteamAchievement from "../models/SteamAchievement.js";
 import SteamFriend from "../models/SteamFriend.js";
 import SteamGame from "../models/SteamGame.js";
 import SteamSyncLog from "../models/SteamSyncLog.js";
+import TeammateFeedback from "../models/TeammateFeedback.js";
 import { createDemoProfile, demoAccounts } from "../utils/seedData.js";
 
 dotenv.config();
@@ -163,11 +167,170 @@ const resetDemoOnlyCollections = async (users) => {
     GameActivity.deleteMany({ userId: { $in: userIds }, source: "demo" }),
     GamePlaytimeAggregate.deleteMany({ userId: { $in: userIds } }),
     MatchAnalysis.deleteMany({ userId: { $in: userIds } }),
+    ScorecardUpload.deleteMany({ userId: { $in: userIds } }),
+    ScorecardAnalysis.deleteMany({ userId: { $in: userIds } }),
+    TeammateFeedback.deleteMany({ $or: [{ fromUserId: { $in: userIds } }, { toUserId: { $in: userIds } }] }),
+    GameplayGraph.deleteMany({ userId: { $in: userIds } }),
     SteamGame.deleteMany({ userId: { $in: userIds } }),
     SteamFriend.deleteMany({ userId: { $in: userIds } }),
     SteamAchievement.deleteMany({ userId: { $in: userIds } }),
     SteamSyncLog.deleteMany({ userId: { $in: userIds }, syncType: "demo" })
   ]);
+};
+
+const createIntelligenceDemoData = async (users) => {
+  const byEmail = new Map(users.map((user) => [user.email, user]));
+  const allActivities = await GameActivity.find({ userId: { $in: users.map((user) => user._id) }, source: "demo" }).sort({ startedAt: -1 });
+
+  for (const user of users) {
+    const activities = allActivities.filter((activity) => String(activity.userId) === String(user._id)).slice(0, 8);
+    const analyses = [];
+
+    for (const [index, activity] of activities.entries()) {
+      const upload = await ScorecardUpload.create({
+        userId: user._id,
+        sessionId: activity._id,
+        gameSlug: activity.gameSlug,
+        gameName: activity.gameName,
+        imageMime: "",
+        imageSizeBytes: 0,
+        status: "processed",
+        source: "demo",
+        processedAt: new Date()
+      });
+      const combat = Math.max(58, Math.min(96, activity.performanceScore + ((index % 4) - 1) * 3));
+      const support = Math.max(60, Math.min(96, activity.teamworkScore + ((index % 3) - 1) * 2));
+      const survival = Math.max(55, Math.min(94, activity.reliabilityScore - (index % 5)));
+      const objectiveFocus = Math.max(60, Math.min(95, activity.communicationScore + (index % 4)));
+      const overall = Math.round(combat * 0.28 + support * 0.24 + survival * 0.16 + objectiveFocus * 0.2 + activity.matchRating * 0.12);
+      analyses.push(
+        await ScorecardAnalysis.create({
+          userId: user._id,
+          sessionId: activity._id,
+          uploadId: upload._id,
+          gameSlug: activity.gameSlug,
+          gameName: activity.gameName,
+          detectedGame: activity.gameName,
+          gameType: ["valorant", "counter-strike-2", "apex-legends"].includes(activity.gameSlug) ? "fps" : "coop",
+          extractedStats: {
+            kills: 12 + index * 2,
+            deaths: 8 + (index % 5),
+            assists: 5 + (index % 7),
+            score: 220 + index * 24,
+            result: activity.result,
+            durationMinutes: activity.durationMinutes
+          },
+          performance: {
+            combat,
+            survival,
+            support,
+            objectiveFocus,
+            consistency: activity.matchRating,
+            impact: Math.round((combat + objectiveFocus + activity.matchRating) / 3),
+            overall
+          },
+          situationalSignals: {
+            clutchPotential: Math.round((combat + survival) / 2),
+            entryPressure: combat,
+            teamSupport: support,
+            objectiveFocus,
+            pressureHandling: Math.round((survival + activity.matchRating) / 2),
+            tiltResistance: activity.reliabilityScore
+          },
+          summary: ["Strong role discipline.", "Reliable squad communication.", "Good pressure handling."],
+          warnings: [],
+          confidence: 0.82,
+          source: "demo"
+        })
+      );
+    }
+
+    const otherUsers = users.filter((candidate) => String(candidate._id) !== String(user._id));
+    for (const [index, teammate] of otherUsers.entries()) {
+      const activity = activities[index % activities.length];
+      if (!activity) continue;
+      await TeammateFeedback.findOneAndUpdate(
+        { sessionId: activity._id, fromUserId: user._id, toUserId: teammate._id },
+        {
+          $set: {
+            ratings: {
+              communication: 4 + (index % 2) * 0.5,
+              teamwork: 4.5,
+              reliability: 4.5,
+              skill: 4,
+              behavior: 5
+            },
+            wouldPlayAgain: "yes",
+            comment: "Clear comms and reliable squad pacing.",
+            skipped: false
+          }
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+    }
+
+    const profile = await GamerProfile.findOne({ userId: user._id });
+    const library = await SteamGame.find({ userId: user._id }).sort({ playtimeForeverMinutes: -1 }).limit(3);
+    const gameProfiles = library.map((game, index) => ({
+      gameSlug: (game.name || "").toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      gameName: game.name,
+      minutes: game.playtimeForeverMinutes,
+      sessions: 10 + index * 3,
+      averageRating: 88 - index * 3,
+      performance: {
+        combat: 80 - index * 2,
+        support: 86 - index,
+        survival: 78 - index,
+        objectiveFocus: 82 - index
+      },
+      roleSignal: index === 0 ? "Sentinel / Support" : "Flex"
+    }));
+    const teammateEdges = otherUsers.map((teammate, index) => ({
+      userId: teammate._id,
+      name: teammate.name,
+      compatibility: 92 - index * 4,
+      sharedGames: [profile.games?.[0]?.gameName || "Valorant"],
+      reason: "Shared demo sessions, strong comms, and role balance."
+    }));
+
+    await GameplayGraph.findOneAndUpdate(
+      { userId: user._id },
+      {
+        $set: {
+          gameplayProfileScore: 82 + (user.email === "captain@clutchq.com" ? 5 : 0),
+          confidence: 0.86,
+          style: {
+            mainStyle: profile.playstyleStats?.support >= profile.playstyleStats?.aggression ? "Structured support" : "Impact flex",
+            competitiveTendency: 82,
+            cooperativeTendency: 88,
+            riskProfile: "Balanced",
+            bestSquadFit: "Ranked squad with clear roles and comms"
+          },
+          gameProfiles,
+          situationalStrengths: [
+            { key: "teamSupport", label: "Team support", score: 88, evidence: "High teammate feedback and assist-heavy scorecards." },
+            { key: "pressureHandling", label: "Pressure handling", score: 84, evidence: "Stable ratings in longer sessions." },
+            { key: "objectiveFocus", label: "Objective focus", score: 81, evidence: "Consistent result and scorecard objective signals." }
+          ],
+          teammateEdges,
+          recommendations: [
+            "Best in structured ranked squads.",
+            "Pair with an IGL or entry fragger.",
+            "Keep sessions under 2.5h for best consistency."
+          ],
+          rhythmSummary: {
+            totalMinutes: activities.reduce((sum, activity) => sum + activity.durationMinutes, 0),
+            activeDays: 24,
+            bestDayMinutes: 310,
+            rhythmScore: 84
+          },
+          source: "demo",
+          lastBuiltAt: new Date()
+        }
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+  }
 };
 
 const createLobbiesAndRequests = async (users) => {
@@ -427,6 +590,7 @@ const run = async () => {
   await resetDemoOnlyCollections(users);
   await createLobbiesAndRequests(users);
   await createActivityAndSteamData(users);
+  await createIntelligenceDemoData(users);
 
   console.log("Demo account seed complete.");
   console.log(`Seeded demo users: ${demoEmails.join(", ")}`);

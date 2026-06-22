@@ -1,0 +1,41 @@
+{
+  "task": "analyze_scorecard",
+  "payload": {
+    "gameSlug": "valorant",
+    "gameName": "Valorant",
+    "manualStats": {
+      "kills": 21,
+      "deaths": 14,
+      "assists": 7,
+      "damage": null,
+      "placement": null,
+      "score": 289,
+      "result": "win",
+      "durationMinutes": 42
+    },
+    "scorecardMeta": {
+      "hasImage": true,
+      "imageMime": "image/webp",
+      "imageSizeBytes": 420000,
+      "ocrText": ""
+    },
+    "session": {
+      "durationMinutes": 42,
+      "matchRating": 88,
+      "result": "win"
+    },
+    "feedbackSummary": {
+      "communication": 4.6,
+      "teamwork": 4.4,
+      "reliability": 4.8,
+      "skill": 4.2,
+      "behavior": 4.7,
+      "wouldPlayAgainRate": 0.91
+    },
+    "steamContext": {
+      "totalGameMinutes": 15000,
+      "recentGameMinutes": 900,
+      "achievementCompletion": 34
+    }
+  }
+}

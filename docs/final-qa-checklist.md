@@ -41,6 +41,28 @@ http://localhost:5000/api/health
 - Steam sync does not show demo data after a real Steam account is connected.
 - Avatar upload accepts PNG, JPG, and WebP under 500KB.
 - Empty Steam friends, achievements, or library panels show a clear empty state.
+- Gameplay Graph loads without `NaN`, `undefined`, or raw JSON.
+- Situational strengths and teammate edges stay compact and do not clutter the profile.
+
+## Gameplay Intelligence
+
+Worker smoke test:
+
+```powershell
+Get-Content -Raw analytics-worker/sample_inputs/session_bundle.json | python analytics-worker/main.py
+```
+
+Confirm:
+
+- `/api/intelligence/health` returns Python status and fallback availability.
+- Activity rhythm loads from `/api/intelligence/rhythm/me`.
+- Ending a session opens Match Wrap-Up without blocking the session stop.
+- Scorecard upload accepts PNG, JPG, and WebP, then compresses below 900KB.
+- Manual stats can be submitted without an image.
+- Teammate feedback can be skipped or submitted.
+- ScorecardAnalysis and GameplayGraph records update after analysis.
+- Python unavailable simulation returns lightweight fallback analysis, not a server crash.
+- A brand new account with no data shows calm empty states.
 
 ## Games And Rooms
 
@@ -66,6 +88,7 @@ DISCORD_BOT_TOKEN=
 DISCORD_GUILD_ID=
 DISCORD_CATEGORY_ID=
 STEAM_API_KEY=
+PYTHON_BIN=python
 STEAM_REALM=https://clutchq-backend.onrender.com
 STEAM_CALLBACK_URL=https://clutchq-backend.onrender.com/api/auth/steam/callback
 ```

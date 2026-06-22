@@ -1,0 +1,28 @@
+{
+  "task": "build_rhythm",
+  "payload": {
+    "sessions": [
+      {
+        "gameSlug": "valorant",
+        "gameName": "Valorant",
+        "startedAt": "2026-06-20T18:30:00.000Z",
+        "durationMinutes": 72,
+        "matchRating": 89,
+        "result": "win"
+      },
+      {
+        "gameSlug": "apex-legends",
+        "gameName": "Apex Legends",
+        "startedAt": "2026-06-21T19:00:00.000Z",
+        "durationMinutes": 94,
+        "matchRating": 84,
+        "result": "completed"
+      }
+    ],
+    "steamHeatmap": [],
+    "steamLibrary": [
+      { "name": "Apex Legends", "playtimeForeverMinutes": 2520 },
+      { "name": "Valorant", "playtimeForeverMinutes": 1880 }
+    ]
+  }
+}

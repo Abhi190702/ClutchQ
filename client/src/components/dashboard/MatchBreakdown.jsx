@@ -55,6 +55,14 @@ const MatchBreakdown = ({ match }) => {
 
   return (
     <div className="space-y-3">
+      {match?.graphFitBonus ? (
+        <div className="rounded-[10px] border border-sky-400/20 bg-sky-500/10 p-3">
+          <div className="text-sm font-black text-white">Gameplay Graph bonus +{match.graphFitBonus}</div>
+          <div className="mt-1 text-sm leading-6 text-sky-100/80">
+            {(match.graphReasons || ["Strong graph fit"]).join(" / ")}
+          </div>
+        </div>
+      ) : null}
       <div className="grid gap-2">
         {breakdown.map((item, index) => {
           const revealDelay = reduceMotion ? "0ms" : `${index * 90}ms`;

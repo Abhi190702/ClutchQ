@@ -1,0 +1,36 @@
+{
+  "task": "analyze_scorecard",
+  "payload": {
+    "gameSlug": "bgmi",
+    "gameName": "BGMI",
+    "manualStats": {
+      "kills": 8,
+      "deaths": 1,
+      "assists": 3,
+      "damage": 1420,
+      "placement": 2,
+      "score": 610,
+      "result": "win",
+      "durationMinutes": 31
+    },
+    "scorecardMeta": {
+      "hasImage": false,
+      "imageMime": "",
+      "imageSizeBytes": 0,
+      "ocrText": ""
+    },
+    "session": {
+      "durationMinutes": 31,
+      "matchRating": 91,
+      "result": "win"
+    },
+    "feedbackSummary": {
+      "communication": 4.2,
+      "teamwork": 4.5,
+      "reliability": 4.7,
+      "skill": 4.4,
+      "behavior": 4.8
+    },
+    "steamContext": {}
+  }
+}

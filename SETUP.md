@@ -112,6 +112,30 @@ STEAM_CALLBACK_URL=https://clutchq-backend.onrender.com/api/auth/steam/callback
 
 Do not put `STEAM_API_KEY` in `client/.env` or Vercel. Steam library, friends, achievements, and recent activity depend on the connected Steam account privacy settings. Set Steam Profile and Game Details to Public, then sync again.
 
+## Gameplay Intelligence Worker
+
+Python is optional but recommended for the richer scorecard, rhythm, teammate fit, and Gameplay Graph analysis. The app never exposes Python as a second backend; the Express server launches it as an internal worker and falls back safely if Python is missing.
+
+Add this to `server/.env` locally or Render if Python is available:
+
+```env
+PYTHON_BIN=python
+```
+
+If your machine uses `python3`, set:
+
+```env
+PYTHON_BIN=python3
+```
+
+Smoke test from the project root:
+
+```powershell
+Get-Content -Raw analytics-worker/sample_inputs/session_bundle.json | python analytics-worker/main.py
+```
+
+Expected result: one JSON object with `success: true`, `task: "build_rhythm"`, and a `data.summary`. On Render or local machines without Python, `/api/intelligence/health` will report Python unavailable and the server will use the lightweight JS analyzer instead.
+
 ## Check Commands
 
 Client `.env` should keep the localhost fallback while still supporting deployed builds:
@@ -135,9 +159,16 @@ Backend health after `npm run dev`:
 http://localhost:5000/api/health
 ```
 
+Intelligence health:
+
+```txt
+http://localhost:5000/api/intelligence/health
+```
+
 ## If Something Fails
 
 - `MongoDB connection failed`: your database is not running or `MONGO_URI` is wrong.
 - `docker compose` fails: start Docker Desktop first.
 - Demo login missing: run `npm run seed`.
 - Frontend API errors: confirm backend is running on `http://localhost:5000`.
+- Scorecard analysis says lightweight analyzer: Python is unavailable or `PYTHON_BIN` is wrong; the app is still working with fallback analysis.

@@ -1,4 +1,5 @@
 import GamerProfile from "../models/GamerProfile.js";
+import GameplayGraph from "../models/GameplayGraph.js";
 import Lobby from "../models/Lobby.js";
 import User from "../models/User.js";
 import { asyncHandler } from "../middleware/errorMiddleware.js";
@@ -21,18 +22,63 @@ const visibleUsersQuery = async () => {
   return { userId: { $nin: suspendedUsers.map((user) => user._id) } };
 };
 
+const enhanceWithGraphFit = (baseMatch, viewerGraph, candidateGraph) => {
+  if (!viewerGraph || !candidateGraph) return baseMatch;
+
+  const viewerGames = new Set((viewerGraph.gameProfiles || []).map((game) => game.gameName).filter(Boolean));
+  const sharedGames = (candidateGraph.gameProfiles || []).map((game) => game.gameName).filter((game) => viewerGames.has(game));
+  const edge = (viewerGraph.teammateEdges || []).find((item) => String(item.userId) === String(candidateGraph.userId));
+  const graphConfidence = Math.min(Number(viewerGraph.confidence) || 0, Number(candidateGraph.confidence) || 0);
+  const reasons = [];
+  let bonus = 0;
+
+  if (sharedGames.length) {
+    bonus += Math.min(3, sharedGames.length * 1.5);
+    reasons.push("Shared recent rhythm");
+  }
+  if (edge?.compatibility >= 80) {
+    bonus += 3;
+    reasons.push("Strong graph fit");
+  }
+  if (candidateGraph.style?.mainStyle && viewerGraph.style?.mainStyle && candidateGraph.style.mainStyle !== viewerGraph.style.mainStyle) {
+    bonus += 2;
+    reasons.push("Complementary playstyle");
+  }
+  if (graphConfidence >= 0.65) {
+    bonus += 2;
+  } else {
+    reasons.push("Low confidence: limited history");
+  }
+
+  const graphFitBonus = Math.min(10, Math.round(bonus));
+  return {
+    ...baseMatch,
+    totalScore: Math.min(100, baseMatch.totalScore + graphFitBonus),
+    baseScore: baseMatch.totalScore,
+    graphFitBonus,
+    graphReasons: reasons
+  };
+};
+
 export const getRecommendations = asyncHandler(async (req, res) => {
   const currentProfile = await getCurrentProfileOrFail(req.user._id);
   const query = await visibleUsersQuery();
   query.userId.$nin.push(req.user._id);
 
   const candidates = await GamerProfile.find(query).populate("userId", "name avatar role");
+  const candidateUserIds = candidates.map((profile) => profile.userId?._id || profile.userId);
+  const graphs = await GameplayGraph.find({ userId: { $in: [req.user._id, ...candidateUserIds] } }).lean();
+  const graphByUser = new Map(graphs.map((graph) => [String(graph.userId), graph]));
+  const viewerGraph = graphByUser.get(String(req.user._id));
 
   const recommendations = candidates
-    .map((profile) => ({
-      profile,
-      match: calculateMatchScore(currentProfile, profile)
-    }))
+    .map((profile) => {
+      const candidateGraph = graphByUser.get(String(profile.userId?._id || profile.userId));
+      return {
+        profile,
+        match: enhanceWithGraphFit(calculateMatchScore(currentProfile, profile), viewerGraph, candidateGraph)
+      };
+    })
     .sort((a, b) => b.match.totalScore - a.match.totalScore)
     .slice(0, Number(req.query.limit) || 12);
 

@@ -1,0 +1,18 @@
+{
+  "success": true,
+  "task": "rebuild_gameplay_graph",
+  "data": {
+    "gameplayProfileScore": 84,
+    "confidence": 0.86,
+    "style": {
+      "mainStyle": "Structured support",
+      "bestSquadFit": "Ranked squad with clear roles and comms"
+    },
+    "situationalStrengths": [],
+    "gameProfiles": [],
+    "teammateEdges": [],
+    "recommendations": []
+  },
+  "warnings": [],
+  "confidence": 0.86
+}

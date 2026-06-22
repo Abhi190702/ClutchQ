@@ -22,6 +22,7 @@ import gameRoomRoutes from "./routes/gameRoomRoutes.js";
 import activityRoutes from "./routes/activityRoutes.js";
 import leaderboardRoutes from "./routes/leaderboardRoutes.js";
 import steamRoutes from "./routes/steamRoutes.js";
+import intelligenceRoutes from "./routes/intelligenceRoutes.js";
 
 dotenv.config();
 validateEnv();
@@ -113,8 +114,8 @@ app.use(
     credentials: true
   })
 );
-app.use(express.json({ limit: "1mb" }));
-app.use(express.urlencoded({ extended: true, limit: "1mb" }));
+app.use(express.json({ limit: "1.25mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1.25mb" }));
 app.use(cookieParser());
 
 app.get("/", (req, res) => {
@@ -161,6 +162,7 @@ app.use("/api/game-rooms", gameRoomRoutes);
 app.use("/api/activity", activityRoutes);
 app.use("/api/leaderboards", leaderboardRoutes);
 app.use("/api/steam", steamRoutes);
+app.use("/api/intelligence", intelligenceRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

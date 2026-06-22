@@ -33,6 +33,7 @@ ClutchQ matches gamers using rank, role, region, language, availability, playsty
 - Owner-created Discord voice rooms for accepted lobby members
 - Game-first browse hub with poster cards, filters, game detail pages, and room queues
 - Steam-powered profile identity, library, recent activity, achievements, friends, heatmap, and player score
+- Python-backed Gameplay Intelligence Pipeline for scorecards, rhythm, teammate fit, and profile graph insights
 - Profile account menu, mobile bottom navigation, retryable error states, and safer empty states
 - Manual playtime tracking with session timer, match ratings, and match analysis
 - Game and player leaderboards for weekly, monthly, and all-time activity
@@ -43,6 +44,7 @@ ClutchQ matches gamers using rank, role, region, language, availability, playsty
 
 - Frontend: ReactJS, Vite, JavaScript, Tailwind CSS, React Router DOM, Axios
 - Backend: Node.js, Express.js, MongoDB, Mongoose
+- Analytics Worker: Python standard library, launched internally by Node child_process
 - Auth: JWT, bcryptjs, Google OAuth, Discord OAuth, and Steam OpenID
 - Integrations: Steam Web API and Discord Bot API for lobby voice rooms
 - Tooling: nodemon and concurrently
@@ -52,14 +54,15 @@ No Angular, Vue, Next.js, Bootstrap, Material UI, Chakra, ShadCN, chart librarie
 ## Architecture
 
 ```txt
-client/  React/Vite app, custom Tailwind components, game hub routes, route guards
-server/  Express API, Mongoose models, JWT middleware, controllers, algorithms, seed data
-docs/    Architecture, API, algorithm, and demo script notes
+client/           React/Vite app, custom Tailwind components, game hub routes, route guards
+server/           Express API, Mongoose models, JWT middleware, controllers, algorithms, seed data
+analytics-worker/ Python JSON worker for safe gameplay intelligence analysis
+docs/             Architecture, API, algorithm, and demo script notes
 ```
 
 For final demo checks, use [docs/final-qa-checklist.md](docs/final-qa-checklist.md).
 
-The backend owns source-of-truth scoring. The frontend renders those explanations as score rings, DNA animations, heatmaps, radar charts, role balance panels, and chemistry graphs.
+The backend owns source-of-truth scoring. Python is not a public backend; Express launches it as an internal worker, parses structured JSON, and falls back to a lightweight JS analyzer if Python is unavailable.
 
 ## Folder Structure
 
@@ -83,6 +86,11 @@ clutchq/
 │   ├── scripts/
 │   ├── seed/
 │   └── utils/
+├── analytics-worker/
+│   ├── main.py
+│   ├── scoring.py
+│   ├── rhythm.py
+│   └── gameplay_graph.py
 ├── docs/
 ├── screenshots/
 └── README.md
@@ -129,6 +137,10 @@ Final Score = clamp(0, 100)
 - GameActivity: manual play sessions, result, duration, ratings, and notes
 - GamePlaytimeAggregate: per-player game totals for weekly, monthly, and all-time leaderboards
 - MatchAnalysis: rating breakdown, highlights, improvement areas, and trust impact
+- ScorecardUpload: compressed user scorecard image data, processing status, and safe metadata
+- ScorecardAnalysis: normalized scorecard stats, performance scores, situational signals, and confidence
+- TeammateFeedback: optional post-session teammate ratings and comments
+- GameplayGraph: profile intelligence score, rhythm summary, situational strengths, teammate edges, and recommendations
 - Request: teammate or lobby request with pending/accepted/rejected/cancelled state
 - Review: communication, teamwork, skill, punctuality, behavior, comment
 - Report: reporter, reported user, reason, status, admin note
@@ -204,6 +216,14 @@ Final Score = clamp(0, 100)
 - `GET /api/steam/heatmap`
 - `GET /api/steam/player-score`
 - `GET /api/steam/match-insights`
+- `GET /api/intelligence/health`
+- `POST /api/intelligence/scorecards`
+- `GET /api/intelligence/scorecards/me`
+- `POST /api/intelligence/sessions/:sessionId/feedback`
+- `POST /api/intelligence/graph/rebuild`
+- `GET /api/intelligence/graph/me`
+- `GET /api/intelligence/rhythm/me`
+- `GET /api/intelligence/teammates/me`
 - `POST /api/activity/start`
 - `POST /api/activity/:id/stop`
 - `GET /api/activity/me`
@@ -269,6 +289,7 @@ DISCORD_CATEGORY_ID=
 STEAM_API_KEY=
 STEAM_REALM=http://localhost:5000
 STEAM_CALLBACK_URL=http://localhost:5000/api/auth/steam/callback
+PYTHON_BIN=python
 ```
 
 Client `.env`:
@@ -349,6 +370,38 @@ STEAM_CALLBACK_URL=https://clutchq-backend.onrender.com/api/auth/steam/callback
 
 Steam privacy matters: library, friends, achievements, and recent activity only sync when the connected Steam profile exposes that data publicly.
 
+## Gameplay Intelligence Pipeline
+
+ClutchQ combines public and user-consented signals into a Gameplay Graph:
+
+- Steam library, recent playtime, achievements, friends, and heatmap data already synced by the backend
+- Manual ClutchQ sessions, match ratings, results, and duration
+- Optional user-uploaded scorecard screenshots compressed to a safe data URL under 900KB
+- Optional user-confirmed scorecard stats
+- Optional teammate feedback after a session
+- Demo seed data for judge-ready accounts
+
+The React UI calls Express. Express stores validated data in MongoDB, launches `analytics-worker/main.py` with JSON over stdin, reads one JSON response from stdout, and stores the result. If Python is missing or fails, `server/services/fallbackAnalyticsService.js` returns deterministic fallback analysis so the app stays usable.
+
+Intelligence routes:
+
+- `GET /api/intelligence/health`
+- `POST /api/intelligence/scorecards`
+- `GET /api/intelligence/scorecards/me`
+- `POST /api/intelligence/sessions/:sessionId/feedback`
+- `POST /api/intelligence/graph/rebuild`
+- `GET /api/intelligence/graph/me`
+- `GET /api/intelligence/rhythm/me`
+- `GET /api/intelligence/teammates/me`
+
+Local worker smoke test:
+
+```powershell
+Get-Content -Raw analytics-worker/sample_inputs/session_bundle.json | python analytics-worker/main.py
+```
+
+The worker uses only Python standard library in this stable version. OCR can be added later with Pillow, pytesseract, or OpenCV, but scorecard upload works today with manual stat confirmation and fallback analysis. ClutchQ does not read game memory, hook processes, packet sniff, bypass anti-cheat, or scrape private account data.
+
 ## Demo Credentials
 
 Seeded demo users:
@@ -367,7 +420,7 @@ Email: admin@clutchq.com
 Password: admin123
 ```
 
-The demo accounts include richer profile data, lobbies, requests, activity history, Steam-like library data, achievements, friends, and compatibility signals. They are safe for live judging when a real Steam account has private or empty library data.
+The demo accounts include richer profile data, lobbies, requests, activity history, Steam-like library data, achievements, friends, scorecard analyses, teammate feedback, Gameplay Graphs, rhythm summaries, and compatibility signals. They are safe for live judging when a real Steam account has private or empty library data.
 
 To add or refresh only the demo users without wiping a database, run:
 
@@ -396,6 +449,7 @@ See [docs/demo-script.md](docs/demo-script.md).
 - Real-time lobby chat and ready checks with WebSockets
 - Epic Games, Microsoft, PlayStation, Xbox, and Nintendo account linking
 - Deeper Steam achievement rarity analysis
+- Optional OCR for uploaded scorecards
 - Anti-toxicity reputation weighting
 - Tournament team builder mode
 - ML-assisted role recommendation

@@ -9,6 +9,7 @@ import GameTimeSplit from "../components/activity/GameTimeSplit";
 import GamingRhythmChart from "../components/activity/GamingRhythmChart";
 import RecentGameTimeline from "../components/activity/RecentGameTimeline";
 import StartSessionDock from "../components/activity/StartSessionDock";
+import MatchWrapUpModal from "../components/intelligence/MatchWrapUpModal";
 import {
   buildActivitySnapshot,
   buildGameTimeSplit,
@@ -20,6 +21,7 @@ import { useToast } from "../context/ToastContext";
 import activityApi from "../services/activityApi";
 import gameApi from "../services/gameApi";
 import { getErrorMessage } from "../services/api";
+import intelligenceApi from "../services/intelligenceApi";
 import steamApi from "../services/steamApi";
 
 const Activity = () => {
@@ -31,8 +33,12 @@ const Activity = () => {
   const [steamHeatmap, setSteamHeatmap] = useState([]);
   const [steamLibrary, setSteamLibrary] = useState([]);
   const [steamFriends, setSteamFriends] = useState([]);
+  const [rhythmIntel, setRhythmIntel] = useState(null);
+  const [teammateFits, setTeammateFits] = useState([]);
+  const [scorecardAnalyses, setScorecardAnalyses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [ending, setEnding] = useState(null);
+  const [wrapUpSession, setWrapUpSession] = useState(null);
   const [form, setForm] = useState({ result: "completed", teamworkScore: 75, communicationScore: 75, performanceScore: 75, notes: "" });
   const [error, setError] = useState("");
 
@@ -40,13 +46,16 @@ const Activity = () => {
     setLoading(true);
     setError("");
     try {
-      const [gamesResponse, summaryResponse, sessionsResponse, heatmapResponse, libraryResponse, friendsResponse] = await Promise.all([
+      const [gamesResponse, summaryResponse, sessionsResponse, heatmapResponse, libraryResponse, friendsResponse, rhythmResponse, teammatesResponse, scorecardsResponse] = await Promise.all([
         gameApi.list(),
         activityApi.summary(),
         activityApi.me(),
         steamApi.getSteamHeatmap().catch(() => ({ data: { data: [] } })),
         steamApi.getSteamLibrary().catch(() => ({ data: { data: [] } })),
-        steamApi.getSteamFriends().catch(() => ({ data: { data: [] } }))
+        steamApi.getSteamFriends().catch(() => ({ data: { data: [] } })),
+        intelligenceApi.getMyRhythm().catch(() => ({ data: { data: null } })),
+        intelligenceApi.getMyTeammates().catch(() => ({ data: { data: { matches: [] } } })),
+        intelligenceApi.getMyScorecards().catch(() => ({ data: { data: [] } }))
       ]);
       setGames(gamesResponse.data.data || []);
       setSummary(summaryResponse.data.data || { aggregates: [], active: null, recentAnalysis: [] });
@@ -54,6 +63,9 @@ const Activity = () => {
       setSteamHeatmap(heatmapResponse.data.data || []);
       setSteamLibrary(libraryResponse.data.data || []);
       setSteamFriends(friendsResponse.data.data || []);
+      setRhythmIntel(rhythmResponse.data.data || null);
+      setTeammateFits(teammatesResponse.data.data?.matches || []);
+      setScorecardAnalyses(scorecardsResponse.data.data || []);
     } catch (error) {
       const message = getErrorMessage(error);
       setError(message);
@@ -70,8 +82,9 @@ const Activity = () => {
   const stop = async (event) => {
     event.preventDefault();
     try {
-      await activityApi.stop(ending._id, form);
-      showToast("Match analysis saved");
+      const response = await activityApi.stop(ending._id, form);
+      showToast("Match saved. Wrap-up is ready.");
+      setWrapUpSession(response.data.data?.activity || ending);
       setEnding(null);
       load();
     } catch (error) {
@@ -79,21 +92,24 @@ const Activity = () => {
     }
   };
 
-  const series = useMemo(() => buildPlaytimeSeries(sessions, steamHeatmap, 30), [sessions, steamHeatmap]);
-  const split = useMemo(() => buildGameTimeSplit(summary.aggregates, steamLibrary), [summary.aggregates, steamLibrary]);
+  const fallbackSeries = useMemo(() => buildPlaytimeSeries(sessions, steamHeatmap, 30), [sessions, steamHeatmap]);
+  const series = useMemo(() => (rhythmIntel?.series?.length ? rhythmIntel.series : fallbackSeries), [fallbackSeries, rhythmIntel]);
+  const fallbackSplit = useMemo(() => buildGameTimeSplit(summary.aggregates, steamLibrary), [summary.aggregates, steamLibrary]);
+  const split = useMemo(() => (rhythmIntel?.gameMix?.length ? rhythmIntel.gameMix : fallbackSplit), [fallbackSplit, rhythmIntel]);
   const snapshot = useMemo(
     () => buildActivitySnapshot({ aggregates: summary.aggregates, sessions, steamLibrary, series }),
     [summary.aggregates, sessions, steamLibrary, series]
   );
-  const compatibleFriends = useMemo(
+  const fallbackFriends = useMemo(
     () => deriveFriendCompatibility({ steamFriends, sessions, profile }),
     [steamFriends, sessions, profile]
   );
+  const compatibleFriends = teammateFits.length ? teammateFits : fallbackFriends;
 
   return (
     <PageShell fullWidth>
       <div className="space-y-8">
-        <ActivityHero snapshot={snapshot} active={summary.active} onEndActive={setEnding} />
+        <ActivityHero snapshot={snapshot} rhythmSummary={rhythmIntel?.summary} active={summary.active} onEndActive={setEnding} />
         {error ? <ErrorState message={error} onRetry={load} /> : null}
         {loading ? (
           <div className="border-l border-white/10 py-5 pl-4 text-sm font-semibold text-zinc-400">Loading activity rhythm...</div>
@@ -103,11 +119,11 @@ const Activity = () => {
           <div className="min-w-0 space-y-6">
             <GamingRhythmChart series={series} />
             <ActivityCalendarStrip days={steamHeatmap} />
-            <RecentGameTimeline sessions={sessions} />
+            <RecentGameTimeline sessions={sessions} analyses={scorecardAnalyses} />
           </div>
           <aside className="min-w-0 space-y-6">
             <GameTimeSplit items={split} />
-            <ActivityInsightPanel snapshot={snapshot} split={split} />
+            <ActivityInsightPanel snapshot={snapshot} split={split} insights={rhythmIntel?.insights || []} rhythmSummary={rhythmIntel?.summary} />
           </aside>
         </div>
         <FriendCompatibilityStrip friends={compatibleFriends} />
@@ -144,6 +160,17 @@ const Activity = () => {
               </div>
             </form>
           </div>
+        ) : null}
+        {wrapUpSession ? (
+          <MatchWrapUpModal
+            session={wrapUpSession}
+            teammates={teammateFits}
+            onClose={() => {
+              setWrapUpSession(null);
+              load();
+            }}
+            onComplete={load}
+          />
         ) : null}
       </div>
     </PageShell>

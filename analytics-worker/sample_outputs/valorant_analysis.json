@@ -1,0 +1,19 @@
+{
+  "success": true,
+  "task": "analyze_scorecard",
+  "data": {
+    "detectedGame": "Valorant",
+    "gameType": "fps",
+    "performance": {
+      "combat": 82,
+      "survival": 68,
+      "support": 74,
+      "objectiveFocus": 71,
+      "consistency": 76,
+      "impact": 84,
+      "overall": 78
+    }
+  },
+  "warnings": [],
+  "confidence": 0.84
+}

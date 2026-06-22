@@ -25,7 +25,7 @@ const GameThumb = ({ image, gameName }) => {
   );
 };
 
-const RecentGameTimeline = ({ sessions = [] }) => (
+const RecentGameTimeline = ({ sessions = [], analyses = [] }) => (
   <section className="border-b border-white/10 pb-6">
     <div className="flex items-end justify-between gap-4">
       <div>
@@ -39,6 +39,7 @@ const RecentGameTimeline = ({ sessions = [] }) => (
       <div className="mt-6 divide-y divide-white/10">
         {sessions.slice(0, 10).map((session) => {
           const image = getGameArt(session.gameName || session.gameSlug);
+          const analysis = analyses.find((item) => String(item.sessionId) === String(session._id));
           return (
             <article key={session._id || `${session.gameName}-${session.startedAt}`} className="grid gap-4 py-4 sm:grid-cols-[56px_1fr_auto] sm:items-center">
               <div className="h-14 w-14 overflow-hidden rounded-2xl bg-white/[0.06]">
@@ -48,8 +49,10 @@ const RecentGameTimeline = ({ sessions = [] }) => (
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="truncate text-base font-black text-white">{session.gameName || "Unknown game"}</h3>
                   {session.result ? <span className="rounded-full bg-white/[0.07] px-2 py-1 text-xs font-bold uppercase text-zinc-300">{session.result}</span> : null}
+                  {analysis ? <span className="rounded-full bg-emerald-500/15 px-2 py-1 text-xs font-bold text-emerald-100">scorecard</span> : null}
                 </div>
                 <p className="mt-1 text-sm text-zinc-500">{formatSafeDateTime(session.startedAt, "Time unknown")} · {formatMinutes(session.durationMinutes)}</p>
+                {analysis?.summary?.[0] ? <p className="mt-2 line-clamp-1 text-sm text-zinc-300">{analysis.summary[0]}</p> : null}
                 {session.notes ? <p className="mt-2 line-clamp-1 text-sm text-zinc-400">{session.notes}</p> : null}
               </div>
               <div className="text-left sm:text-right">

@@ -95,6 +95,19 @@ Errors use:
 - `GET /api/steam/player-score`
 - `GET /api/steam/match-insights`
 
+## Gameplay Intelligence
+
+- `GET /api/intelligence/health`
+- `POST /api/intelligence/scorecards`
+- `GET /api/intelligence/scorecards/me`
+- `POST /api/intelligence/sessions/:sessionId/feedback`
+- `POST /api/intelligence/graph/rebuild`
+- `GET /api/intelligence/graph/me`
+- `GET /api/intelligence/rhythm/me`
+- `GET /api/intelligence/teammates/me`
+
+These routes use the logged-in user from JWT and never accept a client-provided `userId` as authority. Scorecard uploads accept PNG, JPG, or WebP data URLs only, with a compressed payload limit of 900KB.
+
 ## Requests
 
 - `GET /api/requests`

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import GameplayGraphPanel from "../components/intelligence/GameplayGraphPanel";
+import TeammateEdgesPanel from "../components/intelligence/TeammateEdgesPanel";
 import ConnectedAccountsPanel from "../components/profile/ConnectedAccountsPanel";
 import GamingActivityVisual from "../components/profile/GamingActivityVisual";
 import MatchAnalyticsStory from "../components/profile/MatchAnalyticsStory";
@@ -15,6 +17,7 @@ import SteamProfileSection from "../components/profile/SteamProfileSection";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { getErrorMessage } from "../services/api";
+import intelligenceApi from "../services/intelligenceApi";
 import profileApi from "../services/profileApi";
 import steamApi from "../services/steamApi";
 import { PROFILE_TABS } from "../utils/constants";
@@ -46,6 +49,7 @@ const Profile = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [bundle, setBundle] = useState(null);
   const [steam, setSteam] = useState(defaultSteamData);
+  const [gameplayGraph, setGameplayGraph] = useState(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState("");
@@ -55,7 +59,7 @@ const Profile = () => {
     setError("");
 
     try {
-      const [profileResult, syncStatusResult, libraryResult, recentResult, favoritesResult, achievementsResult, friendsResult, heatmapResult, insightsResult] =
+      const [profileResult, syncStatusResult, libraryResult, recentResult, favoritesResult, achievementsResult, friendsResult, heatmapResult, insightsResult, graphResult] =
         await Promise.allSettled([
           profileApi.getProfile(),
           steamApi.getSteamSyncStatus(),
@@ -65,7 +69,8 @@ const Profile = () => {
           steamApi.getSteamAchievements(),
           steamApi.getSteamFriends(),
           steamApi.getSteamHeatmap(),
-          steamApi.getSteamMatchInsights()
+          steamApi.getSteamMatchInsights(),
+          intelligenceApi.getMyGraph()
         ]);
 
       const nextBundle = fromResult(profileResult, null);
@@ -82,6 +87,7 @@ const Profile = () => {
         heatmap: fromResult(heatmapResult, []),
         insights: fromResult(insightsResult, null)
       });
+      setGameplayGraph(fromResult(graphResult, null)?.graph || null);
     } catch (loadError) {
       setError(getErrorMessage(loadError));
     } finally {
@@ -167,10 +173,12 @@ const Profile = () => {
       {activeTab === PROFILE_TABS.overview && (
         <div className="space-y-6">
           <PlayerSnapshot bundle={bundle} library={steam.library} steamSummary={bundle.steamSummary} syncStatus={steamSyncStatus} />
+          <GameplayGraphPanel graph={gameplayGraph} />
           <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
             <PlayerScoreStory score={score} />
             <MatchAnalyticsStory insights={steam.insights} recentActivitySummary={bundle.recentActivitySummary} profile={bundle.profile} />
           </div>
+          <TeammateEdgesPanel edges={gameplayGraph?.teammateEdges || []} />
           <ConnectedAccountsPanel accounts={bundle.connectedAccounts} steamSummary={bundle.steamSummary} onSyncSteam={handleSteamSync} syncing={syncing} compact />
         </div>
       )}
