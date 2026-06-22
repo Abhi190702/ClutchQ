@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import ChevronIcon from "./ChevronIcon";
+import ProfileAccountMenu from "../navigation/ProfileAccountMenu";
 
 const baseLinks = [
   { to: "/dashboard", label: "Dashboard", icon: "dashboard", group: "Play" },
@@ -33,7 +34,8 @@ const SidebarIcon = ({ name }) => (
 );
 
 const Sidebar = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user, profile, logout } = useAuth();
+  const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem("clutchq-sidebar-collapsed") === "true";
@@ -46,6 +48,21 @@ const Sidebar = () => {
     map[link.group] = [...(map[link.group] || []), link];
     return map;
   }, {});
+  const steamProvider = user?.authProviders?.steam;
+  const steamSummary = steamProvider
+    ? {
+        connected: true,
+        displayName: steamProvider.displayName,
+        avatar: steamProvider.avatar,
+        profileUrl: steamProvider.profileUrl,
+        steamId: steamProvider.steamId
+      }
+    : null;
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+  };
 
   useEffect(() => {
     try {
@@ -116,12 +133,19 @@ const Sidebar = () => {
           ))}
         </nav>
 
-        {!collapsed && (
-          <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.035] p-4">
-            <div className="text-[11px] font-black uppercase tracking-[0.22em] text-zinc-600">Live Demo</div>
-            <p className="mt-2 text-sm leading-5 text-zinc-400">Use seeded accounts for judge-ready rooms, requests, and activity.</p>
-          </div>
-        )}
+        <div className={`${collapsed ? "mt-4 flex justify-center" : "mt-4 border-t border-white/10 pt-4"}`}>
+          {user ? (
+            <ProfileAccountMenu
+              user={user}
+              profile={profile}
+              steamSummary={steamSummary}
+              steamLinked={Boolean(steamProvider?.steamId)}
+              onLogout={handleLogout}
+              placement="sidebar"
+              compact={collapsed}
+            />
+          ) : null}
+        </div>
       </div>
     </aside>
   );

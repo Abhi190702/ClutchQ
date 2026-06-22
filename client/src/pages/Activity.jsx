@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import PageShell from "../components/common/PageShell";
 import ErrorState from "../components/common/ErrorState";
+import ActivityCalendarStrip from "../components/activity/ActivityCalendarStrip";
 import ActivityHero from "../components/activity/ActivityHero";
 import ActivityInsightPanel from "../components/activity/ActivityInsightPanel";
-import ActivitySnapshotStrip from "../components/activity/ActivitySnapshotStrip";
 import FriendCompatibilityStrip from "../components/activity/FriendCompatibilityStrip";
 import GameTimeSplit from "../components/activity/GameTimeSplit";
 import GamingRhythmChart from "../components/activity/GamingRhythmChart";
@@ -98,14 +98,14 @@ const Activity = () => {
         {loading ? (
           <div className="border-l border-white/10 py-5 pl-4 text-sm font-semibold text-zinc-400">Loading activity rhythm...</div>
         ) : null}
-        <ActivitySnapshotStrip snapshot={snapshot} />
         <StartSessionDock games={games} active={summary.active} onStarted={load} showToast={showToast} />
-        <div className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
-          <div className="space-y-6">
+        <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="min-w-0 space-y-6">
             <GamingRhythmChart series={series} />
+            <ActivityCalendarStrip days={steamHeatmap} />
             <RecentGameTimeline sessions={sessions} />
           </div>
-          <aside className="space-y-6">
+          <aside className="min-w-0 space-y-6">
             <GameTimeSplit items={split} />
             <ActivityInsightPanel snapshot={snapshot} split={split} />
           </aside>

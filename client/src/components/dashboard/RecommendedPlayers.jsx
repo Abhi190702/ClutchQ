@@ -3,6 +3,8 @@ import SkeletonCard from "../common/SkeletonCard";
 import PlayerCard from "./PlayerCard";
 
 const RecommendedPlayers = ({ recommendations, loading, onSendRequest, requestedIds }) => {
+  const visibleRecommendations = recommendations.slice(0, 3);
+
   if (loading) {
     return (
       <div className="grid gap-4 lg:grid-cols-2">
@@ -28,10 +30,10 @@ const RecommendedPlayers = ({ recommendations, loading, onSendRequest, requested
           <div className="eyebrow mb-2">Recommended players</div>
           <h2 className="text-2xl font-black tracking-tight text-clutch-text">Best squad fits</h2>
         </div>
-        <span className="text-sm font-semibold text-clutch-muted">{recommendations.length} matches</span>
+        <span className="text-sm font-semibold text-clutch-muted">Top {visibleRecommendations.length} of {recommendations.length}</span>
       </div>
       <div className="grid gap-x-5 lg:grid-cols-2">
-      {recommendations.map((item) => (
+      {visibleRecommendations.map((item) => (
         <PlayerCard
           key={item.profile._id}
           item={item}

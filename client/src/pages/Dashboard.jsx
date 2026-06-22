@@ -4,6 +4,7 @@ import PageShell from "../components/common/PageShell";
 import ErrorState from "../components/common/ErrorState";
 import MetricStrip from "../components/common/MetricStrip";
 import SectionHeader from "../components/common/SectionHeader";
+import SoftGlow from "../components/common/SoftGlow";
 import FindSquadNow from "../components/dashboard/FindSquadNow";
 import LiveDNAVisualizer from "../components/dashboard/LiveDNAVisualizer";
 import PlayerFilters from "../components/dashboard/PlayerFilters";
@@ -83,19 +84,22 @@ const Dashboard = () => {
   return (
     <PageShell fullWidth>
       <div className="grid gap-7">
-        <section className="border-b border-white/10 pb-7">
-          <SectionHeader
-            eyebrow="Overview"
-            title={profile?.displayName ? `Welcome, ${profile.displayName}` : "Dashboard"}
-            description={`${filtered.length} strong squad matches available · Best match ${best?.match?.totalScore || 0}% · Trust ${profile?.trustScore || 0}%`}
-            actions={
-              <>
-                <Link to="/lobbies/create" className="btn-primary">Create Lobby</Link>
-                <a href="#squad-controls" className="btn-secondary">Find Squad Now</a>
-              </>
-            }
-          />
-          <MetricStrip metrics={metrics} className="mt-6" />
+        <section className="relative overflow-hidden rounded-[18px] border border-white/10 bg-white/[0.025] px-5 py-6 md:px-7">
+          <SoftGlow />
+          <div className="relative">
+            <SectionHeader
+              eyebrow="Squad console"
+              title={profile?.displayName ? `Welcome, ${profile.displayName}` : "Dashboard"}
+              description={`${filtered.length} strong squad matches · Best ${best?.match?.totalScore || 0}% · Trust ${profile?.trustScore || 0}%`}
+              actions={
+                <>
+                  <a href="#squad-controls" className="btn-primary">Find Squad Now</a>
+                  <Link to="/lobbies/create" className="btn-secondary">Create Lobby</Link>
+                </>
+              }
+            />
+            <MetricStrip metrics={metrics} className="mt-6" />
+          </div>
         </section>
         {error ? <ErrorState message={error} onRetry={load} /> : null}
         <div className="grid gap-8 xl:grid-cols-[0.38fr_0.62fr]">

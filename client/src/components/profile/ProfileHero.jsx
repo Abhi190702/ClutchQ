@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { startProviderOAuth } from "../../utils/oauthLinks";
 import { formatPercentage, safeNumber } from "../../utils/formatters";
+import SoftGlow from "../common/SoftGlow";
 import ProfileAvatarUploader from "./ProfileAvatarUploader";
 
 const ProfileHero = ({ bundle, libraryCount, steamLinked, onAvatarUpload, onAvatarRemove, onSyncSteam, syncing }) => {
@@ -17,8 +18,9 @@ const ProfileHero = ({ bundle, libraryCount, steamLinked, onAvatarUpload, onAvat
   ].filter(Boolean);
 
   return (
-    <section id="overview" className="border-b border-white/10 py-6 md:py-8">
-      <div className="grid gap-6 lg:grid-cols-[160px_minmax(0,1fr)_auto] lg:items-center">
+    <section id="overview" className="relative overflow-hidden rounded-[18px] border border-white/10 bg-[#18181c] shadow-[0_24px_80px_rgba(0,0,0,0.28)]">
+      <SoftGlow />
+      <div className="relative grid gap-6 px-5 py-6 md:px-7 md:py-8 lg:grid-cols-[150px_minmax(0,1fr)_auto] lg:items-center">
           <ProfileAvatarUploader
             user={user}
             profile={profile}
@@ -30,30 +32,30 @@ const ProfileHero = ({ bundle, libraryCount, steamLinked, onAvatarUpload, onAvat
 
           <div className="min-w-0 text-center lg:text-left">
             <div className="flex flex-wrap justify-center gap-2 lg:justify-start">
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/[0.04] px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-clutch-muted">
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/[0.055] px-3 py-1 text-xs font-bold text-clutch-muted">
                 <img src="/brand/clutchq-logo.png" alt="" className="h-5 w-5 rounded-md object-cover" />
                 Official ClutchQ profile
               </span>
-              <span className="rounded-full bg-white/[0.04] px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-clutch-muted">
+              <span className="rounded-full bg-white/[0.055] px-3 py-1 text-xs font-bold text-clutch-muted">
                 {steamLinked ? "Steam connected" : steamSummary?.demo ? "Demo Steam preview" : "ClutchQ account"}
               </span>
               {profile?.micAvailable && <span className="rounded-full border border-clutch-green/30 bg-clutch-green/10 px-3 py-1 text-xs font-bold text-emerald-200">Mic ready</span>}
-              {!Number.isNaN(trust) && <span className="rounded-full bg-white/[0.04] px-3 py-1 text-xs font-bold text-clutch-muted">Trust {formatPercentage(trust)}</span>}
+              {!Number.isNaN(trust) && <span className="rounded-full bg-white/[0.055] px-3 py-1 text-xs font-bold text-clutch-muted">Trust {formatPercentage(trust)}</span>}
             </div>
 
             <h1 className="mt-4 break-words text-4xl font-black tracking-tight text-clutch-text md:text-5xl">{displayName}</h1>
-            <p className="mt-2 text-sm font-black uppercase tracking-[0.18em] text-zinc-400">{tag}</p>
+            <p className="mt-2 text-sm font-bold text-zinc-400">{tag}</p>
             <p className="mt-4 max-w-3xl text-base leading-7 text-zinc-300">
               {profile?.bio || "Build your Steam-powered ClutchQ identity with games, achievements, friends, reliable lobbies, and teammate reviews."}
             </p>
 
             <div className="mt-5 flex flex-wrap justify-center gap-2 lg:justify-start">
               {meta.map((item) => (
-                <span key={item} className="rounded-full bg-white/[0.055] px-3 py-2 text-sm font-semibold text-clutch-muted">{item}</span>
+                <span key={item} className="rounded-full bg-white/[0.06] px-3 py-2 text-sm font-semibold text-clutch-muted">{item}</span>
               ))}
-              <span className="rounded-full bg-white/[0.055] px-3 py-2 text-sm font-semibold text-clutch-muted">{libraryCount} Steam games</span>
+              <span className="rounded-full bg-white/[0.06] px-3 py-2 text-sm font-semibold text-clutch-muted">{libraryCount} Steam games</span>
               {typeof playerScore?.overall === "number" && (
-                <span className="rounded-full bg-white/[0.055] px-3 py-2 text-sm font-semibold text-clutch-muted">Score {Math.round(playerScore.overall)}</span>
+                <span className="rounded-full bg-white/[0.06] px-3 py-2 text-sm font-semibold text-clutch-muted">Score {Math.round(playerScore.overall)}</span>
               )}
             </div>
           </div>

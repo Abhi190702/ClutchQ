@@ -17,13 +17,14 @@ const menuGroups = [
   ]
 ];
 
-const ProfileAccountMenu = ({ user, profile, steamSummary, steamLinked, onLogout }) => {
+const ProfileAccountMenu = ({ user, profile, steamSummary, steamLinked, onLogout, placement = "top", compact = false }) => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
   const displayName = profile?.displayName || user?.name || steamSummary?.displayName || "Player";
   const avatar = profile?.customAvatar?.dataUrl || steamSummary?.avatar || user?.avatar;
   const playerCode = profile?.playerCode || profile?.clutchTag || `CLQ-${String(user?._id || "PLAYER").slice(-5).toUpperCase()}`;
+  const isSidebar = placement === "sidebar";
 
   useEffect(() => {
     if (!open) return undefined;
@@ -54,23 +55,28 @@ const ProfileAccountMenu = ({ user, profile, steamSummary, steamLinked, onLogout
   };
 
   return (
-    <div className="relative" ref={rootRef}>
+    <div className={`relative ${isSidebar && !compact ? "w-full" : ""}`} ref={rootRef}>
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="flex items-center gap-2 rounded-full bg-clutch-panel px-2.5 py-2 text-left transition hover:bg-clutch-panelSoft"
+        className={`${isSidebar && !compact ? "w-full justify-start rounded-xl border border-white/10 bg-white/[0.035] px-3 py-3" : "rounded-full bg-clutch-panel px-2.5 py-2"} flex items-center gap-2 text-left transition hover:bg-clutch-panelSoft`}
         aria-expanded={open}
         aria-haspopup="menu"
       >
         <span className="grid h-9 w-9 place-items-center overflow-hidden rounded-full bg-[#3a3a42] text-sm font-bold text-clutch-text">
           {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : getInitials(displayName)}
         </span>
-        <span className="hidden max-w-32 truncate text-sm font-bold text-clutch-text sm:block">{displayName}</span>
+        {!compact && (
+          <span className="min-w-0 flex-1">
+            <span className="block max-w-36 truncate text-sm font-bold text-clutch-text">{displayName}</span>
+            {isSidebar ? <span className="mt-0.5 block truncate text-xs font-semibold text-zinc-500">{playerCode}</span> : null}
+          </span>
+        )}
       </button>
 
       {open && (
         <div
-          className="absolute right-0 top-14 z-50 w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-md border border-white/10 bg-[#242428] shadow-2xl"
+          className={`${isSidebar ? "bottom-14 left-0" : "right-0 top-14"} absolute z-50 w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-md border border-white/10 bg-[#242428] shadow-2xl`}
           role="menu"
         >
           <div className="bg-gradient-to-br from-white/[0.06] to-transparent px-4 py-4">

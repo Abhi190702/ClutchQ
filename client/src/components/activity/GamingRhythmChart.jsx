@@ -3,7 +3,7 @@ import { formatHours, safeNumber } from "../../utils/formatters";
 
 const GamingRhythmChart = ({ series = [] }) => {
   const width = 760;
-  const height = 230;
+  const height = 200;
   const padding = 28;
   const maxMinutes = Math.max(...series.map((item) => safeNumber(item.minutes)), 0);
 
@@ -11,7 +11,7 @@ const GamingRhythmChart = ({ series = [] }) => {
     return (
       <section className="border-b border-white/10 pb-6">
         <div className="eyebrow mb-3">Rhythm</div>
-        <h2 className="text-2xl font-black text-white">Playtime trend</h2>
+        <h2 className="text-2xl font-black text-white">Rhythm timeline</h2>
         <EmptyState
           compact
           className="mt-5 border-white/10 bg-transparent"
@@ -35,7 +35,7 @@ const GamingRhythmChart = ({ series = [] }) => {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="eyebrow mb-3">Rhythm</div>
-          <h2 className="text-2xl font-black text-white">Playtime trend</h2>
+          <h2 className="text-2xl font-black text-white">Rhythm timeline</h2>
         </div>
         <div className="text-sm font-semibold text-zinc-400">Peak day {formatHours(maxMinutes)}</div>
       </div>

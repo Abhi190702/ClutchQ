@@ -75,5 +75,20 @@ button:disabled {
 }
 
 .eyebrow {
-  @apply text-xs font-semibold uppercase tracking-[0.18em] text-clutch-muted;
+  @apply text-xs font-semibold uppercase tracking-[0.14em] text-clutch-muted;
+}
+
+.soft-radial-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.soft-radial-glow::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(56, 189, 248, 0.1), transparent 32%),
+    radial-gradient(circle at 82% 4%, rgba(167, 139, 250, 0.08), transparent 28%);
 }
