@@ -17,15 +17,16 @@ import { useToast } from "../context/ToastContext";
 import { getErrorMessage } from "../services/api";
 import profileApi from "../services/profileApi";
 import steamApi from "../services/steamApi";
+import { PROFILE_TABS } from "../utils/constants";
 
 const fromResult = (result, fallback) => (result.status === "fulfilled" ? result.value.data.data : fallback);
 
 const profileTabs = [
-  { id: "overview", label: "Overview" },
-  { id: "steam", label: "Steam" },
-  { id: "activity", label: "Activity" },
-  { id: "connections", label: "Connections" },
-  { id: "settings", label: "Settings" }
+  { id: PROFILE_TABS.overview, label: "Overview" },
+  { id: PROFILE_TABS.steam, label: "Steam" },
+  { id: PROFILE_TABS.activity, label: "Activity" },
+  { id: PROFILE_TABS.connections, label: "Connections" },
+  { id: PROFILE_TABS.settings, label: "Settings" }
 ];
 
 const defaultSteamData = {
@@ -143,10 +144,10 @@ const Profile = () => {
   const score = bundle.playerScore || {};
   const steamLinked = bundle.connectedAccounts?.some((account) => account.id === "steam" && account.status === "connected");
   const steamSyncStatus = steam.syncStatus || bundle.steamSyncStatus;
-  const activeTab = profileTabs.some((tab) => tab.id === searchParams.get("tab")) ? searchParams.get("tab") : "overview";
+  const activeTab = profileTabs.some((tab) => tab.id === searchParams.get("tab")) ? searchParams.get("tab") : PROFILE_TABS.overview;
 
   const setActiveTab = (tabId) => {
-    setSearchParams(tabId === "overview" ? {} : { tab: tabId });
+    setSearchParams(tabId === PROFILE_TABS.overview ? {} : { tab: tabId });
   };
 
   return (
@@ -163,7 +164,7 @@ const Profile = () => {
 
       <ProfileTabs tabs={profileTabs} activeTab={activeTab} onChange={setActiveTab} />
 
-      {activeTab === "overview" && (
+      {activeTab === PROFILE_TABS.overview && (
         <div className="space-y-6">
           <PlayerSnapshot bundle={bundle} library={steam.library} steamSummary={bundle.steamSummary} syncStatus={steamSyncStatus} />
           <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
@@ -174,7 +175,7 @@ const Profile = () => {
         </div>
       )}
 
-      {activeTab === "steam" && (
+      {activeTab === PROFILE_TABS.steam && (
         <SteamProfileSection
           steamSummary={bundle.steamSummary}
           steamLinked={steamLinked}
@@ -189,7 +190,7 @@ const Profile = () => {
         />
       )}
 
-      {activeTab === "activity" && (
+      {activeTab === PROFILE_TABS.activity && (
         <div className="space-y-6">
           <GamingActivityVisual heatmap={steam.heatmap} library={steam.library} recentActivitySummary={bundle.recentActivitySummary} />
           <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
@@ -199,11 +200,11 @@ const Profile = () => {
         </div>
       )}
 
-      {activeTab === "connections" && (
+      {activeTab === PROFILE_TABS.connections && (
         <ConnectedAccountsPanel accounts={bundle.connectedAccounts} steamSummary={bundle.steamSummary} onSyncSteam={handleSteamSync} syncing={syncing} />
       )}
 
-      {activeTab === "settings" && (
+      {activeTab === PROFILE_TABS.settings && (
         <ProfileSettingsPanel bundle={bundle} onAvatarUpload={handleAvatarUpload} onAvatarRemove={handleAvatarRemove} />
       )}
     </ProfileShell>

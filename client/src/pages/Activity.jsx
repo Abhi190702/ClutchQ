@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import PageShell from "../components/common/PageShell";
 import ErrorState from "../components/common/ErrorState";
 import ActivityCalendarStrip from "../components/activity/ActivityCalendarStrip";
@@ -36,7 +36,7 @@ const Activity = () => {
   const [form, setForm] = useState({ result: "completed", teamworkScore: 75, communicationScore: 75, performanceScore: 75, notes: "" });
   const [error, setError] = useState("");
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -61,11 +61,11 @@ const Activity = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   const stop = async (event) => {
     event.preventDefault();
@@ -98,7 +98,7 @@ const Activity = () => {
         {loading ? (
           <div className="border-l border-white/10 py-5 pl-4 text-sm font-semibold text-zinc-400">Loading activity rhythm...</div>
         ) : null}
-        <StartSessionDock games={games} active={summary.active} onStarted={load} showToast={showToast} />
+        <StartSessionDock games={games} active={summary.active} onStarted={load} />
         <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="min-w-0 space-y-6">
             <GamingRhythmChart series={series} />

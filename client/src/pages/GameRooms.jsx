@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import PageShell from "../components/common/PageShell";
 import ErrorState from "../components/common/ErrorState";
@@ -34,7 +34,7 @@ const GameRooms = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setError("");
     try {
       const [gameResponse, roomsResponse] = await Promise.all([gameApi.get(slug), gameApi.rooms(slug)]);
@@ -52,11 +52,11 @@ const GameRooms = () => {
       setError(message);
       showToast(message, "error");
     }
-  };
+  }, [showToast, slug]);
 
   useEffect(() => {
     load();
-  }, [slug]);
+  }, [load]);
 
   const createRoom = async (event) => {
     event.preventDefault();

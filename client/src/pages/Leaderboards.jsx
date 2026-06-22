@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import PageShell from "../components/common/PageShell";
 import ErrorState from "../components/common/ErrorState";
 import GameLeaderboardTable from "../components/leaderboards/GameLeaderboardTable";
@@ -22,7 +22,7 @@ const Leaderboards = () => {
   const [trending, setTrending] = useState([]);
   const [error, setError] = useState("");
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setError("");
     try {
       const [gamesResponse, playersResponse, trendingResponse] = await Promise.all([
@@ -38,11 +38,11 @@ const Leaderboards = () => {
       setError(message);
       showToast(message, "error");
     }
-  };
+  }, [range, showToast]);
 
   useEffect(() => {
     load();
-  }, [range, showToast]);
+  }, [load]);
 
   return (
     <PageShell fullWidth>

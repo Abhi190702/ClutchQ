@@ -76,6 +76,9 @@ const lobbySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+lobbySchema.index({ ownerId: 1, status: 1, game: 1 });
+lobbySchema.index({ game: 1, status: 1, createdAt: -1 });
+
 const Lobby = mongoose.model("Lobby", lobbySchema);
 
 export default Lobby;

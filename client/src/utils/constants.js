@@ -49,6 +49,14 @@ export const LOOKING_FOR = ["Rank Push", "Competitive", "Mic Only", "Chill Stack
 export const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 export const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
 
+export const PROFILE_TABS = {
+  overview: "overview",
+  steam: "steam",
+  activity: "activity",
+  connections: "connections",
+  settings: "settings"
+};
+
 export const DEFAULT_PLAYSTYLE = {
   aggression: 65,
   support: 65,

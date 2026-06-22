@@ -7,17 +7,21 @@ import { useToast } from "../../context/ToastContext";
 const FindSquadNow = () => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
   const { showToast } = useToast();
 
   const run = async () => {
     setLoading(true);
     setResult(null);
+    setError("");
     try {
       const response = await api.post("/matchmaking/find-squad-now");
       setResult(response.data.data);
       showToast("Best squad found");
     } catch (error) {
-      showToast(getErrorMessage(error), "error");
+      const message = getErrorMessage(error) || "Could not find squad suggestions.";
+      setError(message);
+      showToast(message, "error");
     } finally {
       setLoading(false);
     }
@@ -42,6 +46,15 @@ const FindSquadNow = () => {
             <div className="h-full w-2/3 animate-pulseLine rounded-full bg-clutch-blue" />
           </div>
           <div className="mt-3 text-sm text-blue-100">Comparing rank, role, trust, and availability...</div>
+        </div>
+      )}
+
+      {error && (
+        <div className="mt-4 rounded-md border border-clutch-red/30 bg-clutch-red/10 p-3 text-sm text-red-100">
+          <span>{error}</span>
+          <button type="button" className="ml-3 font-bold underline" onClick={run}>
+            Retry
+          </button>
         </div>
       )}
 

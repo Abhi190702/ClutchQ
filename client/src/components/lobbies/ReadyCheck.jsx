@@ -1,15 +1,24 @@
 import { useState } from "react";
 import api, { getErrorMessage } from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 
 const ReadyCheck = ({ lobby, onUpdate }) => {
+  const { user } = useAuth();
   const { showToast } = useToast();
   const [saving, setSaving] = useState(false);
+  const currentUserId = String(user?._id || user?.id || "");
 
   const updateReady = async (ready) => {
     setSaving(true);
     const previous = lobby;
-    onUpdate?.({ ...lobby, currentMembers: lobby.currentMembers.map((member) => ({ ...member, ready: member.ready })) });
+    onUpdate?.({
+      ...lobby,
+      currentMembers: (lobby.currentMembers || []).map((member) => {
+        const memberId = String(member.userId?._id || member.userId || member._id || member.id || "");
+        return memberId === currentUserId ? { ...member, ready } : member;
+      })
+    });
     try {
       const response = await api.patch(`/lobbies/${lobby._id}/ready`, { ready });
       onUpdate?.(response.data.data);

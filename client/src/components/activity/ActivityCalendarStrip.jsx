@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { formatHours, formatShortDate } from "../../utils/formatters";
 
 const getIntensity = (minutes = 0) => {
@@ -15,9 +16,9 @@ const fallbackDays = Array.from({ length: 56 }, (_, index) => ({
 }));
 
 const ActivityCalendarStrip = ({ days = [], compact = false }) => {
-  const visibleDays = (days.length ? days : fallbackDays).slice(compact ? -28 : -56);
-  const totalMinutes = visibleDays.reduce((sum, day) => sum + (day.totalMinutes || 0), 0);
-  const activeDays = visibleDays.filter((day) => (day.totalMinutes || 0) > 0).length;
+  const visibleDays = useMemo(() => (days.length ? days : fallbackDays).slice(compact ? -28 : -56), [compact, days]);
+  const totalMinutes = useMemo(() => visibleDays.reduce((sum, day) => sum + (day.totalMinutes || 0), 0), [visibleDays]);
+  const activeDays = useMemo(() => visibleDays.filter((day) => (day.totalMinutes || 0) > 0).length, [visibleDays]);
 
   return (
     <section className={`${compact ? "" : "border-b border-white/10 pb-6"}`}>

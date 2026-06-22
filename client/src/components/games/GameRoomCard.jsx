@@ -17,10 +17,12 @@ const GameRoomCard = ({ room, user, onUpdated, compact = false }) => {
   const members = room.currentMembers?.filter((member) => member.status !== "left") || [];
   const hasDiscord = Boolean(room.discord?.inviteUrl);
   const isPreview = Boolean(room.isPreview) || String(room._id || "").startsWith("preview-");
-  const maxMembers = room.maxMembers || 5;
+  const maxMembers = Number(room.maxMembers || room.neededPlayers || 5);
   const isFull = members.length >= maxMembers || room.status === "full";
   const isOpen = room.status === "open" || !room.status;
   const joinDisabled = isPreview || loading === "join" || isFull || !isOpen;
+  const joinLabel = isPreview ? "Preview Room" : isFull ? "Full" : loading === "join" ? "Joining..." : "Join Room";
+  const disabledTitle = isFull ? "This lobby is already full." : !isOpen ? "This lobby is closed." : undefined;
 
   const runAction = async (key, action, success) => {
     setLoading(key);
@@ -85,9 +87,10 @@ const GameRoomCard = ({ room, user, onUpdated, compact = false }) => {
             type="button"
             className="btn-primary py-2"
             disabled={joinDisabled}
+            title={disabledTitle}
             onClick={() => !joinDisabled && runAction("join", () => gameApi.joinRoom(room._id), "Joined room")}
           >
-            {isPreview ? "Preview Room" : isFull ? "Full" : loading === "join" ? "Joining..." : "Join Room"}
+            {joinLabel}
           </button>
         ) : (
           <button

@@ -14,13 +14,13 @@ const SquadRoom = ({ data, onLobbyUpdate }) => {
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
               <h2 className="text-2xl font-semibold">{lobby.title}</h2>
-              <p className="mt-2 text-sm text-clutch-muted">{lobby.game} - {lobby.region} - starts {shortDateTime(lobby.startTime)}</p>
+              <p className="mt-2 text-sm text-clutch-muted">{lobby.game} - {lobby.region} - starts {shortDateTime(lobby.startTime || lobby.startsAt || lobby.createdAt || lobby.updatedAt, "when full")}</p>
             </div>
             <Badge>{lobby.inviteCode}</Badge>
           </div>
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             {lobby.currentMembers?.map((member) => (
-              <div key={member.userId?._id || member.userId} className="rounded-lg border border-clutch-border bg-clutch-panelSoft p-3">
+              <div key={member.userId?._id || member.userId || member._id} className="rounded-lg border border-clutch-border bg-clutch-panelSoft p-3">
                 <div className="font-bold text-clutch-text">{member.userId?.name || "Member"}</div>
                 <div className="mt-1 text-sm text-clutch-muted">{member.role} - {member.ready ? "Ready" : "Waiting"}</div>
               </div>

@@ -3,14 +3,13 @@ import Badge from "../common/Badge";
 import RankBadge from "../common/RankBadge";
 import LobbyCompatibility from "./LobbyCompatibility";
 import { shortDateTime } from "../../utils/formatters";
+import { getLobbyState } from "../../utils/lobbyState";
 
 const LobbyCard = ({ item, onJoin, requested = false }) => {
   const lobby = item.lobby;
-  const openSlots = Math.max(0, (lobby.neededPlayers || 5) - (lobby.currentMembers?.length || 0));
-  const isOpen = lobby.status === "open";
-  const isFull = openSlots <= 0 || lobby.status === "full";
-  const joinDisabled = requested || !isOpen || isFull;
-  const joinLabel = isFull ? "Lobby Full" : requested ? "Join Requested" : !isOpen ? "Closed" : "Request Join";
+  const state = getLobbyState(lobby, item.compatibility);
+  const joinDisabled = requested || !state.canRequest;
+  const joinLabel = requested ? "Requested" : state.joinLabel;
 
   return (
     <article className="card p-5 transition hover:border-clutch-blue/40">
@@ -19,8 +18,8 @@ const LobbyCard = ({ item, onJoin, requested = false }) => {
           <h3 className="text-xl font-semibold text-clutch-text">{lobby.title}</h3>
           <p className="mt-1 text-sm text-clutch-muted">{lobby.game} - {lobby.mode} - {lobby.region}</p>
         </div>
-        <Badge tone={isFull ? "warning" : "success"}>
-          {isFull ? "Full" : `${openSlots} slots`}
+        <Badge tone={state.isFull ? "warning" : "success"}>
+          {state.isFull ? "Full" : `${state.openSlots} slots`}
         </Badge>
       </div>
 
@@ -48,7 +47,7 @@ const LobbyCard = ({ item, onJoin, requested = false }) => {
       )}
 
       <div className="mt-5 flex flex-wrap gap-3">
-        <button type="button" disabled={joinDisabled} onClick={() => !joinDisabled && onJoin?.(lobby)} className="btn-primary py-2">
+        <button type="button" disabled={joinDisabled} title={state.disabledTitle} onClick={() => !joinDisabled && onJoin?.(lobby)} className="btn-primary py-2">
           {joinLabel}
         </button>
         <Link to={`/lobbies/${lobby._id}`} className="btn-secondary py-2">

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useToast } from "../../context/ToastContext";
 import api, { getErrorMessage } from "../../services/api";
 import { copyText } from "../../utils/clipboard";
@@ -12,14 +12,21 @@ const DiscordVoiceRoom = ({ lobby, isOwner, isMember, onUpdated }) => {
   const [error, setError] = useState("");
   const [discordRoom, setDiscordRoom] = useState(hasInvite(lobby?.discord) ? lobby.discord : null);
   const [copied, setCopied] = useState(false);
+  const justCreatedRef = useRef(false);
   const canAccess = Boolean(isOwner || isMember);
 
   useEffect(() => {
+    const lobbyRoom = hasInvite(lobby?.discord) ? lobby.discord : null;
     setError("");
     setCopied(false);
-    setDiscordRoom(hasInvite(lobby?.discord) ? lobby.discord : null);
+    setDiscordRoom(lobbyRoom);
 
     if (!lobby?._id || !canAccess) return undefined;
+    if (justCreatedRef.current) {
+      justCreatedRef.current = false;
+      return undefined;
+    }
+    if (lobbyRoom?.inviteUrl) return undefined;
 
     let active = true;
 
@@ -52,6 +59,7 @@ const DiscordVoiceRoom = ({ lobby, isOwner, isMember, onUpdated }) => {
 
     try {
       const response = await api.post(`/lobbies/${lobby._id}/discord/create`);
+      justCreatedRef.current = true;
       setDiscordRoom(response.data.data.discord);
       showToast("Discord voice room ready.");
       await refreshParent();

@@ -1,19 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import ChevronIcon from "../common/ChevronIcon";
 import PlatformIcon from "../platformIcons/PlatformIcon";
 import { getInitials } from "../../utils/formatters";
+import { PROFILE_TABS } from "../../utils/constants";
 
 const menuGroups = [
   [
     { label: "My Profile", path: "/profile", helper: "Identity and snapshot" },
-    { label: "Steam Library", path: "/profile?tab=steam", helper: "Games and achievements" },
-    { label: "Activity", path: "/profile?tab=activity", helper: "Rhythm and sessions" },
-    { label: "Connected Accounts", path: "/profile?tab=connections", helper: "Platforms and OAuth" },
-    { label: "Settings", path: "/profile?tab=settings", helper: "Profile controls" }
+    { label: "Steam Library", path: `/profile?tab=${PROFILE_TABS.steam}`, helper: "Games and achievements" },
+    { label: "Activity", path: `/profile?tab=${PROFILE_TABS.activity}`, helper: "Rhythm and sessions" },
+    { label: "Connected Accounts", path: `/profile?tab=${PROFILE_TABS.connections}`, helper: "Platforms and OAuth" },
+    { label: "Settings", path: `/profile?tab=${PROFILE_TABS.settings}`, helper: "Profile controls" }
   ],
   [
     { label: "Help / Support", path: "/requests", helper: "Requests inbox" },
-    { label: "Privacy", path: "/profile?tab=settings", helper: "Visibility and sync" }
+    { label: "Privacy", path: `/profile?tab=${PROFILE_TABS.settings}`, helper: "Visibility and sync" }
   ]
 ];
 
@@ -50,6 +52,7 @@ const ProfileAccountMenu = ({ user, profile, steamSummary, steamLinked, onLogout
   };
 
   const handleLogout = async () => {
+    if (!window.confirm("Sign out of ClutchQ?")) return;
     setOpen(false);
     await onLogout();
   };
@@ -107,7 +110,7 @@ const ProfileAccountMenu = ({ user, profile, steamSummary, steamLinked, onLogout
                       <span className="block text-sm font-bold text-clutch-text">{item.label}</span>
                       <span className="mt-0.5 block truncate text-xs text-clutch-muted">{item.helper}</span>
                     </span>
-                    <span className="text-sm font-bold text-clutch-muted transition group-hover:translate-x-0.5 group-hover:text-clutch-text">&gt;</span>
+                    <ChevronIcon direction="right" size={14} className="text-clutch-muted transition group-hover:translate-x-0.5 group-hover:text-clutch-text" />
                   </button>
                 ))}
               </div>

@@ -12,7 +12,7 @@ const ProfileStatCards = ({ profile, playerScore, libraryCount = 0 }) => {
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       <Stat label="ClutchQ Score" value={playerScore?.overall ?? "--"} caption="Gaming profile score" />
-      <Stat label="Trust Score" value={`${profile?.trustScore ?? 70}%`} caption={`${profile?.totalReviews || 0} teammate reviews`} />
+      <Stat label="Trust Score" value={profile?.trustScore != null ? `${profile.trustScore}%` : "No data"} caption={`${profile?.totalReviews || 0} teammate reviews`} />
       <Stat label="Primary Game" value={primaryGame?.gameName || "Set one"} caption={primaryGame?.rank || "Add rank in onboarding"} />
       <Stat label="Steam Library" value={libraryCount || 0} caption="Synced games tracked" />
     </div>

@@ -9,12 +9,17 @@ const formatElapsed = (seconds) => {
 
 const ActiveSessionTimer = ({ activity, onEnd }) => {
   const [now, setNow] = useState(Date.now());
-  const started = useMemo(() => new Date(activity?.startedAt || Date.now()).getTime(), [activity?.startedAt]);
+  const started = useMemo(() => {
+    if (!activity?.startedAt) return Date.now();
+    const time = new Date(activity.startedAt).getTime();
+    return Number.isFinite(time) ? time : Date.now();
+  }, [activity?.startedAt]);
 
   useEffect(() => {
+    if (!activity) return undefined;
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
-  }, []);
+  }, [activity]);
 
   if (!activity) return null;
 

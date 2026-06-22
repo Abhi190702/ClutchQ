@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import PageShell from "../components/common/PageShell";
 import ErrorState from "../components/common/ErrorState";
@@ -16,7 +16,7 @@ const Lobbies = () => {
   const [filters, setFilters] = useState({ game: "", region: "", language: "", mode: "" });
   const clearFilters = () => setFilters({ game: "", region: "", language: "", mode: "" });
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -29,11 +29,11 @@ const Lobbies = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   const filtered = useMemo(
     () =>

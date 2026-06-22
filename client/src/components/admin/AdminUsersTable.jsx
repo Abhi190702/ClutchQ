@@ -22,7 +22,7 @@ const AdminUsersTable = ({ users = [] }) => (
               <td className="p-4 text-clutch-muted">{user.email}</td>
               <td className="p-4 text-clutch-muted">{user.role}</td>
               <td className="p-4 text-clutch-muted">{user.profile?.region || "None"}</td>
-              <td className="p-4"><TrustBadge score={user.profile?.trustScore || 0} /></td>
+              <td className="p-4"><TrustBadge score={user.profile?.trustScore} /></td>
               <td className="p-4 text-clutch-muted">{user.isSuspended ? "Suspended" : "Active"}</td>
             </tr>
           ))}

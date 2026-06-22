@@ -57,15 +57,15 @@ const PlayerCard = ({ item, onSendRequest, requested = false }) => {
         open={open}
         onClose={() => setOpen(false)}
         title={`Why ${profile?.displayName || "this player"} fits`}
-        subtitle={`${game?.gameName || "Primary game"} · ${match?.totalScore || 0}% match`}
+        subtitle={`${game?.gameName || "Primary game"} · ${match?.totalScore ?? 0}% match`}
       >
         <div className="mb-5 grid grid-cols-2 gap-3">
           <div className="border-l border-white/10 pl-3">
-            <div className="text-2xl font-black text-white">{profile?.reliabilityScore || 0}%</div>
+            <div className="text-2xl font-black text-white">{profile?.reliabilityScore != null ? `${profile.reliabilityScore}%` : "No data"}</div>
             <div className="text-xs font-semibold text-zinc-500">Reliability</div>
           </div>
           <div className="border-l border-white/10 pl-3">
-            <div className="text-2xl font-black text-white">{match?.availability?.overlapHours || 0}h</div>
+            <div className="text-2xl font-black text-white">{match?.availability?.overlapHours ?? 0}h</div>
             <div className="text-xs font-semibold text-zinc-500">Overlap</div>
           </div>
         </div>

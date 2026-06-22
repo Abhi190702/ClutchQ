@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import PageShell from "../components/common/PageShell";
 import ActiveRoomsPanel from "../components/games/ActiveRoomsPanel";
 import GameEmptyState from "../components/games/GameEmptyState";
 import GameHero from "../components/games/GameHero";
 import GameStatsStrip from "../components/games/GameStatsStrip";
-import StartPlayingPanel from "../components/activity/StartPlayingPanel";
+import StartSessionDock from "../components/activity/StartSessionDock";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import gameApi from "../services/gameApi";
@@ -24,7 +24,7 @@ const GameDetail = () => {
   const [matches, setMatches] = useState([]);
   const [finding, setFinding] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const [gameResponse, roomsResponse, statsResponse, playersResponse] = await Promise.all([
         gameApi.get(slug),
@@ -39,11 +39,11 @@ const GameDetail = () => {
     } catch (error) {
       showToast(getErrorMessage(error), "error");
     }
-  };
+  }, [showToast, slug]);
 
   useEffect(() => {
     load();
-  }, [slug]);
+  }, [load]);
 
   const findSquad = async () => {
     setFinding(true);
@@ -103,7 +103,7 @@ const GameDetail = () => {
             </section>
           </div>
           <aside className="space-y-6">
-            <StartPlayingPanel games={[game]} selectedGameSlug={game.slug} onStarted={() => navigate("/activity")} />
+            <StartSessionDock games={[game]} selectedGameSlug={game.slug} onStarted={() => navigate("/activity")} />
             <div className="rounded-[10px] border border-[#2f2f36] bg-[#202024] p-5">
               <h3 className="text-lg font-black text-white">Top Players</h3>
               <div className="mt-4 grid gap-3">

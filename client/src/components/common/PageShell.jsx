@@ -1,9 +1,42 @@
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import Sidebar from "./Sidebar";
 import MobileBottomNav from "./MobileBottomNav";
+import ProfileAccountMenu from "../navigation/ProfileAccountMenu";
 
 const PageShell = ({ children, title, eyebrow, actions, fullWidth = false, hideSidebar = false }) => {
+  const { user, profile, logout } = useAuth();
+  const navigate = useNavigate();
+  const steamProvider = user?.authProviders?.steam;
+  const steamSummary = steamProvider
+    ? {
+        connected: true,
+        displayName: steamProvider.displayName,
+        avatar: steamProvider.avatar,
+        profileUrl: steamProvider.profileUrl,
+        steamId: steamProvider.steamId
+      }
+    : null;
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+  };
+
   return (
     <div className="noise-bg min-h-screen text-clutch-text">
+      {!hideSidebar && user ? (
+        <div className="fixed right-3 top-3 z-40 lg:hidden">
+          <ProfileAccountMenu
+            user={user}
+            profile={profile}
+            steamSummary={steamSummary}
+            steamLinked={Boolean(steamProvider?.steamId)}
+            onLogout={handleLogout}
+            compact
+          />
+        </div>
+      ) : null}
       <div className="flex min-h-screen">
         {!hideSidebar && <Sidebar />}
         <div className="min-w-0 flex-1">

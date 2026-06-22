@@ -4,7 +4,7 @@ const PlayerFilters = ({ filters, onChange }) => {
   const field = (name, label, options) => (
     <label>
       <span className="form-label">{label}</span>
-      <select className="form-input" value={filters[name]} onChange={(event) => onChange({ ...filters, [name]: event.target.value })}>
+      <select className="form-input" value={filters[name] || ""} onChange={(event) => onChange({ ...filters, [name]: event.target.value })}>
         <option value="">Any</option>
         {options.map((option) => <option key={option}>{option}</option>)}
       </select>

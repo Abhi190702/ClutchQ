@@ -1,15 +1,23 @@
+import { useMemo } from "react";
 import { formatHours } from "../../utils/formatters";
 import ActivityCalendarStrip from "../activity/ActivityCalendarStrip";
 import { Link } from "react-router-dom";
 
 const GamingActivityVisual = ({ heatmap = [], library = [], recentActivitySummary, compact = false }) => {
-  const totalMinutes = heatmap.reduce((sum, day) => sum + (day.totalMinutes || 0), 0) || recentActivitySummary?.totalRecentMinutes || 0;
-  const activeDays = heatmap.filter((day) => day.totalMinutes > 0).length;
-  const split = [...library]
-    .filter((game) => game.playtimeForeverMinutes)
-    .sort((a, b) => (b.playtimeForeverMinutes || 0) - (a.playtimeForeverMinutes || 0))
-    .slice(0, 3);
-  const splitTotal = split.reduce((sum, game) => sum + (game.playtimeForeverMinutes || 0), 0);
+  const totalMinutes = useMemo(
+    () => heatmap.reduce((sum, day) => sum + (day.totalMinutes || 0), 0) || recentActivitySummary?.totalRecentMinutes || 0,
+    [heatmap, recentActivitySummary?.totalRecentMinutes]
+  );
+  const activeDays = useMemo(() => heatmap.filter((day) => day.totalMinutes > 0).length, [heatmap]);
+  const split = useMemo(
+    () =>
+      [...library]
+        .filter((game) => game.playtimeForeverMinutes)
+        .sort((a, b) => (b.playtimeForeverMinutes || 0) - (a.playtimeForeverMinutes || 0))
+        .slice(0, 3),
+    [library]
+  );
+  const splitTotal = useMemo(() => split.reduce((sum, game) => sum + (game.playtimeForeverMinutes || 0), 0), [split]);
   const latestSession = recentActivitySummary?.sessions?.[0];
 
   return (

@@ -2,6 +2,9 @@ import { useRef, useState } from "react";
 import { getInitials } from "../../utils/formatters";
 
 const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+const maxOriginalSize = 5 * 1024 * 1024;
+const maxCompressedSize = 500 * 1024;
+const delay = () => new Promise((resolve) => window.setTimeout(resolve, 0));
 
 const dataUrlSize = (dataUrl) => {
   const base64 = dataUrl.split(",")[1] || "";
@@ -26,6 +29,7 @@ const loadImage = (src) =>
 
 const compressAvatar = async (file) => {
   if (!allowedTypes.has(file.type)) throw new Error("Upload a PNG, JPG, or WebP image.");
+  if (file.size > maxOriginalSize) throw new Error("Choose an image under 5MB.");
 
   const source = await readFile(file);
   const image = await loadImage(source);
@@ -41,12 +45,13 @@ const compressAvatar = async (file) => {
 
   let quality = 0.86;
   let output = canvas.toDataURL("image/webp", quality);
-  while (dataUrlSize(output) > 500 * 1024 && quality > 0.42) {
+  while (dataUrlSize(output) > maxCompressedSize && quality > 0.42) {
     quality -= 0.08;
+    await delay();
     output = canvas.toDataURL("image/webp", quality);
   }
 
-  if (dataUrlSize(output) > 500 * 1024) {
+  if (dataUrlSize(output) > maxCompressedSize) {
     throw new Error("Avatar is still larger than 500KB after compression.");
   }
 

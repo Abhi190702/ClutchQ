@@ -1,8 +1,8 @@
 import { NavLink } from "react-router-dom";
 
 const navItems = [
+  { to: "/dashboard", label: "Home", icon: "M5 5h6v6H5zM13 5h6v4h-6zM13 11h6v8h-6zM5 13h6v6H5z" },
   { to: "/games", label: "Games", icon: "M5 8h14M7 16h10M8 5l-3 6 3 6M16 5l3 6-3 6" },
-  { to: "/activity", label: "Activity", icon: "M4 15h3l3-8 4 10 3-6h3" },
   { to: "/lobbies", label: "Lobbies", icon: "M7 8h10M7 12h6M5 5h14v10H8l-3 4z" },
   { to: "/requests", label: "Requests", icon: "M5 7h14M5 12h14M5 17h9" },
   { to: "/profile", label: "Profile", icon: "M12 12a4 4 0 100-8 4 4 0 000 8zM5 20a7 7 0 0114 0" }

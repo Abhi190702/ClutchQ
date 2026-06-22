@@ -83,6 +83,9 @@ const gameRoomSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+gameRoomSchema.index({ gameSlug: 1, status: 1, hostId: 1 });
+gameRoomSchema.index({ gameSlug: 1, status: 1, createdAt: -1 });
+
 const GameRoom = mongoose.model("GameRoom", gameRoomSchema);
 
 export default GameRoom;

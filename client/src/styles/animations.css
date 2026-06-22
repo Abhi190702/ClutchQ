@@ -19,9 +19,17 @@
   height: 8px;
 }
 
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .thin-scrollbar::-webkit-scrollbar-thumb {
   background: #3a3a42;
   border-radius: 999px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
 }
 
 @media (prefers-reduced-motion: reduce) {

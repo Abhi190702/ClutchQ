@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import PageShell from "../components/common/PageShell";
 import ErrorState from "../components/common/ErrorState";
@@ -23,7 +23,7 @@ const Dashboard = () => {
   const [filters, setFilters] = useState({ game: "", region: "", role: "" });
   const [requestedIds, setRequestedIds] = useState([]);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -36,11 +36,11 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   const filtered = useMemo(
     () =>
@@ -73,10 +73,15 @@ const Dashboard = () => {
 
   const best = filtered[0];
   const primaryGame = getPrimaryGame(profile);
+  const hasBestScore = best?.match?.totalScore !== null && best?.match?.totalScore !== undefined && Number.isFinite(Number(best.match.totalScore));
+  const bestScoreLabel = hasBestScore ? `${Math.round(Number(best.match.totalScore))}%` : "--";
+  const trustLabel = profile?.trustScore !== null && profile?.trustScore !== undefined && Number.isFinite(Number(profile.trustScore))
+    ? `${Math.round(Number(profile.trustScore))}%`
+    : "No data";
   const metrics = [
     { label: "Recommended", value: filtered.length, helper: "players ready" },
-    { label: "Best match", value: `${best?.match?.totalScore || 0}%`, helper: best?.profile?.displayName || "Build profile data" },
-    { label: "Trust", value: `${profile?.trustScore || 0}%`, helper: `${profile?.totalReviews || 0} reviews` },
+    { label: "Best match", value: bestScoreLabel, helper: best?.profile?.displayName || "Build profile data" },
+    { label: "Trust", value: trustLabel, helper: `${profile?.totalReviews || 0} reviews` },
     { label: "Availability", value: `${profile?.availability?.length || 0}h`, helper: "weekly overlap" },
     { label: "Primary game", value: primaryGame?.gameName || "Not set", helper: primaryGame?.rank || "Complete onboarding" }
   ];
@@ -90,7 +95,7 @@ const Dashboard = () => {
             <SectionHeader
               eyebrow="Squad console"
               title={profile?.displayName ? `Welcome, ${profile.displayName}` : "Dashboard"}
-              description={`${filtered.length} strong squad matches · Best ${best?.match?.totalScore || 0}% · Trust ${profile?.trustScore || 0}%`}
+              description={`${filtered.length} strong squad matches · Best ${bestScoreLabel} · Trust ${trustLabel}`}
               actions={
                 <>
                   <a href="#squad-controls" className="btn-primary">Find Squad Now</a>

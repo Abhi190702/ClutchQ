@@ -28,6 +28,13 @@ const AdminReportsTable = ({ reports = [], onAction }) => (
               </td>
             </tr>
           ))}
+          {!reports.length && (
+            <tr>
+              <td colSpan={5} className="p-8 text-center text-sm text-clutch-muted">
+                No reports yet.
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

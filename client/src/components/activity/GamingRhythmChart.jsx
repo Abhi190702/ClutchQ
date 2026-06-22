@@ -59,13 +59,14 @@ const GamingRhythmChart = ({ series = [] }) => {
         ))}
         <path d={area} fill="url(#rhythm-fill)" />
         <path d={line} fill="none" stroke="#35B8FF" strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" />
-        {points.map((point, index) =>
-          index % 3 === 0 || point.minutes ? (
-            <circle key={`${point.date}-${index}`} cx={point.x} cy={point.y} r="4" fill="#F5F5F7">
-              <title>{`${point.label}: ${formatHours(point.minutes)}`}</title>
+        {points.map((point, index) => {
+          const label = point.label || point.date || `Day ${index + 1}`;
+          return index % 3 === 0 || point.minutes ? (
+            <circle key={`${point.date || label}-${index}`} cx={point.x} cy={point.y} r="4" fill="#F5F5F7">
+              <title>{`${label}: ${formatHours(point.minutes || 0)}`}</title>
             </circle>
-          ) : null
-        )}
+          ) : null;
+        })}
       </svg>
     </section>
   );

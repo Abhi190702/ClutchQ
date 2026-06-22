@@ -54,7 +54,14 @@ const calculateLobbyViewerCompatibility = async (viewerProfile, lobby) => {
   if (viewerProfile.region !== lobby.region) warnings.push("Region mismatch may affect ping");
   if (!viewerProfile.languages?.includes(lobby.language)) warnings.push("Lobby language is not in your profile");
 
-  const base = scores.length ? scores.reduce((sum, score) => sum + score, 0) / scores.length : 68;
+  if (!scores.length) {
+    return {
+      score: null,
+      warnings: warnings.length ? warnings : ["Not enough squad data yet"]
+    };
+  }
+
+  const base = scores.reduce((sum, score) => sum + score, 0) / scores.length;
   const modifiers = (inRank ? 8 : -12) + (warnings.length ? -warnings.length * 4 : 5);
 
   return {

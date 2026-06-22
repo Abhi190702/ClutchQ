@@ -22,7 +22,7 @@ const Reviews = () => {
       }
     };
     load();
-  }, []);
+  }, [showToast]);
 
   return (
     <PageShell title="Reviews" eyebrow="Trust builder">

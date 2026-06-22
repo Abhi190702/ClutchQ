@@ -1,6 +1,29 @@
+import { useState } from "react";
 import EmptyState from "../common/EmptyState";
 import { formatMinutes, formatRating, formatSafeDateTime } from "../../utils/formatters";
 import { gameInitials, getGameArt } from "../../utils/gameArt";
+
+const GameThumb = ({ image, gameName }) => {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  if (image && !imageFailed) {
+    return (
+      <img
+        src={image}
+        alt={gameName || "Game"}
+        className="h-full w-full object-cover"
+        loading="lazy"
+        onError={() => setImageFailed(true)}
+      />
+    );
+  }
+
+  return (
+    <div className="grid h-full w-full place-items-center text-sm font-black text-white">
+      {gameInitials(gameName)}
+    </div>
+  );
+};
 
 const RecentGameTimeline = ({ sessions = [] }) => (
   <section className="border-b border-white/10 pb-6">
@@ -19,18 +42,7 @@ const RecentGameTimeline = ({ sessions = [] }) => (
           return (
             <article key={session._id || `${session.gameName}-${session.startedAt}`} className="grid gap-4 py-4 sm:grid-cols-[56px_1fr_auto] sm:items-center">
               <div className="h-14 w-14 overflow-hidden rounded-2xl bg-white/[0.06]">
-                {image ? (
-                  <img
-                    src={image}
-                    alt=""
-                    className="h-full w-full object-cover"
-                    loading="lazy"
-                    onError={(event) => {
-                      event.currentTarget.style.display = "none";
-                    }}
-                  />
-                ) : null}
-                <div className="grid h-full w-full place-items-center text-sm font-black text-white">{gameInitials(session.gameName)}</div>
+                <GameThumb image={image} gameName={session.gameName || session.gameSlug} />
               </div>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">

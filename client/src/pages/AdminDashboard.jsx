@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PageShell from "../components/common/PageShell";
 import ErrorState from "../components/common/ErrorState";
@@ -18,7 +18,7 @@ const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [error, setError] = useState("");
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setError("");
     try {
       const [statsResponse, usersResponse] = await Promise.all([api.get("/admin/stats"), api.get("/admin/users")]);
@@ -29,11 +29,11 @@ const AdminDashboard = () => {
       setError(message);
       showToast(message, "error");
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   if (error) {
     return (

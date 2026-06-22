@@ -20,8 +20,8 @@ const SteamFriendsPanel = ({ friends = [] }) => {
         </div>
       ) : (
         <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {friends.slice(0, 9).map((friend) => (
-            <div key={friend.friendSteamId} className="rounded-md border border-clutch-border bg-clutch-bg/40 p-4">
+          {friends.slice(0, 9).map((friend, index) => (
+            <div key={friend.friendSteamId || friend._id || friend.clutchQUserId || friend.displayName || index} className="rounded-md border border-clutch-border bg-clutch-bg/40 p-4">
               <div className="flex items-center gap-3">
                 <div className="h-12 w-12 overflow-hidden rounded-full bg-clutch-panelSoft">
                   {friend.avatar ? <img src={friend.avatar} alt="" className="h-full w-full object-cover" /> : null}

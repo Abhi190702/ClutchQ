@@ -25,7 +25,7 @@ const SquadChemistryGraph = ({ members = [], pairwiseScores = [] }) => {
     };
   });
 
-  const findNode = (name) => nodes.find((node) => node.label === name) || nodes[0];
+  const findNode = (name) => nodes.find((node) => node.label === name) || null;
 
   return (
     <div className="card p-5">
@@ -35,11 +35,12 @@ const SquadChemistryGraph = ({ members = [], pairwiseScores = [] }) => {
       </div>
       <svg viewBox={`0 0 ${size} ${size}`} className="mx-auto max-w-[360px]">
         {pairwiseScores.map((pair) => {
-          const first = findNode(pair.players[0]);
-          const second = findNode(pair.players[1]);
+          const players = Array.isArray(pair.players) ? pair.players : [];
+          const first = findNode(players[0]);
+          const second = findNode(players[1]);
           if (!first || !second) return null;
           return (
-            <g key={pair.players.join("-")}>
+            <g key={players.join("-") || `${first.id}-${second.id}`}>
               <line x1={first.x} y1={first.y} x2={second.x} y2={second.y} stroke={pair.score >= 80 ? "#34D399" : pair.score >= 60 ? "#60A5FA" : "#FBBF24"} strokeWidth={Math.max(1.5, pair.score / 25)} opacity="0.75" />
               <text x={(first.x + second.x) / 2} y={(first.y + second.y) / 2} fill="#F8FAFC" fontSize="10" fontWeight="600">
                 {pair.score}

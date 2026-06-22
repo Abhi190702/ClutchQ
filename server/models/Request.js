@@ -30,6 +30,9 @@ const requestSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+requestSchema.index({ fromUser: 1, toUser: 1, status: 1 });
+requestSchema.index({ lobbyId: 1, status: 1 });
+
 const Request = mongoose.model("Request", requestSchema);
 
 export default Request;

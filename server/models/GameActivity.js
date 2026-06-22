@@ -56,6 +56,8 @@ const gameActivitySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+gameActivitySchema.index({ userId: 1, gameSlug: 1, startedAt: -1 });
+
 const GameActivity = mongoose.model("GameActivity", gameActivitySchema);
 
 export default GameActivity;

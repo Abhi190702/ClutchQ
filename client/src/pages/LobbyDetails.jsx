@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import PageShell from "../components/common/PageShell";
 import SkeletonCard from "../components/common/SkeletonCard";
@@ -13,6 +13,7 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import api, { getErrorMessage } from "../services/api";
 import { shortDateTime } from "../utils/formatters";
+import { getLobbyState } from "../utils/lobbyState";
 
 const LobbyDetails = () => {
   const { id } = useParams();
@@ -22,7 +23,7 @@ const LobbyDetails = () => {
   const [loading, setLoading] = useState(true);
   const [requested, setRequested] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const response = await api.get(`/lobbies/${id}`);
@@ -32,11 +33,11 @@ const LobbyDetails = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, showToast]);
 
   useEffect(() => {
     load();
-  }, [id]);
+  }, [load]);
 
   const join = async () => {
     setRequested(true);
@@ -68,8 +69,10 @@ const LobbyDetails = () => {
   }
 
   const { lobby, chemistry, compatibility, memberProfiles } = data;
+  const lobbyState = getLobbyState(lobby, compatibility);
   const isOwner = String(lobby.ownerId?._id || lobby.ownerId) === String(user?._id);
   const isMember = lobby.currentMembers?.some((member) => String(member.userId?._id || member.userId) === String(user?._id));
+  const joinDisabled = requested || !lobbyState.canRequest;
 
   return (
     <PageShell
@@ -78,7 +81,7 @@ const LobbyDetails = () => {
       actions={
         <>
           <Link to={`/squad/${lobby._id}`} className="btn-secondary">Open squad room</Link>
-          {isOwner ? <button onClick={closeLobby} className="btn-danger" type="button">Close lobby</button> : <button onClick={join} disabled={requested} className="btn-primary" type="button">{requested ? "Requested" : "Join request"}</button>}
+          {isOwner ? <button onClick={closeLobby} className="btn-danger" type="button">Close lobby</button> : <button onClick={join} disabled={joinDisabled} title={lobbyState.disabledTitle} className="btn-primary" type="button">{requested ? "Requested" : lobbyState.joinLabel}</button>}
         </>
       }
     >
@@ -91,7 +94,7 @@ const LobbyDetails = () => {
               <Badge>{lobby.region}</Badge>
               <Badge>{lobby.language}</Badge>
               <Badge>{lobby.micRequired ? "Mic Required" : "Mic Optional"}</Badge>
-              <Badge>{shortDateTime(lobby.startTime)}</Badge>
+              <Badge>{shortDateTime(lobby.startTime || lobby.startsAt || lobby.createdAt || lobby.updatedAt, "Starts when full")}</Badge>
             </div>
             <p className="mt-5 text-sm leading-6 text-clutch-muted">{lobby.description}</p>
           </div>
@@ -107,7 +110,7 @@ const LobbyDetails = () => {
             <h3 className="mb-4 text-lg font-semibold">Current members</h3>
             <div className="space-y-3">
               {lobby.currentMembers?.map((member) => (
-                <div key={member.userId?._id || member.userId} className="rounded-lg border border-clutch-border bg-clutch-panelSoft p-3">
+                <div key={member.userId?._id || member.userId || member._id} className="rounded-lg border border-clutch-border bg-clutch-panelSoft p-3">
                   <div className="font-bold">{member.userId?.name || "Member"}</div>
                   <div className="text-sm text-clutch-muted">{member.role} - {member.ready ? "Ready" : "Waiting"}</div>
                 </div>

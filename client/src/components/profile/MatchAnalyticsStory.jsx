@@ -17,6 +17,7 @@ const MatchAnalyticsStory = ({ insights, recentActivitySummary, profile }) => {
   const analyses = insights?.recentAnalyses || recentActivitySummary?.analysis || [];
   const primaryGame = profile?.games?.find((game) => game.isPrimary) || profile?.games?.[0];
   const recommended = insights?.recommendedGames?.[0]?.name || primaryGame?.gameName || "Create or join a ClutchQ room";
+  const getSignalScore = (item) => item.matchRating ?? item.teamworkScore ?? item.communicationScore ?? "";
 
   return (
     <section className="border-b border-white/10 py-6 md:py-8">
@@ -58,7 +59,7 @@ const MatchAnalyticsStory = ({ insights, recentActivitySummary, profile }) => {
                       {item.durationMinutes ? formatMinutes(item.durationMinutes) : "Session analysis"} - {item.status || "tracked"}
                     </div>
                   </div>
-                  <div className="text-sm font-black text-clutch-blue">{item.matchRating || item.teamworkScore || item.communicationScore || ""}</div>
+                  <div className="text-sm font-black text-clutch-blue">{getSignalScore(item)}</div>
                 </div>
               </div>
             ))}

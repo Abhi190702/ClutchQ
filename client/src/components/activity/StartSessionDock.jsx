@@ -1,24 +1,36 @@
 import { useEffect, useState } from "react";
+import { useToast } from "../../context/ToastContext";
 import { getErrorMessage } from "../../services/api";
 import activityApi from "../../services/activityApi";
 
-const StartSessionDock = ({ games = [], active, onStarted, showToast }) => {
-  const [gameSlug, setGameSlug] = useState(games[0]?.slug || "valorant");
+const StartSessionDock = ({ games = [], active, onStarted, selectedGameSlug = "" }) => {
+  const { showToast } = useToast();
+  const [gameSlug, setGameSlug] = useState(selectedGameSlug || games[0]?.slug || "");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!gameSlug && games[0]?.slug) setGameSlug(games[0].slug);
-  }, [gameSlug, games]);
+    if (selectedGameSlug && selectedGameSlug !== gameSlug) {
+      setGameSlug(selectedGameSlug);
+      return;
+    }
+
+    if (!gameSlug && games.length) {
+      setGameSlug(games[0].slug);
+    }
+  }, [gameSlug, games, selectedGameSlug]);
 
   const start = async () => {
-    if (!gameSlug) return;
+    if (!gameSlug) {
+      showToast("Select a game first.", "error");
+      return;
+    }
     setLoading(true);
     try {
       await activityApi.start({ gameSlug });
-      showToast?.("Session started");
+      showToast("Session started");
       onStarted?.();
     } catch (error) {
-      showToast?.(getErrorMessage(error), "error");
+      showToast(getErrorMessage(error), "error");
     } finally {
       setLoading(false);
     }
@@ -39,6 +51,7 @@ const StartSessionDock = ({ games = [], active, onStarted, showToast }) => {
             disabled={Boolean(active)}
             aria-label="Choose game to track"
           >
+            <option value="">Select a game</option>
             {games.map((game) => (
               <option key={game.slug} value={game.slug}>
                 {game.title}
