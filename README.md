@@ -289,6 +289,7 @@ Then seed and run:
 
 ```bash
 npm run seed
+npm run seed:demo
 npm run seed:games
 npm run dev
 ```
@@ -367,6 +368,14 @@ Password: admin123
 ```
 
 The demo accounts include richer profile data, lobbies, requests, activity history, Steam-like library data, achievements, friends, and compatibility signals. They are safe for live judging when a real Steam account has private or empty library data.
+
+To add or refresh only the demo users without wiping a database, run:
+
+```bash
+npm run seed:demo
+```
+
+For production, run it only when `server/.env` or Render has `NODE_ENV=production` and `MONGO_URI` pointing at the intended Atlas database. This command upserts the demo users and refreshes demo-only lobbies, requests, activity, and Steam-like data.
 
 ## Screenshots
 

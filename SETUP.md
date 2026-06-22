@@ -24,6 +24,7 @@ Start Docker Desktop manually, wait until it says Docker is running, then:
 docker compose up -d mongo
 $env:NODE_ENV='development'
 npm run seed
+npm run seed:demo
 npm run seed:games
 npm run dev
 ```
@@ -45,6 +46,19 @@ Admin: admin@clutchq.com / admin123
 ```
 
 If your local `server/.env` has `NODE_ENV=production` for Render, keep the PowerShell override above while seeding locally so the seed uses your local MongoDB instead of Atlas.
+
+## Safe Demo Account Seed
+
+If the deployed site says `Invalid email or password` for `captain@clutchq.com`, `sentinel@clutchq.com`, or `flex@clutchq.com`, the production Atlas database has not received the demo-only seed yet.
+
+Safe production method:
+
+```powershell
+$env:NODE_ENV='production'
+npm run seed:demo
+```
+
+This does not wipe the database. It upserts the four demo users and refreshes demo-only lobbies, requests, activity, and Steam-like data. Run it only when `MONGO_URI` points to the Atlas database used by your Render backend.
 
 ## Atlas Path
 
