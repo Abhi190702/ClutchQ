@@ -116,8 +116,8 @@ const GamingRhythmChart = ({ series = [] }) => {
         </div>
       </div>
 
-      <div className="mt-5 overflow-x-auto rounded-[14px] border border-white/10 bg-[#111512] px-4 py-5">
-        <svg className="h-auto min-w-[780px] max-w-full" viewBox="0 0 780 278" role="img" aria-label="3D gameplay contribution blocks">
+      <div className="mt-5 overflow-hidden rounded-[22px] border border-white/10 bg-[#111512] px-4 py-5 shadow-[0_20px_70px_rgba(0,0,0,0.24)]">
+        <svg className="h-auto w-full" viewBox="0 0 780 278" role="img" aria-label="3D gameplay contribution blocks">
           <defs>
             <linearGradient id="activity-board-grid" x1="0" x2="1" y1="0" y2="1">
               <stop offset="0%" stopColor="#132017" />

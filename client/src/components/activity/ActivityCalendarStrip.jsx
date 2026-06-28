@@ -59,16 +59,26 @@ const shouldShowMonth = (days, index) => {
 const gameSummary = (games = []) =>
   games.length ? ` · ${games.slice(0, 2).map((game) => game.gameName || game.name).filter(Boolean).join(", ")}` : "";
 
-const buildPath = (points) => points.map((point, index) => `${index ? "L" : "M"} ${point.x} ${point.y}`).join(" ");
+const buildSmoothPath = (points) => {
+  if (!points.length) return "";
+  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+
+  return points.reduce((path, point, index) => {
+    if (index === 0) return `M ${point.x} ${point.y}`;
+    const previous = points[index - 1];
+    const controlX = previous.x + (point.x - previous.x) / 2;
+    return `${path} C ${controlX} ${previous.y}, ${controlX} ${point.y}, ${point.x} ${point.y}`;
+  }, "");
+};
 
 const ActivityCalendarStrip = ({ days = [], compact = false }) => {
-  const visibleDays = useMemo(() => normalizeDays(days, compact ? 31 : 56), [compact, days]);
+  const visibleDays = useMemo(() => normalizeDays(days, compact ? 21 : 31), [compact, days]);
   const totalMinutes = useMemo(() => visibleDays.reduce((sum, day) => sum + safeNumber(day.minutes), 0), [visibleDays]);
   const activeDays = useMemo(() => visibleDays.filter((day) => safeNumber(day.minutes) > 0).length, [visibleDays]);
   const maxMinutes = useMemo(() => Math.max(...visibleDays.map((day) => safeNumber(day.minutes)), 0), [visibleDays]);
   const peak = useMemo(() => visibleDays.reduce((best, day) => (day.minutes > best.minutes ? day : best), visibleDays[0]), [visibleDays]);
 
-  const width = Math.max(900, visibleDays.length * 28);
+  const width = 920;
   const height = 330;
   const left = 58;
   const right = 28;
@@ -83,7 +93,7 @@ const ActivityCalendarStrip = ({ days = [], compact = false }) => {
     const y = top + graphHeight - (safeNumber(day.minutes) / yMax) * graphHeight;
     return { ...day, x, y };
   });
-  const path = buildPath(points);
+  const path = buildSmoothPath(points);
 
   return (
     <section className={`${compact ? "" : "border-b border-white/10 pb-6"}`}>
@@ -100,8 +110,8 @@ const ActivityCalendarStrip = ({ days = [], compact = false }) => {
         </div>
       </div>
 
-      <div className="mt-5 overflow-x-auto border-t border-white/10 bg-[#101418] px-3 py-5">
-        <svg className="h-auto" style={{ minWidth: width }} viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Daily gameplay rhythm line graph">
+      <div className="mt-5 overflow-hidden rounded-[22px] border border-white/10 bg-[#101418] px-3 py-5 shadow-[0_20px_70px_rgba(0,0,0,0.24)]">
+        <svg className="h-auto w-full" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Daily gameplay rhythm line graph">
           <defs>
             <filter id="green-line-shadow" x="-20%" y="-20%" width="140%" height="140%">
               <feDropShadow dx="0" dy="0" stdDeviation="2.2" floodColor="#2ea043" floodOpacity="0.28" />
