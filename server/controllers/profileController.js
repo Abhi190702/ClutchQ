@@ -1,5 +1,6 @@
 import GamerProfile from "../models/GamerProfile.js";
 import GameActivity from "../models/GameActivity.js";
+import GameplayGraph from "../models/GameplayGraph.js";
 import MatchAnalysis from "../models/MatchAnalysis.js";
 import Review from "../models/Review.js";
 import Report from "../models/Report.js";
@@ -66,13 +67,14 @@ const connectedAccountsForUser = (user) => {
 };
 
 const buildProfileBundle = async (req) => {
-  const [profile, steamSummary, steamSyncStatus, playerScore, recentActivity, recentAnalysis] = await Promise.all([
+  const [profile, steamSummary, steamSyncStatus, playerScore, recentActivity, recentAnalysis, gameplayGraph] = await Promise.all([
     GamerProfile.findOne({ userId: req.user._id }).populate("userId", "name email avatar role createdAt"),
     getSteamIdentityForUser(req.user),
     getSteamSyncStatusForUser(req.user),
     calculatePlayerScore(req.user),
     GameActivity.find({ userId: req.user._id }).sort({ startedAt: -1 }).limit(8),
-    MatchAnalysis.find({ userId: req.user._id }).sort({ createdAt: -1 }).limit(6)
+    MatchAnalysis.find({ userId: req.user._id }).sort({ createdAt: -1 }).limit(6),
+    GameplayGraph.findOne({ userId: req.user._id }).lean()
   ]);
 
   return {
@@ -82,6 +84,7 @@ const buildProfileBundle = async (req) => {
     steamSummary,
     steamSyncStatus,
     playerScore,
+    gameplayGraph,
     recentActivitySummary: {
       sessions: recentActivity,
       analysis: recentAnalysis,

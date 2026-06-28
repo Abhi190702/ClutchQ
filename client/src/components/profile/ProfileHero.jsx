@@ -4,7 +4,7 @@ import { formatPercentage, safeNumber } from "../../utils/formatters";
 import SoftGlow from "../common/SoftGlow";
 import ProfileAvatarUploader from "./ProfileAvatarUploader";
 
-const ProfileHero = ({ bundle, libraryCount, steamLinked, onAvatarUpload, onAvatarRemove, onSyncSteam, syncing }) => {
+const ProfileHero = ({ bundle, libraryCount, steamLinked, gameplayGraph, onAvatarUpload, onAvatarRemove, onSyncSteam, syncing }) => {
   const { user, profile, steamSummary, playerScore } = bundle;
   const displayName = profile?.displayName || user?.name || steamSummary?.displayName || "ClutchQ Player";
   const tag = profile?.playerCode || profile?.clutchTag || `CLQ-${String(user?._id || "PLAYER").slice(-5).toUpperCase()}`;
@@ -54,8 +54,10 @@ const ProfileHero = ({ bundle, libraryCount, steamLinked, onAvatarUpload, onAvat
                 <span key={item} className="rounded-full bg-white/[0.06] px-3 py-2 text-sm font-semibold text-clutch-muted">{item}</span>
               ))}
               <span className="rounded-full bg-white/[0.06] px-3 py-2 text-sm font-semibold text-clutch-muted">{libraryCount} Steam games</span>
-              {typeof playerScore?.overall === "number" && (
-                <span className="rounded-full bg-white/[0.06] px-3 py-2 text-sm font-semibold text-clutch-muted">Score {Math.round(playerScore.overall)}</span>
+              {typeof (gameplayGraph?.gameplayProfileScore ?? playerScore?.overall) === "number" && (
+                <span className="rounded-full bg-white/[0.06] px-3 py-2 text-sm font-semibold text-clutch-muted">
+                  Graph score {Math.round(gameplayGraph?.gameplayProfileScore ?? playerScore.overall)}
+                </span>
               )}
             </div>
           </div>

@@ -4,6 +4,7 @@ import GamePlaytimeAggregate from "../models/GamePlaytimeAggregate.js";
 import MatchAnalysis from "../models/MatchAnalysis.js";
 import { getGameBySlug } from "../data/gameCatalog.js";
 import { asyncHandler } from "../middleware/errorMiddleware.js";
+import { rebuildGraphForUser } from "./intelligenceController.js";
 
 const minutesBetween = (start, end) => Math.max(1, Math.round((new Date(end) - new Date(start)) / 60000));
 const clampScore = (value) => Math.max(0, Math.min(100, Math.round(value)));
@@ -165,6 +166,10 @@ export const stopActivity = asyncHandler(async (req, res) => {
   await activity.save();
 
   const [aggregate, analysis] = await Promise.all([updateAggregate(activity), createAnalysis(activity, game)]);
+  const graphRefresh = await rebuildGraphForUser(req.user._id).catch((error) => ({
+    graph: null,
+    warnings: [`Gameplay graph refresh skipped: ${error.message}`]
+  }));
 
   res.json({
     success: true,
@@ -172,7 +177,9 @@ export const stopActivity = asyncHandler(async (req, res) => {
     data: {
       activity,
       aggregate,
-      analysis
+      analysis,
+      gameplayGraph: graphRefresh.graph,
+      warnings: graphRefresh.warnings || []
     }
   });
 });

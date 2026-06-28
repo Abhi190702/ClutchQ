@@ -9,29 +9,43 @@ const labels = {
   achievementScore: "Achievements",
   teamReliability: "Reliability",
   communication: "Communication",
-  matchConsistency: "Consistency"
+  matchConsistency: "Consistency",
+  teamSupport: "Team support",
+  pressureHandling: "Pressure handling",
+  objectiveFocus: "Objective focus",
+  clutchPotential: "Clutch potential",
+  tiltResistance: "Tilt resistance",
+  entryPressure: "Entry pressure",
+  consistency: "Consistency"
 };
 
-const PlayerScoreStory = ({ score }) => {
+const PlayerScoreStory = ({ score, graph }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const breakdown = score?.breakdown || {};
+  const graphBreakdown = Object.fromEntries((graph?.situationalStrengths || []).map((signal) => [signal.key, signal.score]));
+  const breakdown = Object.keys(graphBreakdown).length ? graphBreakdown : score?.breakdown || {};
+  const displayScore = graph?.gameplayProfileScore ?? score?.overall ?? 0;
   const topTraits = Object.entries(breakdown)
     .sort((a, b) => (b[1] || 0) - (a[1] || 0))
     .slice(0, 3);
-  const chips = Object.entries(labels).slice(0, 4);
-  const fullBreakdown = Object.entries(labels);
+  const fullBreakdown = Object.entries(breakdown).length
+    ? Object.entries(breakdown).map(([key, value]) => [key, labels[key] || key, value])
+    : Object.entries(labels).map(([key, label]) => [key, label, 0]);
+  const chips = fullBreakdown.slice(0, 4);
+  const explanation = graph
+    ? "Gameplay Graph score built from sessions, scorecards, teammate feedback, Steam context, and Python rhythm signals."
+    : score?.explanation || "Reliable teammate profile signals improve as Steam depth, completed rooms, and teammate reviews grow.";
 
   return (
     <section className="border-b border-white/10 py-6 md:py-8">
       <div className="grid gap-6 lg:grid-cols-[128px_minmax(0,1fr)_auto] lg:items-center">
         <div className="flex justify-center lg:justify-start">
-          <ScoreRing score={score?.overall || 0} size={118} label="Score" />
+          <ScoreRing score={displayScore} size={118} label="Score" />
         </div>
         <div>
-          <div className="eyebrow">Player score</div>
-          <h2 className="mt-2 text-2xl font-black tracking-tight text-clutch-text">ClutchQ Score {Math.round(score?.overall || 0)}</h2>
+          <div className="eyebrow">{graph ? "Gameplay Graph" : "Player score"}</div>
+          <h2 className="mt-2 text-2xl font-black tracking-tight text-clutch-text">ClutchQ Score {Math.round(displayScore || 0)}</h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-clutch-muted">
-            {score?.explanation || "Reliable teammate profile signals improve as Steam depth, completed rooms, and teammate reviews grow."}
+            {explanation}
           </p>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
@@ -49,9 +63,9 @@ const PlayerScoreStory = ({ score }) => {
       </div>
 
       <div className="mt-5 flex flex-wrap gap-2">
-        {chips.map(([key, label]) => (
+        {chips.map(([key, label, value]) => (
           <span key={key} className="rounded-full bg-white/[0.055] px-3 py-1.5 text-xs font-semibold text-clutch-muted">
-            {label} <span className="ml-1 font-black text-clutch-text">{Math.round(breakdown[key] || 0)}</span>
+            {label} <span className="ml-1 font-black text-clutch-text">{Math.round(value || 0)}</span>
           </span>
         ))}
       </div>
@@ -59,18 +73,18 @@ const PlayerScoreStory = ({ score }) => {
       <DetailDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        title="Player score breakdown"
-        subtitle="The full set of signals behind this ClutchQ score."
+        title={graph ? "Gameplay Graph breakdown" : "Player score breakdown"}
+        subtitle={graph ? "Python-backed signals behind this ClutchQ score." : "The full set of signals behind this ClutchQ score."}
       >
         <div className="space-y-3">
-          {fullBreakdown.map(([key, label]) => (
+          {fullBreakdown.map(([key, label, value]) => (
             <div key={key} className="border-b border-white/10 pb-3 last:border-b-0">
               <div className="flex items-center justify-between gap-4">
                 <span className="text-sm font-bold text-clutch-text">{label}</span>
-                <span className="text-sm font-black text-clutch-blue">{Math.round(breakdown[key] || 0)}</span>
+                <span className="text-sm font-black text-[#39D353]">{Math.round(value || 0)}</span>
               </div>
               <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-                <div className="h-full rounded-full bg-clutch-blue" style={{ width: `${Math.max(0, Math.min(100, Math.round(breakdown[key] || 0)))}%` }} />
+                <div className="h-full rounded-full bg-[#39D353]" style={{ width: `${Math.max(0, Math.min(100, Math.round(value || 0)))}%` }} />
               </div>
             </div>
           ))}

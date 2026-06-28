@@ -50,6 +50,8 @@ const Profile = () => {
   const [bundle, setBundle] = useState(null);
   const [steam, setSteam] = useState(defaultSteamData);
   const [gameplayGraph, setGameplayGraph] = useState(null);
+  const [rhythmIntel, setRhythmIntel] = useState(null);
+  const [scorecardAnalyses, setScorecardAnalyses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState("");
@@ -59,7 +61,7 @@ const Profile = () => {
     setError("");
 
     try {
-      const [profileResult, syncStatusResult, libraryResult, recentResult, favoritesResult, achievementsResult, friendsResult, heatmapResult, insightsResult, graphResult] =
+      const [profileResult, syncStatusResult, libraryResult, recentResult, favoritesResult, achievementsResult, friendsResult, heatmapResult, insightsResult, graphResult, rhythmResult, scorecardsResult] =
         await Promise.allSettled([
           profileApi.getProfile(),
           steamApi.getSteamSyncStatus(),
@@ -70,7 +72,9 @@ const Profile = () => {
           steamApi.getSteamFriends(),
           steamApi.getSteamHeatmap(),
           steamApi.getSteamMatchInsights(),
-          intelligenceApi.getMyGraph()
+          intelligenceApi.getMyGraph(),
+          intelligenceApi.getMyRhythm(),
+          intelligenceApi.getMyScorecards()
         ]);
 
       const nextBundle = fromResult(profileResult, null);
@@ -87,7 +91,9 @@ const Profile = () => {
         heatmap: fromResult(heatmapResult, []),
         insights: fromResult(insightsResult, null)
       });
-      setGameplayGraph(fromResult(graphResult, null)?.graph || null);
+      setGameplayGraph(fromResult(graphResult, nextBundle.gameplayGraph || null)?.graph || nextBundle.gameplayGraph || null);
+      setRhythmIntel(fromResult(rhythmResult, null));
+      setScorecardAnalyses(fromResult(scorecardsResult, []));
     } catch (loadError) {
       setError(getErrorMessage(loadError));
     } finally {
@@ -162,6 +168,7 @@ const Profile = () => {
         bundle={bundle}
         libraryCount={steam.library.length}
         steamLinked={steamLinked}
+        gameplayGraph={gameplayGraph}
         onAvatarUpload={handleAvatarUpload}
         onAvatarRemove={handleAvatarRemove}
         onSyncSteam={handleSteamSync}
@@ -172,11 +179,11 @@ const Profile = () => {
 
       {activeTab === PROFILE_TABS.overview && (
         <div className="space-y-6">
-          <PlayerSnapshot bundle={bundle} library={steam.library} steamSummary={bundle.steamSummary} syncStatus={steamSyncStatus} />
+          <PlayerSnapshot bundle={bundle} library={steam.library} steamSummary={bundle.steamSummary} syncStatus={steamSyncStatus} gameplayGraph={gameplayGraph} />
           <GameplayGraphPanel graph={gameplayGraph} />
           <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-            <PlayerScoreStory score={score} />
-            <MatchAnalyticsStory insights={steam.insights} recentActivitySummary={bundle.recentActivitySummary} profile={bundle.profile} />
+            <PlayerScoreStory score={score} graph={gameplayGraph} />
+            <MatchAnalyticsStory insights={steam.insights} recentActivitySummary={bundle.recentActivitySummary} profile={bundle.profile} graph={gameplayGraph} scorecards={scorecardAnalyses} />
           </div>
           <TeammateEdgesPanel edges={gameplayGraph?.teammateEdges || []} />
           <ConnectedAccountsPanel accounts={bundle.connectedAccounts} steamSummary={bundle.steamSummary} onSyncSteam={handleSteamSync} syncing={syncing} compact />
@@ -200,10 +207,10 @@ const Profile = () => {
 
       {activeTab === PROFILE_TABS.activity && (
         <div className="space-y-6">
-          <GamingActivityVisual heatmap={steam.heatmap} library={steam.library} recentActivitySummary={bundle.recentActivitySummary} />
+          <GamingActivityVisual heatmap={steam.heatmap} library={steam.library} recentActivitySummary={bundle.recentActivitySummary} rhythm={rhythmIntel} graph={gameplayGraph} />
           <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-            <PlayerScoreStory score={score} />
-            <MatchAnalyticsStory insights={steam.insights} recentActivitySummary={bundle.recentActivitySummary} profile={bundle.profile} />
+            <PlayerScoreStory score={score} graph={gameplayGraph} />
+            <MatchAnalyticsStory insights={steam.insights} recentActivitySummary={bundle.recentActivitySummary} profile={bundle.profile} graph={gameplayGraph} scorecards={scorecardAnalyses} />
           </div>
         </div>
       )}

@@ -13,6 +13,7 @@ import {
   syncSteamForUser,
   SteamServiceError
 } from "../services/steamService.js";
+import { rebuildGraphForUser } from "./intelligenceController.js";
 
 const sendSteamError = (res, error) => {
   if (error instanceof SteamServiceError) {
@@ -37,6 +38,10 @@ export const getSteamMe = asyncHandler(async (req, res) => {
 export const syncSteam = asyncHandler(async (req, res) => {
   try {
     const result = await syncSteamForUser(req.user);
+    const graphRefresh = await rebuildGraphForUser(req.user._id).catch((error) => ({
+      graph: null,
+      warnings: [`Gameplay graph refresh skipped: ${error.message}`]
+    }));
     res.json({
       success: true,
       message: result.message || "Steam synced successfully.",
@@ -46,7 +51,8 @@ export const syncSteam = asyncHandler(async (req, res) => {
         friendsSynced: result.counts.friends,
         achievementsSynced: result.counts.achievements,
         privateSections: result.privateSections,
-        warnings: result.warnings
+        gameplayGraphRefreshed: Boolean(graphRefresh.graph),
+        warnings: [...(result.warnings || []), ...(graphRefresh.warnings || [])]
       }
     });
   } catch (error) {

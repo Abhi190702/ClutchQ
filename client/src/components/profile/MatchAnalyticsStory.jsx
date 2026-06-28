@@ -11,13 +11,28 @@ const Signal = ({ label, value, helper }) => (
   </div>
 );
 
-const MatchAnalyticsStory = ({ insights, recentActivitySummary, profile }) => {
+const MatchAnalyticsStory = ({ insights, recentActivitySummary, profile, graph, scorecards = [] }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const sessions = recentActivitySummary?.sessions || [];
-  const analyses = insights?.recentAnalyses || recentActivitySummary?.analysis || [];
+  const scorecardRows = scorecards.map((card) => ({
+    _id: card._id,
+    gameName: card.gameName,
+    durationMinutes: card.extractedStats?.durationMinutes,
+    status: "scorecard analysis",
+    signalScore: card.performance?.overall,
+    summary: card.summary?.[0],
+    createdAt: card.createdAt
+  }));
+  const analyses = [
+    ...scorecardRows,
+    ...(insights?.recentAnalyses || []),
+    ...(recentActivitySummary?.analysis || [])
+  ];
   const primaryGame = profile?.games?.find((game) => game.isPrimary) || profile?.games?.[0];
-  const recommended = insights?.recommendedGames?.[0]?.name || primaryGame?.gameName || "Create or join a ClutchQ room";
-  const getSignalScore = (item) => item.matchRating ?? item.teamworkScore ?? item.communicationScore ?? "";
+  const recommended = graph?.gameProfiles?.[0]?.gameName || insights?.recommendedGames?.[0]?.name || primaryGame?.gameName || "Create or join a ClutchQ room";
+  const mainStyle = graph?.style?.mainStyle || insights?.mainGenre || "Building profile";
+  const bestSquadFit = graph?.style?.bestSquadFit || insights?.bestSquadFit || "Ranked squad with clear roles";
+  const getSignalScore = (item) => item.signalScore ?? item.matchRating ?? item.teamworkScore ?? item.communicationScore ?? "";
 
   return (
     <section className="border-b border-white/10 py-6 md:py-8">
@@ -32,8 +47,8 @@ const MatchAnalyticsStory = ({ insights, recentActivitySummary, profile }) => {
       </div>
 
       <div className="mt-5 grid gap-5 md:grid-cols-3">
-        <Signal label="Main style" value={insights?.mainGenre || "Building profile"} helper="Based on synced history." />
-        <Signal label="Best squad fit" value={insights?.bestSquadFit || "Ranked squad with clear roles"} helper="Useful for mic-required rooms." />
+        <Signal label="Main style" value={mainStyle} helper={graph ? "Based on Gameplay Graph signals." : "Based on synced history."} />
+        <Signal label="Best squad fit" value={bestSquadFit} helper="Useful for mic-required rooms." />
         <Signal label="Recommended game" value={recommended} helper={profile?.micAvailable ? "Mic-ready profile." : "Add mic status for better matches."} />
       </div>
 
@@ -41,7 +56,7 @@ const MatchAnalyticsStory = ({ insights, recentActivitySummary, profile }) => {
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         title="Matchmaking signals"
-        subtitle="Recent sessions and Steam signals that shape this profile."
+        subtitle={graph ? "Scorecards, sessions, Steam context, and Python graph signals that shape this profile." : "Recent sessions and Steam signals that shape this profile."}
       >
         {!analyses.length && !sessions.length ? (
           <ProfileEmptyState
@@ -58,8 +73,9 @@ const MatchAnalyticsStory = ({ insights, recentActivitySummary, profile }) => {
                     <div className="mt-1 text-sm leading-6 text-clutch-muted">
                       {item.durationMinutes ? formatMinutes(item.durationMinutes) : "Session analysis"} - {item.status || "tracked"}
                     </div>
+                    {item.summary ? <div className="mt-1 text-sm leading-6 text-zinc-500">{item.summary}</div> : null}
                   </div>
-                  <div className="text-sm font-black text-clutch-blue">{getSignalScore(item)}</div>
+                  <div className="text-sm font-black text-[#39D353]">{getSignalScore(item)}</div>
                 </div>
               </div>
             ))}

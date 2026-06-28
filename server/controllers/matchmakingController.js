@@ -98,12 +98,21 @@ export const explainMatch = asyncHandler(async (req, res) => {
     throw new Error("Player profile not found");
   }
 
+  const graphs = await GameplayGraph.find({
+    userId: { $in: [req.user._id, target.userId?._id || target.userId] }
+  }).lean();
+  const graphByUser = new Map(graphs.map((graph) => [String(graph.userId), graph]));
+
   res.json({
     success: true,
     message: "Match explanation generated",
     data: {
       profile: target,
-      match: calculateMatchScore(currentProfile, target)
+      match: enhanceWithGraphFit(
+        calculateMatchScore(currentProfile, target),
+        graphByUser.get(String(req.user._id)),
+        graphByUser.get(String(target.userId?._id || target.userId))
+      )
     }
   });
 });
@@ -117,13 +126,22 @@ export const compareProfiles = asyncHandler(async (req, res) => {
     throw new Error("Player profile not found");
   }
 
+  const graphs = await GameplayGraph.find({
+    userId: { $in: [req.user._id, target.userId?._id || target.userId] }
+  }).lean();
+  const graphByUser = new Map(graphs.map((graph) => [String(graph.userId), graph]));
+
   res.json({
     success: true,
     message: "Profile comparison ready",
     data: {
       currentProfile,
       targetProfile: target,
-      match: calculateMatchScore(currentProfile, target)
+      match: enhanceWithGraphFit(
+        calculateMatchScore(currentProfile, target),
+        graphByUser.get(String(req.user._id)),
+        graphByUser.get(String(target.userId?._id || target.userId))
+      )
     }
   });
 });
@@ -147,11 +165,18 @@ export const findSquadNow = asyncHandler(async (req, res) => {
   query.userId.$nin.push(req.user._id);
 
   const candidates = await GamerProfile.find(query).populate("userId", "name avatar role");
+  const candidateUserIds = candidates.map((profile) => profile.userId?._id || profile.userId);
+  const graphs = await GameplayGraph.find({ userId: { $in: [req.user._id, ...candidateUserIds] } }).lean();
+  const graphByUser = new Map(graphs.map((graph) => [String(graph.userId), graph]));
+  const viewerGraph = graphByUser.get(String(req.user._id));
   const scoredPlayers = candidates
-    .map((profile) => ({
-      profile,
-      match: calculateMatchScore(currentProfile, profile)
-    }))
+    .map((profile) => {
+      const candidateGraph = graphByUser.get(String(profile.userId?._id || profile.userId));
+      return {
+        profile,
+        match: enhanceWithGraphFit(calculateMatchScore(currentProfile, profile), viewerGraph, candidateGraph)
+      };
+    })
     .sort((a, b) => b.match.totalScore - a.match.totalScore);
 
   const bestSquadPlayers = scoredPlayers.slice(0, 4);

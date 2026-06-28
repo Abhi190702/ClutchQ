@@ -2,6 +2,7 @@ import Game from "../models/Game.js";
 import GameRoom from "../models/GameRoom.js";
 import GameActivity from "../models/GameActivity.js";
 import GamePlaytimeAggregate from "../models/GamePlaytimeAggregate.js";
+import GameplayGraph from "../models/GameplayGraph.js";
 import GamerProfile from "../models/GamerProfile.js";
 import { gameCatalog, getGameBySlug } from "../data/gameCatalog.js";
 import { buildDemoRooms, countDemoRoomPlayers } from "../data/demoGameRooms.js";
@@ -167,6 +168,8 @@ export const findSquadNow = asyncHandler(async (req, res) => {
   }
 
   const profile = await GamerProfile.findOne({ userId: req.user._id });
+  const viewerGraph = await GameplayGraph.findOne({ userId: req.user._id }).lean();
+  const graphGame = (viewerGraph?.gameProfiles || []).find((item) => item.gameSlug === req.params.slug || item.gameName === game.title);
   const rooms = await GameRoom.find({ gameSlug: req.params.slug, status: "open" })
     .populate("hostId", "name avatar")
     .populate("currentMembers.userId", "name avatar")
@@ -179,14 +182,26 @@ export const findSquadNow = asyncHandler(async (req, res) => {
       const languageMatch = profile?.languages?.includes(room.language);
       const regionMatch = profile?.region === room.region;
       const micMatch = !room.micRequired || profile?.micAvailable;
+      const graphGameBonus = graphGame ? Math.min(12, Math.round(((graphGame.averageRating || 65) - 55) / 3)) : 0;
+      const graphConfidenceBonus = viewerGraph?.confidence >= 0.65 ? 4 : 0;
       const score =
         (regionMatch ? 30 : 0) +
         (languageMatch ? 22 : 0) +
         (missingRoleMatch ? 18 : 0) +
         (micMatch ? 12 : 0) +
-        Math.min(18, Math.max(0, (profile?.trustScore || 70) - (room.trustRequirement || 60)));
+        Math.min(18, Math.max(0, (profile?.trustScore || 70) - (room.trustRequirement || 60))) +
+        graphGameBonus +
+        graphConfidenceBonus;
 
-      return { room, score, alreadyMember };
+      return {
+        room,
+        score: Math.min(100, Math.round(score)),
+        alreadyMember,
+        graphReasons: [
+          graphGame ? "Gameplay Graph has history in this game" : null,
+          graphConfidenceBonus ? "High confidence graph" : null
+        ].filter(Boolean)
+      };
     })
     .filter((item) => !item.alreadyMember)
     .sort((a, b) => b.score - a.score)
