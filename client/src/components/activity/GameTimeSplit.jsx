@@ -1,7 +1,7 @@
 import EmptyState from "../common/EmptyState";
 import { formatHours, safeNumber } from "../../utils/formatters";
 
-const colors = ["#35B8FF", "#A78BFA", "#34D399", "#FBBF24", "#71717A"];
+const colors = ["#39D353", "#26A641", "#56D364", "#F2CC60", "#71717A"];
 
 const GameTimeSplit = ({ items = [] }) => {
   const total = items.reduce((sum, item) => sum + safeNumber(item.minutes), 0);
