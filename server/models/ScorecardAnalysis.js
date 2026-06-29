@@ -29,7 +29,11 @@ const scorecardAnalysisSchema = new mongoose.Schema(
     situationalSignals: mongoose.Schema.Types.Mixed,
     summary: [String],
     warnings: [String],
-    confidence: Number,
+    confidence: {
+      type: Number,
+      min: 0,
+      max: 1
+    },
     source: {
       type: String,
       enum: ["python", "fallback", "demo"],

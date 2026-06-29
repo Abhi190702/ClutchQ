@@ -322,55 +322,80 @@ export const getMyScorecards = asyncHandler(async (req, res) => {
 export const submitSessionFeedback = asyncHandler(async (req, res) => {
   const { sessionId } = req.params;
   const session = await getSessionForUser(sessionId, req.user._id);
-  const { toUserId, ratings = {}, wouldPlayAgain = "skipped", comment = "", skipped = false } = req.body;
+  const feedbackItems = Array.isArray(req.body.feedback) ? req.body.feedback : [req.body];
+  const actionableItems = [
+    ...new Map(feedbackItems.filter((item) => item?.toUserId).map((item) => [String(item.toUserId), item])).values()
+  ];
 
-  if (!toUserId || !mongoose.isValidObjectId(toUserId)) {
-    res.status(400);
-    throw new Error("Teammate is required.");
+  if (!actionableItems.length || req.body.skipped) {
+    const giverGraph = await rebuildGraphForUser(req.user._id);
+    return res.json({
+      success: true,
+      message: "Feedback skipped",
+      data: {
+        feedback: [],
+        graph: giverGraph.graph,
+        receiverGraphs: [],
+        warnings: giverGraph.warnings || []
+      }
+    });
   }
 
-  if (String(toUserId) === String(req.user._id)) {
+  const invalidItem = actionableItems.find((item) => !mongoose.isValidObjectId(item.toUserId));
+  if (invalidItem) {
+    res.status(400);
+    throw new Error("Teammate is invalid.");
+  }
+
+  if (actionableItems.some((item) => String(item.toUserId) === String(req.user._id))) {
     res.status(400);
     throw new Error("You cannot submit teammate feedback for yourself.");
   }
 
-  const teammateExists = await User.exists({ _id: toUserId });
-  if (!teammateExists) {
+  const uniqueToUserIds = [...new Set(actionableItems.map((item) => String(item.toUserId)))];
+  const teammateCount = await User.countDocuments({ _id: { $in: uniqueToUserIds } });
+  if (teammateCount !== uniqueToUserIds.length) {
     res.status(404);
     throw new Error("Teammate not found.");
   }
 
-  const cleanedRatings = skipped ? {} : cleanRatings(ratings);
-  const safeComment = String(comment || "").trim().slice(0, maxCommentLength);
-  const playAgain = ["yes", "maybe", "no", "skipped"].includes(wouldPlayAgain) ? wouldPlayAgain : "skipped";
+  const feedback = await Promise.all(
+    actionableItems.map((item) => {
+      const itemSkipped = Boolean(item.skipped);
+      const cleanedRatings = itemSkipped ? {} : cleanRatings(item.ratings || {});
+      const safeComment = String(item.comment || "").trim().slice(0, maxCommentLength);
+      const playAgain = ["yes", "maybe", "no", "skipped"].includes(item.wouldPlayAgain) ? item.wouldPlayAgain : "skipped";
 
-  const feedback = await TeammateFeedback.findOneAndUpdate(
-    { sessionId: session._id, fromUserId: req.user._id, toUserId },
-    {
-      $set: {
-        lobbyId: session.roomId,
-        ratings: cleanedRatings,
-        wouldPlayAgain: skipped ? "skipped" : playAgain,
-        comment: safeComment,
-        skipped: Boolean(skipped)
-      }
-    },
-    { new: true, upsert: true, setDefaultsOnInsert: true }
+      return TeammateFeedback.findOneAndUpdate(
+        { sessionId: session._id, fromUserId: req.user._id, toUserId: item.toUserId },
+        {
+          $set: {
+            lobbyId: session.roomId,
+            ratings: cleanedRatings,
+            wouldPlayAgain: itemSkipped ? "skipped" : playAgain,
+            comment: safeComment,
+            skipped: itemSkipped
+          }
+        },
+        { new: true, upsert: true, setDefaultsOnInsert: true }
+      );
+    })
   );
 
-  const [giverGraph, receiverGraph] = await Promise.all([
+  const [giverGraph, ...receiverGraphs] = await Promise.all([
     rebuildGraphForUser(req.user._id),
-    rebuildGraphForUser(toUserId)
+    ...uniqueToUserIds.map((toUserId) => rebuildGraphForUser(toUserId))
   ]);
 
   res.json({
     success: true,
-    message: skipped ? "Feedback skipped" : "Teammate feedback saved",
+    message: "Teammate feedback saved",
     data: {
       feedback,
       graph: giverGraph.graph,
-      receiverGraph: receiverGraph.graph,
-      warnings: [...(giverGraph.warnings || []), ...(receiverGraph.warnings || [])]
+      receiverGraph: receiverGraphs[0]?.graph || null,
+      receiverGraphs: receiverGraphs.map((item) => item.graph),
+      warnings: [...(giverGraph.warnings || []), ...receiverGraphs.flatMap((item) => item.warnings || [])]
     }
   });
 });

@@ -9,8 +9,8 @@ const projectRoot = path.resolve(__dirname, "../..");
 const workerPath = path.join(projectRoot, "analytics-worker", "main.py");
 
 const candidateBins = () => {
-  if (process.env.PYTHON_BIN?.trim()) return [process.env.PYTHON_BIN.trim()];
-  return ["python", "python3"];
+  const bins = [process.env.PYTHON_BIN?.trim(), "python", "python3"].filter(Boolean);
+  return [...new Set(bins)];
 };
 
 const timeoutForTask = (task, requestedTimeout) => {

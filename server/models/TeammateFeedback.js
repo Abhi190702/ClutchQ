@@ -25,18 +25,21 @@ const teammateFeedbackSchema = new mongoose.Schema(
       index: true
     },
     ratings: {
-      communication: Number,
-      teamwork: Number,
-      reliability: Number,
-      skill: Number,
-      behavior: Number
+      communication: { type: Number, min: 1, max: 5 },
+      teamwork: { type: Number, min: 1, max: 5 },
+      reliability: { type: Number, min: 1, max: 5 },
+      skill: { type: Number, min: 1, max: 5 },
+      behavior: { type: Number, min: 1, max: 5 }
     },
     wouldPlayAgain: {
       type: String,
       enum: ["yes", "maybe", "no", "skipped"],
       default: "skipped"
     },
-    comment: String,
+    comment: {
+      type: String,
+      maxlength: 500
+    },
     skipped: {
       type: Boolean,
       default: false

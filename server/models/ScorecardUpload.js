@@ -23,8 +23,17 @@ const scorecardUploadSchema = new mongoose.Schema(
     },
     gameName: String,
     imageDataUrl: String,
-    imageMime: String,
-    imageSizeBytes: Number,
+    imageMime: {
+      type: String,
+      enum: ["", "image/jpeg", "image/png", "image/webp"],
+      default: ""
+    },
+    imageSizeBytes: {
+      type: Number,
+      min: 0,
+      max: 900 * 1024,
+      default: 0
+    },
     status: {
       type: String,
       enum: ["pending", "processed", "failed"],
