@@ -1,5 +1,5 @@
 import { formatHours, formatRating } from "../../utils/formatters";
-import { getGameArt } from "../../utils/gameArt";
+import { gameInitials, getGameArt } from "../../utils/gameArt";
 
 const GameProfileShelf = ({ games = [] }) => {
   if (!games.length) {
@@ -11,9 +11,13 @@ const GameProfileShelf = ({ games = [] }) => {
       {games.slice(0, 3).map((game) => {
         const art = getGameArt(game.gameName || game.gameSlug);
         return (
-          <article key={game.gameSlug || game.gameName} className="overflow-hidden rounded-[10px] border border-white/10 bg-white/[0.025]">
+          <article key={game.gameSlug || game.gameName} className="overflow-hidden rounded-[14px] border border-white/10 bg-black/15">
             <div className="h-28 bg-white/[0.04]">
-              {art ? <img src={art} alt="" className="h-full w-full object-cover" loading="lazy" /> : null}
+              {art ? (
+                <img src={art} alt="" className="h-full w-full object-cover" loading="lazy" />
+              ) : (
+                <div className="grid h-full w-full place-items-center text-2xl font-black text-white">{gameInitials(game.gameName)}</div>
+              )}
             </div>
             <div className="p-4">
               <div className="truncate text-base font-black text-white">{game.gameName}</div>

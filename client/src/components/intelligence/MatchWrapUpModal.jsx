@@ -6,7 +6,12 @@ import ScorecardStatsEditor from "./ScorecardStatsEditor";
 import ScorecardUploader from "./ScorecardUploader";
 import TeammateFeedbackForm from "./TeammateFeedbackForm";
 
-const steps = ["Scorecard", "Stats", "Feedback", "Analysis"];
+const steps = ["Summary", "Scorecard", "Stats", "Feedback", "Analysis"];
+const normalizeNumber = (raw) => {
+  if (raw === "") return "";
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? Math.max(0, parsed) : "";
+};
 
 const MatchWrapUpModal = ({ session, teammates = [], onClose, onComplete }) => {
   const [step, setStep] = useState(0);
@@ -43,7 +48,7 @@ const MatchWrapUpModal = ({ session, teammates = [], onClose, onComplete }) => {
         manualStats: stats
       });
       setAnalysis(response.data.data);
-      setStep(3);
+      setStep(4);
       onComplete?.();
     } catch (analysisError) {
       setError(getErrorMessage(analysisError));
@@ -54,7 +59,6 @@ const MatchWrapUpModal = ({ session, teammates = [], onClose, onComplete }) => {
 
   const submitFeedback = async () => {
     if (!feedback.toUserId || !session?._id) {
-      setStep(3);
       return runAnalysis();
     }
 
@@ -70,8 +74,8 @@ const MatchWrapUpModal = ({ session, teammates = [], onClose, onComplete }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4">
-      <div className="thin-scrollbar max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-[14px] border border-[#33333a] bg-[#1d1d21] p-5 shadow-2xl">
+    <div className="fixed inset-0 z-50 grid place-items-end bg-black/75 p-0 sm:place-items-center sm:p-4">
+      <div className="thin-scrollbar max-h-[94vh] w-full max-w-3xl overflow-y-auto rounded-t-[22px] border border-[#33333a] bg-[#1d1d21] p-5 shadow-2xl sm:rounded-[14px]">
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="eyebrow">Match wrap-up</div>
@@ -97,13 +101,35 @@ const MatchWrapUpModal = ({ session, teammates = [], onClose, onComplete }) => {
         {error ? <div className="mt-4 rounded-md border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-100">{error}</div> : null}
 
         <div className="mt-5 space-y-4">
-          {step === 0 && <ScorecardUploader value={scorecard} onChange={setScorecard} />}
-          {step === 1 && <ScorecardStatsEditor value={stats} onChange={setStats} />}
-          {step === 2 && <TeammateFeedbackForm teammates={normalizedTeammates} value={feedback} onChange={setFeedback} />}
-          {step === 3 && (
+          {step === 0 && (
+            <div className="rounded-[12px] border border-white/10 bg-white/[0.025] p-4">
+              <div className="text-sm font-black text-white">Match summary</div>
+              <p className="mt-1 text-sm text-zinc-400">Start with the basic result. Scorecard and teammate feedback stay optional.</p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <label>
+                  <span className="form-label">Result</span>
+                  <select className="form-input" value={stats.result || "completed"} onChange={(event) => setStats({ ...stats, result: event.target.value })}>
+                    <option value="completed">Completed</option>
+                    <option value="win">Win</option>
+                    <option value="loss">Loss</option>
+                    <option value="unknown">Unknown</option>
+                  </select>
+                </label>
+                <label>
+                  <span className="form-label">Duration minutes</span>
+                  <input className="form-input" type="number" min="0" value={stats.durationMinutes ?? ""} onChange={(event) => setStats({ ...stats, durationMinutes: normalizeNumber(event.target.value) })} />
+                </label>
+              </div>
+            </div>
+          )}
+          {step === 1 && <ScorecardUploader value={scorecard} onChange={setScorecard} />}
+          {step === 2 && <ScorecardStatsEditor value={stats} onChange={setStats} gameName={session?.gameName || session?.gameSlug} />}
+          {step === 3 && <TeammateFeedbackForm teammates={normalizedTeammates} value={feedback} onChange={setFeedback} />}
+          {step === 4 && (
             analysis ? <AnalysisResultCard result={analysis} /> : (
               <div className="rounded-[10px] border border-white/10 bg-white/[0.025] p-4 text-sm text-zinc-300">
                 Ready to generate scorecard analysis from session, stats, feedback, and Steam context.
+                {error ? <button type="button" className="mt-3 block font-bold text-clutch-blue" onClick={runAnalysis} disabled={busy}>Retry analysis</button> : null}
               </div>
             )
           )}
@@ -114,19 +140,19 @@ const MatchWrapUpModal = ({ session, teammates = [], onClose, onComplete }) => {
             Back
           </button>
           <div className="flex flex-wrap gap-3">
-            {step < 2 ? (
+            {step < 3 ? (
               <>
                 <button type="button" className="btn-secondary" onClick={() => setStep((value) => value + 1)}>Skip</button>
                 <button type="button" className="btn-primary" onClick={() => setStep((value) => value + 1)}>Continue</button>
               </>
             ) : null}
-            {step === 2 ? (
+            {step === 3 ? (
               <>
                 <button type="button" className="btn-secondary" onClick={runAnalysis} disabled={busy}>Skip feedback</button>
                 <button type="button" className="btn-primary" onClick={submitFeedback} disabled={busy}>{busy ? "Saving..." : "Save and analyze"}</button>
               </>
             ) : null}
-            {step === 3 ? (
+            {step === 4 ? (
               <button type="button" className="btn-primary" onClick={analysis ? onClose : runAnalysis} disabled={busy}>
                 {analysis ? "Done" : busy ? "Generating..." : "Generate analysis"}
               </button>

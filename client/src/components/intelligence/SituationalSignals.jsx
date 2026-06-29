@@ -10,7 +10,14 @@ const SituationalSignals = ({ signals = [], limit = 5 }) => {
           <div className="mb-2 flex items-center justify-between gap-3">
             <div className="min-w-0">
               <div className="truncate text-sm font-black text-white">{signal.label}</div>
-              {signal.evidence ? <div className="mt-0.5 line-clamp-1 text-xs text-zinc-500">{signal.evidence}</div> : null}
+              {signal.evidence ? (
+                <details className="group mt-1">
+                  <summary className="cursor-pointer list-none text-xs font-bold text-clutch-blue transition hover:text-sky-300">
+                    View evidence
+                  </summary>
+                  <p className="mt-1 text-xs leading-5 text-zinc-500">{signal.evidence}</p>
+                </details>
+              ) : null}
             </div>
             <div className="text-sm font-black text-white">{signal.score ?? "--"}</div>
           </div>

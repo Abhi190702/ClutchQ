@@ -6,7 +6,6 @@ import MetricStrip from "../components/common/MetricStrip";
 import SectionHeader from "../components/common/SectionHeader";
 import SoftGlow from "../components/common/SoftGlow";
 import FindSquadNow from "../components/dashboard/FindSquadNow";
-import LiveDNAVisualizer from "../components/dashboard/LiveDNAVisualizer";
 import PlayerFilters from "../components/dashboard/PlayerFilters";
 import RecommendedPlayers from "../components/dashboard/RecommendedPlayers";
 import { useAuth } from "../context/AuthContext";
@@ -77,7 +76,7 @@ const Dashboard = () => {
   const bestScoreLabel = hasBestScore ? `${Math.round(Number(best.match.totalScore))}%` : "--";
   const trustLabel = profile?.trustScore !== null && profile?.trustScore !== undefined && Number.isFinite(Number(profile.trustScore))
     ? `${Math.round(Number(profile.trustScore))}%`
-    : "No data";
+    : "Building";
   const metrics = [
     { label: "Recommended", value: filtered.length, helper: "players ready" },
     { label: "Best match", value: bestScoreLabel, helper: best?.profile?.displayName || "Build profile data" },
@@ -111,7 +110,6 @@ const Dashboard = () => {
           <div id="squad-controls" className="space-y-6">
             <FindSquadNow />
             <PlayerFilters filters={filters} onChange={setFilters} />
-            {best && <LiveDNAVisualizer breakdown={best.match.breakdown} totalScore={best.match.totalScore} />}
           </div>
           <RecommendedPlayers recommendations={filtered} loading={loading} onSendRequest={sendRequest} requestedIds={requestedIds} />
         </div>

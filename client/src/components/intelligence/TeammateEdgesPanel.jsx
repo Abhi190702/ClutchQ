@@ -13,21 +13,25 @@ const TeammateEdgesPanel = ({ edges = [] }) => (
 
     {edges.length ? (
       <div className="mt-5 divide-y divide-white/10">
-        {edges.slice(0, 5).map((edge) => (
-          <div key={edge.userId || edge.name} className="flex items-center gap-3 py-3">
+        {edges.slice(0, 5).map((edge) => {
+          const sharedGames = edge.sharedGames?.length ? edge.sharedGames.join(", ") : edge.sharedGame || "Shared rhythm building";
+          return (
+          <div key={edge.userId || edge.name} className="grid gap-3 py-3 sm:grid-cols-[auto_minmax(0,1fr)_auto_auto] sm:items-center">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/[0.07] text-sm font-black text-white">
               {getInitials(edge.name)}
             </span>
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-black text-white">{edge.name}</div>
-              <div className="mt-0.5 truncate text-xs text-zinc-500">{edge.reason}</div>
+              <div className="mt-0.5 truncate text-xs text-zinc-500">{sharedGames} · {edge.reason || "Compatible play rhythm"}</div>
             </div>
             <div className="text-right">
               <div className="text-lg font-black text-white">{edge.compatibility}%</div>
               <div className="text-[11px] uppercase tracking-[0.16em] text-zinc-600">fit</div>
             </div>
+            <Link to="/dashboard" className="btn-secondary py-2 text-sm">View</Link>
           </div>
-        ))}
+          );
+        })}
       </div>
     ) : (
       <p className="mt-4 text-sm leading-6 text-zinc-400">Join rooms and collect feedback to build teammate graph edges.</p>

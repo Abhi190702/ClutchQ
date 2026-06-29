@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import PageShell from "../components/common/PageShell";
 import ErrorState from "../components/common/ErrorState";
+import SkeletonCard from "../components/common/SkeletonCard";
 import ActivityCalendarStrip from "../components/activity/ActivityCalendarStrip";
 import ActivityHero from "../components/activity/ActivityHero";
 import ActivityInsightPanel from "../components/activity/ActivityInsightPanel";
@@ -109,30 +110,43 @@ const Activity = () => {
   return (
     <PageShell fullWidth>
       <div className="space-y-8">
-        <ActivityHero snapshot={snapshot} rhythmSummary={rhythmIntel?.summary} active={summary.active} onEndActive={setEnding} />
+        <ActivityHero snapshot={snapshot} rhythmSummary={rhythmIntel?.summary} active={summary.active} onEndActive={setEnding}>
+          <StartSessionDock games={games} active={summary.active} onStarted={load} compact />
+        </ActivityHero>
         {error ? <ErrorState message={error} onRetry={load} /> : null}
         {loading ? (
-          <div className="border-l border-white/10 py-5 pl-4 text-sm font-semibold text-zinc-400">Loading activity rhythm...</div>
-        ) : null}
-        <StartSessionDock games={games} active={summary.active} onStarted={load} />
-        <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-6">
-            <GamingRhythmChart series={series} />
-            <ActivityCalendarStrip days={series} />
-            <RecentGameTimeline sessions={sessions} analyses={scorecardAnalyses} />
+          <div className="grid min-w-0 gap-7 xl:grid-cols-[minmax(0,1.85fr)_minmax(320px,0.95fr)]">
+            <div className="space-y-6">
+              <SkeletonCard rows={6} />
+              <SkeletonCard rows={4} />
+            </div>
+            <aside className="space-y-6">
+              <SkeletonCard rows={5} />
+              <SkeletonCard rows={5} />
+            </aside>
           </div>
-          <aside className="min-w-0 space-y-6">
-            <GameTimeSplit items={split} />
-            <ActivityInsightPanel snapshot={snapshot} split={split} insights={rhythmIntel?.insights || []} rhythmSummary={rhythmIntel?.summary} />
-          </aside>
-        </div>
-        <FriendCompatibilityStrip friends={compatibleFriends} />
+        ) : (
+          <>
+            <div className="grid min-w-0 gap-7 xl:grid-cols-[minmax(0,1.85fr)_minmax(320px,0.95fr)]">
+              <div className="min-w-0 space-y-6">
+                <GamingRhythmChart series={series} />
+                <ActivityCalendarStrip days={series} />
+                <RecentGameTimeline sessions={sessions} analyses={scorecardAnalyses} />
+              </div>
+              <aside className="min-w-0 space-y-6">
+                <GameTimeSplit items={split} />
+                <ActivityInsightPanel snapshot={snapshot} split={split} insights={rhythmIntel?.insights || []} rhythmSummary={rhythmIntel?.summary} />
+              </aside>
+            </div>
+            <FriendCompatibilityStrip friends={compatibleFriends} />
+          </>
+        )}
 
         {ending ? (
-          <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
-            <form onSubmit={stop} className="w-full max-w-lg rounded-[10px] border border-[#33333a] bg-[#202024] p-5">
-              <h2 className="text-2xl font-black text-white">End Match</h2>
-              <p className="mt-2 text-sm text-zinc-400">Rate the session so ClutchQ can create a match analysis.</p>
+          <div className="fixed inset-0 z-50 grid place-items-end bg-black/75 p-0 sm:place-items-center sm:p-4">
+            <form onSubmit={stop} className="w-full max-w-lg rounded-t-[22px] border border-[#33333a] bg-[#202024] p-5 shadow-2xl sm:rounded-[14px]">
+              <h2 className="text-2xl font-black text-white">Finish match</h2>
+              <p className="mt-2 text-sm leading-6 text-zinc-400">Save the session first, then add scorecard stats and teammate feedback in the wrap-up.</p>
               <div className="mt-5 grid gap-4">
                 <label>
                   <span className="form-label">Result</span>
@@ -143,19 +157,13 @@ const Activity = () => {
                     <option value="unknown">Unknown</option>
                   </select>
                 </label>
-                {["teamworkScore", "communicationScore", "performanceScore"].map((field) => (
-                  <label key={field}>
-                    <span className="form-label">{field.replace("Score", " score")}</span>
-                    <input className="form-input" type="number" min="0" max="100" value={form[field]} onChange={(event) => setForm({ ...form, [field]: Number(event.target.value) })} />
-                  </label>
-                ))}
                 <label>
-                  <span className="form-label">Notes</span>
+                  <span className="form-label">Quick note</span>
                   <textarea className="form-input min-h-24" value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} />
                 </label>
               </div>
               <div className="mt-5 flex gap-3">
-                <button type="submit" className="btn-primary">Save Match</button>
+                <button type="submit" className="btn-primary">Open wrap-up</button>
                 <button type="button" className="btn-secondary" onClick={() => setEnding(null)}>Cancel</button>
               </div>
             </form>

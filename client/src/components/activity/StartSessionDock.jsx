@@ -3,7 +3,7 @@ import { useToast } from "../../context/ToastContext";
 import { getErrorMessage } from "../../services/api";
 import activityApi from "../../services/activityApi";
 
-const StartSessionDock = ({ games = [], active, onStarted, selectedGameSlug = "" }) => {
+const StartSessionDock = ({ games = [], active, onStarted, selectedGameSlug = "", compact = false }) => {
   const { showToast } = useToast();
   const [gameSlug, setGameSlug] = useState(selectedGameSlug || games[0]?.slug || "");
   const [loading, setLoading] = useState(false);
@@ -37,15 +37,15 @@ const StartSessionDock = ({ games = [], active, onStarted, selectedGameSlug = ""
   };
 
   return (
-    <section className="border-b border-white/10 pb-5">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+    <section className={compact ? "" : "border-b border-white/10 pb-5"}>
+      <div className={`flex flex-col gap-3 ${compact ? "" : "md:flex-row md:items-center md:justify-between"}`}>
         <div>
           <div className="text-sm font-black text-white">{active ? `Tracking ${active.gameName}` : "Start a session"}</div>
           <div className="mt-1 text-xs text-zinc-500">Manual sessions sharpen recommendations and activity history.</div>
         </div>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className={`flex flex-col gap-3 ${compact ? "" : "sm:flex-row sm:items-center"}`}>
           <select
-            className="form-input min-w-[220px]"
+            className={`form-input ${compact ? "w-full" : "min-w-[220px]"}`}
             value={gameSlug}
             onChange={(event) => setGameSlug(event.target.value)}
             disabled={Boolean(active)}

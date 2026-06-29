@@ -1,13 +1,14 @@
 import { useState } from "react";
 import api, { getErrorMessage } from "../../services/api";
-import ScoreRing from "../common/ScoreRing";
 import Badge from "../common/Badge";
+import DetailDrawer from "../common/DetailDrawer";
 import { useToast } from "../../context/ToastContext";
 
 const FindSquadNow = () => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [open, setOpen] = useState(false);
   const { showToast } = useToast();
 
   const run = async () => {
@@ -59,22 +60,55 @@ const FindSquadNow = () => {
       )}
 
       {result && (
-        <div className="mt-5 grid gap-4 lg:grid-cols-[auto_1fr]">
-          <ScoreRing score={result.squadCompatibilityScore} label="Squad" />
-          <div className="border-l border-white/10 pl-4">
-            <div className="text-sm font-semibold text-clutch-blue">Best squad found</div>
-            <h4 className="mt-1 text-xl font-semibold">Squad compatibility: {result.squadCompatibilityScore}%</h4>
-            <div className="mt-3 grid gap-2 text-sm text-clutch-muted">
-              <div>Your strongest match: <span className="font-bold text-clutch-text">{result.strongestMatch?.displayName || "Direct invite"}</span></div>
-              <div>Best open lobby: <span className="font-bold text-clutch-text">{result.bestOpenLobby?.lobby?.title || "No lobby beats direct squad"}</span></div>
-              <div>Recommended action: <span className="font-bold text-clutch-blue">{result.recommendedAction}</span></div>
+        <>
+          <div className="mt-5 rounded-[14px] border border-white/10 bg-white/[0.025] p-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="text-sm font-semibold text-clutch-blue">Best squad found</div>
+                <h4 className="mt-1 text-xl font-black text-white">{result.squadCompatibilityScore}% squad compatibility</h4>
+                <p className="mt-2 text-sm leading-6 text-clutch-muted">
+                  Strongest match: <span className="font-bold text-clutch-text">{result.strongestMatch?.displayName || "Direct invite"}</span>
+                </p>
+              </div>
+              <button type="button" className="btn-secondary" onClick={() => setOpen(true)}>
+                Why this squad?
+              </button>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
-              {result.whySelected?.map((why) => <Badge key={why}>{why}</Badge>)}
-              {result.missingRoles?.map((role) => <Badge key={role} tone="border-clutch-amber/40 bg-clutch-amber/10 text-amber-100">Missing {role}</Badge>)}
+              {(result.whySelected || []).slice(0, 2).map((why) => <Badge key={why}>{why}</Badge>)}
+              {result.recommendedAction ? <Badge>{result.recommendedAction}</Badge> : null}
             </div>
           </div>
-        </div>
+          <DetailDrawer
+            open={open}
+            onClose={() => setOpen(false)}
+            title="Squad engine explanation"
+            subtitle={`Compatibility ${result.squadCompatibilityScore}% · ${result.recommendedAction || "Recommended action ready"}`}
+          >
+            <div className="space-y-5">
+              <div>
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-zinc-500">Best open lobby</div>
+                <p className="mt-2 text-base font-bold text-white">{result.bestOpenLobby?.lobby?.title || "No lobby beats direct squad building"}</p>
+              </div>
+              <div>
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-zinc-500">Why selected</div>
+                <div className="mt-3 space-y-2">
+                  {(result.whySelected || []).map((why) => (
+                    <p key={why} className="rounded-[12px] bg-white/[0.04] px-3 py-2 text-sm leading-6 text-zinc-300">{why}</p>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs font-black uppercase tracking-[0.16em] text-zinc-500">Role gaps</div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {result.missingRoles?.length ? result.missingRoles.map((role) => (
+                    <Badge key={role} tone="border-clutch-amber/40 bg-clutch-amber/10 text-amber-100">Missing {role}</Badge>
+                  )) : <Badge>Role balance stable</Badge>}
+                </div>
+              </div>
+            </div>
+          </DetailDrawer>
+        </>
       )}
     </section>
   );

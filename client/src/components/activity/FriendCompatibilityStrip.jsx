@@ -17,7 +17,7 @@ const FriendCompatibilityStrip = ({ friends = [] }) => (
     {friends.length ? (
       <div className="mt-6 grid gap-x-6 lg:grid-cols-3">
         {friends.slice(0, 6).map((friend) => (
-          <div key={friend.userId || friend.id || friend.name} className="flex items-center gap-3 border-b border-white/10 py-3">
+          <div key={friend.userId || friend.id || friend.name} className="grid gap-3 border-b border-white/10 py-3 sm:grid-cols-[auto_1fr_auto] sm:items-center">
             <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full bg-white/[0.08] text-sm font-black text-white">
               {friend.avatar ? <img src={friend.avatar} alt="" className="h-full w-full object-cover" /> : getInitials(friend.name)}
             </span>
@@ -27,9 +27,14 @@ const FriendCompatibilityStrip = ({ friends = [] }) => (
                 {(friend.sharedGames?.join(", ") || friend.sharedGame || "Shared rhythm building")} · {friend.reasons?.[0] || friend.role || "Fit signal"}
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-lg font-black text-white">{friend.compatibility}%</div>
-              <div className="text-[11px] uppercase tracking-[0.18em] text-zinc-600">fit</div>
+            <div className="flex items-center justify-between gap-3 sm:justify-end">
+              <div className="text-left sm:text-right">
+                <div className="text-lg font-black text-white">{friend.compatibility}%</div>
+                <div className="text-[11px] uppercase tracking-[0.18em] text-zinc-600">fit</div>
+              </div>
+              <Link to="/dashboard" className="btn-secondary py-2 text-sm">
+                Invite
+              </Link>
             </div>
           </div>
         ))}

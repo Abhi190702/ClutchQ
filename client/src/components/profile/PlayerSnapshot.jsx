@@ -2,6 +2,12 @@ import { formatDate, formatHours, formatPercentage, safeNumber } from "../../uti
 import MetricStrip from "../common/MetricStrip";
 import SectionHeader from "../common/SectionHeader";
 
+const toConfidencePercent = (value) => {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return NaN;
+  return numeric <= 1 ? numeric * 100 : numeric;
+};
+
 const PlayerSnapshot = ({ bundle, library = [], steamSummary, syncStatus, gameplayGraph }) => {
   const { profile, playerScore } = bundle;
   const primaryGame = profile?.games?.find((game) => game.isPrimary) || profile?.games?.[0];
@@ -10,14 +16,14 @@ const PlayerSnapshot = ({ bundle, library = [], steamSummary, syncStatus, gamepl
   const lastSynced = syncStatus?.lastSyncedAt || steamSummary?.lastSyncedAt;
 
   const graphScore = gameplayGraph?.gameplayProfileScore;
-  const confidence = Number(gameplayGraph?.confidence);
+  const confidence = toConfidencePercent(gameplayGraph?.confidence);
   const metrics = [
     {
       value: Math.round(graphScore ?? playerScore?.overall ?? 0),
       label: "Graph score",
       helper: graphScore !== undefined ? "Python gameplay graph" : playerScore?.explanation || "Player profile score"
     },
-    { value: Number.isNaN(trust) ? "No data" : formatPercentage(trust), label: "Trust", helper: `${profile?.totalReviews || 0} teammate reviews` },
+    { value: Number.isNaN(trust) ? "Building" : formatPercentage(trust), label: "Trust", helper: `${profile?.totalReviews || 0} teammate reviews` },
     {
       value: gameplayGraph?.gameProfiles?.[0]?.gameName || primaryGame?.gameName || "Not set",
       label: "Main game",
@@ -25,7 +31,7 @@ const PlayerSnapshot = ({ bundle, library = [], steamSummary, syncStatus, gamepl
     },
     { value: library.length, label: "Steam library", helper: library.length ? `${formatHours(totalMinutes)} total playtime` : "Sync public games" },
     {
-      value: Number.isFinite(confidence) ? formatPercentage(confidence * 100) : lastSynced ? formatDate(lastSynced) : "Not synced",
+      value: Number.isFinite(confidence) ? formatPercentage(confidence) : lastSynced ? formatDate(lastSynced) : "Not synced",
       label: gameplayGraph ? "Graph confidence" : "Last Steam sync",
       helper: gameplayGraph ? `${gameplayGraph.source || "fallback"} intelligence source` : syncStatus?.status || steamSummary?.syncStatus || "Connect or sync Steam"
     }

@@ -15,6 +15,10 @@ const PlayerCard = ({ item, onSendRequest, requested = false }) => {
   const profile = item?.profile;
   const match = item?.match;
   const game = getPrimaryGame(profile);
+  const visibleBadges = [
+    ...(profile?.badges || []),
+    profile?.micAvailable ? "Mic Ready" : null
+  ].filter(Boolean).slice(0, 2);
 
   return (
     <article className="group border-b border-white/10 py-4 transition hover:bg-white/[0.025]">
@@ -36,9 +40,9 @@ const PlayerCard = ({ item, onSendRequest, requested = false }) => {
         <ScoreRing score={match?.totalScore} size={68} label="Match" />
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        {profile?.badges?.slice(0, 2).map((badge) => <Badge key={badge}>{badge}</Badge>)}
-        {profile?.micAvailable ? <Badge>Mic Ready</Badge> : null}
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <MatchConfidence confidence={match?.confidence} />
+        {visibleBadges.map((badge) => <Badge key={badge}>{badge}</Badge>)}
       </div>
 
       <div className="mt-4 flex flex-wrap gap-3">
@@ -49,7 +53,7 @@ const PlayerCard = ({ item, onSendRequest, requested = false }) => {
           View Profile
         </Link>
         <button type="button" className="btn-secondary py-2" onClick={() => setOpen((current) => !current)}>
-          Details
+          Why?
         </button>
       </div>
 
@@ -61,7 +65,7 @@ const PlayerCard = ({ item, onSendRequest, requested = false }) => {
       >
         <div className="mb-5 grid grid-cols-2 gap-3">
           <div className="border-l border-white/10 pl-3">
-            <div className="text-2xl font-black text-white">{profile?.reliabilityScore != null ? `${profile.reliabilityScore}%` : "No data"}</div>
+            <div className="text-2xl font-black text-white">{profile?.reliabilityScore != null ? `${profile.reliabilityScore}%` : "Building"}</div>
             <div className="text-xs font-semibold text-zinc-500">Reliability</div>
           </div>
           <div className="border-l border-white/10 pl-3">
@@ -74,6 +78,12 @@ const PlayerCard = ({ item, onSendRequest, requested = false }) => {
         </div>
         <div className="border-t border-white/10 pt-4">
           <MatchBreakdown match={match} />
+        </div>
+        <div className="mt-5 rounded-[12px] border border-white/10 bg-white/[0.025] p-3">
+          <div className="text-sm font-black text-white">Next action</div>
+          <p className="mt-1 text-sm leading-6 text-zinc-400">
+            Send a request if rank, role, and timing still feel right. ClutchQ will keep improving this explanation as more sessions and feedback come in.
+          </p>
         </div>
       </DetailDrawer>
     </article>

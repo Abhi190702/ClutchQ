@@ -9,6 +9,7 @@ const ratingFields = [
 const TeammateFeedbackForm = ({ teammates = [], value, onChange }) => {
   const update = (patch) => onChange?.({ ...value, ...patch });
   const ratings = value.ratings || {};
+  const setRating = (key, rating) => update({ ratings: { ...ratings, [key]: rating } });
 
   return (
     <div className="rounded-[10px] border border-white/10 bg-white/[0.025] p-4">
@@ -30,19 +31,23 @@ const TeammateFeedbackForm = ({ teammates = [], value, onChange }) => {
           </label>
           {value.toUserId ? (
             <>
-              <div className="grid gap-3 sm:grid-cols-5">
+              <div className="grid gap-3">
                 {ratingFields.map(([key, label]) => (
-                  <label key={key}>
-                    <span className="form-label">{label}</span>
-                    <input
-                      className="form-input"
-                      type="number"
-                      min="1"
-                      max="5"
-                      value={ratings[key] || 4}
-                      onChange={(event) => update({ ratings: { ...ratings, [key]: Number(event.target.value) } })}
-                    />
-                  </label>
+                  <div key={key} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <span className="form-label mb-0">{label}</span>
+                    <div className="flex gap-1.5">
+                      {[1, 2, 3, 4, 5].map((rating) => (
+                        <button
+                          key={rating}
+                          type="button"
+                          className={`h-9 w-9 rounded-full border text-sm font-black transition ${Number(ratings[key] || 4) === rating ? "border-clutch-blue bg-clutch-blue text-black" : "border-white/10 bg-white/[0.04] text-zinc-300 hover:border-white/25"}`}
+                          onClick={() => setRating(key, rating)}
+                        >
+                          {rating}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
               <label>
