@@ -10,6 +10,11 @@ import { buildDiscordAuthUrl, handleDiscordOAuthCallback, isDiscordOAuthConfigur
 import { buildGoogleAuthUrl, handleGoogleOAuthCallback, isGoogleOAuthConfigured } from "../services/oauth/googleOAuthService.js";
 import { sendOtpEmail } from "../services/emailService.js";
 import { createOtp, invalidateOtps, verifyOtp } from "../services/otpService.js";
+import {
+  consumePasswordResetSession,
+  createPasswordResetSession,
+  verifyPasswordResetSession
+} from "../services/passwordResetSessionService.js";
 import { buildSteamAuthUrl, getPlayerSummary, verifySteamOpenId } from "../services/steamService.js";
 import { verifyTurnstileToken } from "../services/turnstileService.js";
 import { getJwtSecret } from "../utils/validateEnv.js";
@@ -530,13 +535,46 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   });
 });
 
-export const resetPassword = asyncHandler(async (req, res) => {
-  const { email, otp, newPassword } = req.body;
+export const verifyPasswordResetOtp = asyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
   const normalizedEmail = normalizeEmail(email);
 
   if (!isValidEmail(normalizedEmail) || !/^\d{6}$/.test(String(otp || "").trim())) {
     res.status(400);
-    throw new Error("Enter a valid reset code.");
+    throw new Error("Invalid or expired code.");
+  }
+
+  const result = await verifyOtp({ email: normalizedEmail, purpose: "password_reset", otp });
+  if (!result.success) {
+    res.status(result.reason === "locked" ? 429 : 400);
+    throw new Error(result.reason === "locked" ? "Too many wrong codes. Request a new OTP." : "Invalid or expired code.");
+  }
+
+  const user = await User.findOne({ email: normalizedEmail });
+  if (!user || !user.passwordHash) {
+    res.status(400);
+    throw new Error("Invalid or expired code.");
+  }
+
+  const { resetToken } = await createPasswordResetSession({
+    email: normalizedEmail,
+    ip: getRemoteIp(req),
+    userAgent: req.get("user-agent")
+  });
+
+  res.json({
+    success: true,
+    message: "Code verified.",
+    data: { resetToken }
+  });
+});
+
+export const resetPassword = asyncHandler(async (req, res) => {
+  const { resetToken, newPassword } = req.body;
+
+  if (!resetToken) {
+    res.status(400);
+    throw new Error("Invalid or expired reset session.");
   }
 
   if (!strongEnoughPassword(newPassword)) {
@@ -544,13 +582,20 @@ export const resetPassword = asyncHandler(async (req, res) => {
     throw new Error("Password must be at least 8 characters and include a letter and a number.");
   }
 
-  const result = await verifyOtp({ email: normalizedEmail, purpose: "password_reset", otp });
-  if (!result.success) {
-    res.status(result.reason === "locked" ? 429 : 400);
-    throw new Error(result.reason === "locked" ? "Too many wrong codes. Request a new OTP." : "Invalid or expired reset code.");
+  const sessionCheck = await verifyPasswordResetSession(resetToken);
+  if (!sessionCheck.success) {
+    res.status(400);
+    throw new Error("Invalid or expired reset session.");
   }
 
-  const user = await User.findOne({ email: normalizedEmail });
+  const consumed = await consumePasswordResetSession(resetToken);
+  if (!consumed.success) {
+    res.status(400);
+    throw new Error("Invalid or expired reset session.");
+  }
+
+  const resetEmail = consumed.session.email;
+  const user = await User.findOne({ email: resetEmail });
   if (!user || !user.passwordHash) {
     res.status(400);
     throw new Error("Unable to reset password. Request a new code.");
@@ -562,11 +607,22 @@ export const resetPassword = asyncHandler(async (req, res) => {
   user.emailVerified = true;
   user.emailVerifiedAt = user.emailVerifiedAt || new Date();
   await user.save();
-  await invalidateOtps(normalizedEmail, "password_reset");
+  await invalidateOtps(resetEmail, "password_reset");
 
   res.json({
     success: true,
     message: "Password reset successfully."
+  });
+});
+
+export const getSecurityHealth = asyncHandler(async (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      smtpConfigured: Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS),
+      turnstileConfigured: Boolean(process.env.TURNSTILE_SECRET_KEY),
+      otpTtlMinutes: Number.parseInt(process.env.OTP_TTL_MINUTES || "10", 10)
+    }
   });
 });
 

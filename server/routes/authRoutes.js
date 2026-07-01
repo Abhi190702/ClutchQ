@@ -2,6 +2,7 @@ import express from "express";
 import {
   demoLogin,
   forgotPassword,
+  getSecurityHealth,
   getMe,
   handleDiscordOAuth,
   handleGoogleOAuth,
@@ -15,7 +16,8 @@ import {
   startDiscordOAuth,
   startGoogleOAuth,
   startSteamOAuth,
-  verifyEmailOtp
+  verifyEmailOtp,
+  verifyPasswordResetOtp
 } from "../controllers/authController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import { authLimiter, loginLimiter, otpRequestLimiter, otpVerifyLimiter, passwordResetLimiter } from "../middleware/rateLimiters.js";
@@ -29,7 +31,9 @@ router.post("/logout", logout);
 router.get("/me", protect, getMe);
 router.post("/otp/request", otpRequestLimiter, requestOtp);
 router.post("/otp/verify", otpVerifyLimiter, verifyEmailOtp);
+router.get("/security/health", authLimiter, getSecurityHealth);
 router.post("/password/forgot", passwordResetLimiter, forgotPassword);
+router.post("/password/verify-otp", otpVerifyLimiter, verifyPasswordResetOtp);
 router.post("/password/reset", passwordResetLimiter, resetPassword);
 
 router.get("/google", authLimiter, startGoogleOAuth);

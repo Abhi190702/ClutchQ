@@ -10,6 +10,7 @@
     "seed:demo": "node scripts/seedDemoAccounts.js",
     "seed:games": "node seed/gameSeed.js",
     "sync:external-games": "node scripts/syncExternalGames.js",
+    "test:email": "node scripts/testEmail.js",
     "clear": "node scripts/clearDb.js"
   },
   "dependencies": {

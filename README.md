@@ -135,6 +135,7 @@ Final Score = clamp(0, 100)
 
 - User: account, email, password hash, verification state, login safety counters, role, avatar, suspension state
 - OtpToken: hashed one-time email/password reset codes with TTL, attempts, cooldown, and single-use consumption
+- PasswordResetSession: hashed short-lived reset session token created only after password reset OTP verification
 - GamerProfile: game/rank/roles, region, languages, availability, playstyle, trust, badges
 - Lobby: owner, game, rank range, region, language, members, requests, invite code, Discord voice room metadata
 - Game: game catalog, poster/cover URLs, roles, platforms, modes, status, and activity metadata
@@ -159,7 +160,9 @@ Final Score = clamp(0, 100)
 - `POST /api/auth/otp/request`
 - `POST /api/auth/otp/verify`
 - `POST /api/auth/password/forgot`
+- `POST /api/auth/password/verify-otp`
 - `POST /api/auth/password/reset`
+- `GET /api/auth/security/health`
 - `GET /api/auth/me`
 - `GET /api/auth/google`
 - `GET /api/auth/google/callback`
@@ -401,7 +404,8 @@ ClutchQ keeps public auth actions small and guarded:
 
 - Email accounts register first, then verify email through a 6-digit OTP banner inside the app.
 - OTPs are HMAC hashed with the server secret, expire by TTL, are single-use, and lock after repeated wrong attempts.
-- Password reset uses the same OTP system and returns generic responses so email existence is not exposed.
+- Password reset is a 3-step flow: email plus Turnstile, OTP-only verification, then new password after a short-lived reset token is issued.
+- Password reset returns generic responses where email existence could be exposed.
 - Cloudflare Turnstile is verified only on the backend for OTP and password reset requests.
 - `TURNSTILE_SECRET_KEY`, SMTP credentials, OAuth secrets, Steam keys, and MongoDB URIs stay server-only.
 - Helmet sets security headers, Render proxy trust is enabled, strict CORS allows only known frontend origins, and auth/OTP/scorecard routes are rate-limited.
@@ -425,6 +429,13 @@ SMTP_HOST=
 SMTP_PORT=587
 SMTP_USER=
 SMTP_PASS=
+```
+
+SMTP test without sending an OTP:
+
+```powershell
+cd server
+npm run test:email -- your-email@example.com
 ```
 
 ## Gameplay Intelligence Pipeline

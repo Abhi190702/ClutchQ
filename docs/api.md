@@ -27,7 +27,9 @@ Errors use:
 - `POST /api/auth/otp/request`
 - `POST /api/auth/otp/verify`
 - `POST /api/auth/password/forgot`
+- `POST /api/auth/password/verify-otp`
 - `POST /api/auth/password/reset`
+- `GET /api/auth/security/health`
 - `GET /api/auth/me`
 - `GET /api/auth/google`
 - `GET /api/auth/google/callback`
@@ -37,6 +39,14 @@ Errors use:
 - `GET /api/auth/steam/callback`
 
 OTP request and password reset request routes require backend-verified Cloudflare Turnstile. Responses stay generic and never reveal whether an email exists. OTP hashes are stored server-side only and expire by TTL.
+
+Password reset flow:
+
+1. `POST /api/auth/password/forgot` with `{ email, turnstileToken }`
+2. `POST /api/auth/password/verify-otp` with `{ email, otp }`, returning `{ resetToken }`
+3. `POST /api/auth/password/reset` with `{ resetToken, newPassword }`
+
+`resetToken` is short-lived, single-use, and stored only as a hash server-side.
 
 ## Profiles
 

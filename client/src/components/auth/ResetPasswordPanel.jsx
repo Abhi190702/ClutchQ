@@ -2,10 +2,14 @@ import { useState } from "react";
 import { resetPassword } from "../../services/authSecurityApi";
 import { getErrorMessage } from "../../services/api";
 
-const ResetPasswordPanel = ({ email, onReset }) => {
-  const [form, setForm] = useState({ otp: "", newPassword: "", confirmPassword: "" });
+const strongEnoughPassword = (value) => value.length >= 8 && /[a-z]/i.test(value) && /\d/.test(value);
+
+const ResetPasswordPanel = ({ resetToken, onReset }) => {
+  const [form, setForm] = useState({ newPassword: "", confirmPassword: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const passwordsMatch = form.newPassword && form.newPassword === form.confirmPassword;
+  const passwordReady = passwordsMatch && strongEnoughPassword(form.newPassword);
 
   const submit = async () => {
     setError("");
@@ -16,12 +20,11 @@ const ResetPasswordPanel = ({ email, onReset }) => {
 
     setLoading(true);
     try {
-      await resetPassword({ email, otp: form.otp, newPassword: form.newPassword });
-      setForm({ otp: "", newPassword: "", confirmPassword: "" });
+      await resetPassword({ resetToken, newPassword: form.newPassword });
+      setForm({ newPassword: "", confirmPassword: "" });
       onReset?.();
     } catch (err) {
       setError(getErrorMessage(err));
-      setForm((current) => ({ ...current, otp: "" }));
     } finally {
       setLoading(false);
     }
@@ -29,14 +32,6 @@ const ResetPasswordPanel = ({ email, onReset }) => {
 
   return (
     <div className="space-y-3">
-      <input
-        className="form-input text-center text-lg font-black tracking-[0.32em]"
-        inputMode="numeric"
-        maxLength={6}
-        value={form.otp}
-        onChange={(event) => setForm({ ...form, otp: event.target.value.replace(/\D/g, "").slice(0, 6) })}
-        placeholder="OTP code"
-      />
       <input
         className="form-input"
         type="password"
@@ -51,8 +46,9 @@ const ResetPasswordPanel = ({ email, onReset }) => {
         onChange={(event) => setForm({ ...form, confirmPassword: event.target.value })}
         placeholder="Confirm password"
       />
+      <p className="text-xs leading-5 text-slate-400">Use at least 8 characters with a letter and a number.</p>
       {error ? <p className="rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">{error}</p> : null}
-      <button type="button" className="btn-primary w-full" disabled={loading || form.otp.length !== 6 || !form.newPassword} onClick={submit}>
+      <button type="button" className="btn-primary w-full" disabled={loading || !resetToken || !passwordReady} onClick={submit}>
         {loading ? "Resetting..." : "Reset password"}
       </button>
     </div>

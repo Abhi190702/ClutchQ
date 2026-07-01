@@ -145,6 +145,25 @@ Production rules:
 - Redeploy both backend and frontend after changing these values.
 - Do not put SMTP or Turnstile secret keys in Vercel.
 
+Test Brevo SMTP without touching OTP state:
+
+```powershell
+cd server
+npm run test:email -- your-email@example.com
+```
+
+Expected result:
+
+```txt
+Test email sent successfully.
+```
+
+Password reset UX is intentionally three steps:
+
+1. Email and Turnstile sends an OTP.
+2. OTP-only screen verifies the code.
+3. New password fields appear only after the code is verified.
+
 ## Gameplay Intelligence Worker
 
 Python is optional but recommended for the richer scorecard, rhythm, teammate fit, and Gameplay Graph analysis. The app never exposes Python as a second backend; the Express server launches it as an internal worker and falls back safely if Python is missing.
@@ -236,3 +255,4 @@ http://localhost:5000/api/intelligence/health
 - Scorecard analysis says lightweight analyzer: Python is unavailable or `PYTHON_BIN` is wrong; the app is still working with fallback analysis.
 - OTP email not received locally: check the backend terminal for `DEV OTP`.
 - OTP fails in production: confirm `TURNSTILE_SECRET_KEY`, `VITE_TURNSTILE_SITE_KEY`, and SMTP values are set, then redeploy Render and Vercel.
+- Brevo test email fails: confirm `SMTP_HOST`, `SMTP_PORT=587`, `SMTP_USER`, `SMTP_PASS`, and `OTP_EMAIL_FROM` in Render or `server/.env`.

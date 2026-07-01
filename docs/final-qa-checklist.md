@@ -39,7 +39,11 @@ http://localhost:5000/api/health
 - Repeated wrong OTP attempts are denied.
 - Correct OTP marks the user as verified and cannot be reused.
 - Forgot password returns the generic OTP message without revealing whether an email exists.
-- Reset password works with a valid password reset OTP.
+- Forgot password moves through Email, Code, Password steps.
+- New password fields are hidden until the OTP is verified.
+- Password reset OTP verification returns a short-lived reset token, not a password form.
+- Reset password works with a verified reset token.
+- Reusing the same reset token fails.
 - Login with the new password works and failed login messages stay generic.
 - Google, Discord, and Steam buttons redirect back to the frontend, not to a blank backend page.
 - Logging out clears the session and protected pages return to login.
@@ -148,6 +152,13 @@ VITE_API_URL=https://clutchq-backend.onrender.com/api
 VITE_PRODUCTION_API_URL=https://clutchq-backend.onrender.com/api
 VITE_LOCAL_API_URL=http://localhost:5000/api
 VITE_TURNSTILE_SITE_KEY=
+```
+
+SMTP test:
+
+```powershell
+cd server
+npm run test:email -- your-email@example.com
 ```
 
 Never commit real `.env` files or provider secrets.
