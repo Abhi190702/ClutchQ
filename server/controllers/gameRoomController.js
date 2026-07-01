@@ -145,6 +145,11 @@ export const leaveGameRoom = asyncHandler(async (req, res) => {
     throw new Error("Room host can cancel the room instead of leaving");
   }
 
+  if (!isRoomMember(room, req.user._id)) {
+    res.status(403);
+    throw new Error("Only room members can leave this room");
+  }
+
   room.currentMembers = room.currentMembers.filter((member) => getId(member.userId) !== getId(req.user._id));
   if (room.status === "full" && (room.currentMembers?.filter((member) => member.status !== "left").length || 0) < room.maxMembers) {
     room.status = "open";
@@ -228,14 +233,27 @@ export const deleteGameRoom = asyncHandler(async (req, res) => {
   }
 
   room.status = "cancelled";
-  if (room.discord?.channelId) await deleteDiscordChannel(room.discord.channelId);
+  const warnings = [];
+  if (room.discord?.channelId) {
+    try {
+      await deleteDiscordChannel(room.discord.channelId);
+    } catch (error) {
+      warnings.push("Discord voice room cleanup failed. Check bot permissions before creating the next room.");
+      console.error("Game room Discord cleanup failed", {
+        roomId: String(room._id),
+        channelId: room.discord.channelId,
+        message: error.message
+      });
+    }
+  }
   room.discord = undefined;
   await room.save();
 
   res.json({
     success: true,
     message: "Game room cancelled",
-    data: room
+    data: room,
+    warnings
   });
 });
 

@@ -31,6 +31,20 @@ export const createSessionFromLobby = asyncHandler(async (req, res) => {
     throw new Error("Only the lobby owner can start a session");
   }
 
+  const existingSession = await Session.findOne({ lobbyId: lobby._id });
+  if (existingSession) {
+    if (lobby.status !== "closed") {
+      lobby.status = "closed";
+      await lobby.save();
+    }
+
+    return res.json({
+      success: true,
+      message: "Session already exists for this lobby",
+      data: existingSession
+    });
+  }
+
   const memberIds = lobby.currentMembers.map((member) => member.userId);
   const profiles = await GamerProfile.find({ userId: { $in: memberIds } });
   const chemistry = calculateSquadChemistry(profiles, lobby);
@@ -51,7 +65,11 @@ export const createSessionFromLobby = asyncHandler(async (req, res) => {
     notes: req.body.notes
   });
 
-  await GamerProfile.updateMany({ userId: { $in: memberIds } }, { $inc: { completedSessions: 1 } });
+  lobby.status = "closed";
+  await Promise.all([
+    GamerProfile.updateMany({ userId: { $in: memberIds } }, { $inc: { completedSessions: 1 } }),
+    lobby.save()
+  ]);
 
   res.status(201).json({
     success: true,

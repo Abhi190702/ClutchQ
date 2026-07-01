@@ -1,10 +1,12 @@
 import Review from "../models/Review.js";
 import GamerProfile from "../models/GamerProfile.js";
 import Report from "../models/Report.js";
+import Session from "../models/Session.js";
 import User from "../models/User.js";
 import { asyncHandler } from "../middleware/errorMiddleware.js";
 import calculateTrustScore from "../utils/calculateTrustScore.js";
 import generateBadges from "../utils/badgeEngine.js";
+import mongoose from "mongoose";
 
 const updateReviewedUserScores = async (reviewedUserId) => {
   const profile = await GamerProfile.findOne({ userId: reviewedUserId });
@@ -32,6 +34,11 @@ export const createReview = asyncHandler(async (req, res) => {
     throw new Error("Reviewed user is required");
   }
 
+  if (!mongoose.isValidObjectId(reviewedUserId)) {
+    res.status(400);
+    throw new Error("Invalid reviewed user");
+  }
+
   if (String(reviewedUserId) === String(req.user._id)) {
     res.status(400);
     throw new Error("You cannot review yourself");
@@ -47,6 +54,36 @@ export const createReview = asyncHandler(async (req, res) => {
   if (scores.some((score) => score < 1 || score > 5 || Number.isNaN(score))) {
     res.status(400);
     throw new Error("All review scores must be between 1 and 5");
+  }
+
+  if (sessionId) {
+    if (!mongoose.isValidObjectId(sessionId)) {
+      res.status(400);
+      throw new Error("Invalid session");
+    }
+
+    const session = await Session.findById(sessionId);
+    if (!session) {
+      res.status(404);
+      throw new Error("Session not found");
+    }
+
+    const participantIds = new Set((session.members || []).map((member) => String(member.userId)));
+    if (!participantIds.has(String(req.user._id)) || !participantIds.has(String(reviewedUserId))) {
+      res.status(403);
+      throw new Error("Reviews for a session can only be submitted by session teammates");
+    }
+
+    const duplicate = await Review.findOne({
+      reviewerId: req.user._id,
+      reviewedUserId,
+      sessionId
+    });
+
+    if (duplicate) {
+      res.status(409);
+      throw new Error("You already reviewed this teammate for this session");
+    }
   }
 
   const review = await Review.create({
