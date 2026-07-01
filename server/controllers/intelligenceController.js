@@ -23,6 +23,20 @@ import {
 const allowedImageMimes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const maxImageBytes = 900 * 1024;
 const maxCommentLength = 500;
+const maxFeedbackItems = 8;
+
+const sanitizeText = (value = "", maxLength = 160) =>
+  String(value)
+    .replace(/[\u0000-\u001f\u007f]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, maxLength);
+
+const sanitizeSlug = (value = "") =>
+  sanitizeText(value, 80)
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/(^-|-$)/g, "");
 
 const clamp = (value, min = 0, max = 100) => {
   const number = Number(value);
@@ -89,7 +103,7 @@ const cleanManualStats = (manualStats = {}) => {
   });
 
   if (manualStats.result) {
-    const result = String(manualStats.result).trim().toLowerCase();
+    const result = sanitizeText(manualStats.result, 24).toLowerCase();
     output.result = ["win", "loss", "completed", "unknown"].includes(result) ? result : "completed";
   }
 
@@ -226,8 +240,8 @@ export const uploadScorecard = asyncHandler(async (req, res) => {
   const { sessionId, lobbyId, gameSlug, gameName, imageDataUrl, manualStats = {} } = req.body;
   const session = await getSessionForUser(sessionId, req.user._id);
   const safeLobbyId = optionalObjectId(lobbyId, "lobby id");
-  const finalGameSlug = gameSlug || session?.gameSlug;
-  const finalGameName = gameName || session?.gameName;
+  const finalGameName = sanitizeText(gameName || session?.gameName, 120);
+  const finalGameSlug = sanitizeSlug(gameSlug || session?.gameSlug || finalGameName);
 
   if (!finalGameSlug || !finalGameName) {
     res.status(400);
@@ -322,7 +336,7 @@ export const getMyScorecards = asyncHandler(async (req, res) => {
 export const submitSessionFeedback = asyncHandler(async (req, res) => {
   const { sessionId } = req.params;
   const session = await getSessionForUser(sessionId, req.user._id);
-  const feedbackItems = Array.isArray(req.body.feedback) ? req.body.feedback : [req.body];
+  const feedbackItems = (Array.isArray(req.body.feedback) ? req.body.feedback : [req.body]).slice(0, maxFeedbackItems);
   const actionableItems = [
     ...new Map(feedbackItems.filter((item) => item?.toUserId).map((item) => [String(item.toUserId), item])).values()
   ];
@@ -363,8 +377,9 @@ export const submitSessionFeedback = asyncHandler(async (req, res) => {
     actionableItems.map((item) => {
       const itemSkipped = Boolean(item.skipped);
       const cleanedRatings = itemSkipped ? {} : cleanRatings(item.ratings || {});
-      const safeComment = String(item.comment || "").trim().slice(0, maxCommentLength);
-      const playAgain = ["yes", "maybe", "no", "skipped"].includes(item.wouldPlayAgain) ? item.wouldPlayAgain : "skipped";
+      const safeComment = sanitizeText(item.comment || "", maxCommentLength);
+      const requestedPlayAgain = sanitizeText(item.wouldPlayAgain || "", 24).toLowerCase();
+      const playAgain = ["yes", "maybe", "no", "skipped"].includes(requestedPlayAgain) ? requestedPlayAgain : "skipped";
 
       return TeammateFeedback.findOneAndUpdate(
         { sessionId: session._id, fromUserId: req.user._id, toUserId: item.toUserId },

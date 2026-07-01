@@ -53,6 +53,7 @@ const scorecardUploadSchema = new mongoose.Schema(
 
 scorecardUploadSchema.index({ userId: 1, sessionId: 1 });
 scorecardUploadSchema.index({ userId: 1, gameSlug: 1, createdAt: -1 });
+scorecardUploadSchema.index({ userId: 1, status: 1, createdAt: -1 });
 scorecardUploadSchema.index({ status: 1, createdAt: -1 });
 
 const ScorecardUpload = mongoose.model("ScorecardUpload", scorecardUploadSchema);

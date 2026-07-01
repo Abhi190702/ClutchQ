@@ -3,9 +3,9 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import helmet from "helmet";
-import rateLimit from "express-rate-limit";
 import connectDB from "./config/db.js";
 import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
+import { publicLimiter } from "./middleware/rateLimiters.js";
 import validateEnv from "./utils/validateEnv.js";
 import authRoutes from "./routes/authRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
@@ -23,6 +23,7 @@ import activityRoutes from "./routes/activityRoutes.js";
 import leaderboardRoutes from "./routes/leaderboardRoutes.js";
 import steamRoutes from "./routes/steamRoutes.js";
 import intelligenceRoutes from "./routes/intelligenceRoutes.js";
+import externalGameRoutes from "./routes/externalGameRoutes.js";
 
 dotenv.config();
 validateEnv();
@@ -79,27 +80,8 @@ app.use(
   })
 );
 app.use(
-  rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 300,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: {
-      success: false,
-      message: "Too many requests. Please wait a moment and try again."
-    }
-  })
+  publicLimiter
 );
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 20,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    success: false,
-    message: "Too many sign-in attempts. Please wait and try again."
-  }
-});
 
 app.use(
   cors({
@@ -114,8 +96,8 @@ app.use(
     credentials: true
   })
 );
-app.use(express.json({ limit: "1.25mb" }));
-app.use(express.urlencoded({ extended: true, limit: "1.25mb" }));
+app.use(express.json({ limit: "1.5mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1.5mb" }));
 app.use(cookieParser());
 
 app.get("/", (req, res) => {
@@ -140,12 +122,6 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-app.use("/api/auth/login", authLimiter);
-app.use("/api/auth/register", authLimiter);
-app.use("/api/auth/demo", authLimiter);
-app.use("/api/auth/google", authLimiter);
-app.use("/api/auth/discord", authLimiter);
-app.use("/api/auth/steam", authLimiter);
 app.use("/api/auth", authRoutes);
 app.use("/api/profiles", profileRoutes);
 app.use("/api/profile", profileRoutes);
@@ -163,6 +139,7 @@ app.use("/api/activity", activityRoutes);
 app.use("/api/leaderboards", leaderboardRoutes);
 app.use("/api/steam", steamRoutes);
 app.use("/api/intelligence", intelligenceRoutes);
+app.use("/api/external", externalGameRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

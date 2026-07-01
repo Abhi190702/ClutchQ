@@ -74,6 +74,17 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false
     },
+    emailVerified: {
+      type: Boolean,
+      default: false
+    },
+    emailVerifiedAt: Date,
+    lastLoginAt: Date,
+    failedLoginAttempts: {
+      type: Number,
+      default: 0
+    },
+    lockedUntil: Date,
     authProviders: {
       type: authProviderSchema,
       default: () => ({})
@@ -116,6 +127,9 @@ userSchema.methods.toSafeJSON = function toSafeJSON() {
     role: this.role,
     avatar: this.avatar,
     isSuspended: this.isSuspended,
+    emailVerified: Boolean(this.emailVerified),
+    emailVerifiedAt: this.emailVerifiedAt,
+    lastLoginAt: this.lastLoginAt,
     authProviders: sanitizeAuthProviders(this.authProviders),
     createdAt: this.createdAt,
     updatedAt: this.updatedAt

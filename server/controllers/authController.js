@@ -8,7 +8,10 @@ import { asyncHandler } from "../middleware/errorMiddleware.js";
 import { createDemoProfile } from "../utils/seedData.js";
 import { buildDiscordAuthUrl, handleDiscordOAuthCallback, isDiscordOAuthConfigured } from "../services/oauth/discordOAuthService.js";
 import { buildGoogleAuthUrl, handleGoogleOAuthCallback, isGoogleOAuthConfigured } from "../services/oauth/googleOAuthService.js";
+import { sendOtpEmail } from "../services/emailService.js";
+import { createOtp, invalidateOtps, verifyOtp } from "../services/otpService.js";
 import { buildSteamAuthUrl, getPlayerSummary, verifySteamOpenId } from "../services/steamService.js";
+import { verifyTurnstileToken } from "../services/turnstileService.js";
 import { getJwtSecret } from "../utils/validateEnv.js";
 
 const isLocalDev = process.env.npm_lifecycle_event === "dev" || process.env.NODE_ENV === "development";
@@ -33,8 +36,65 @@ const oauthReturnCookieName = (provider) => `clutchq_${provider}_oauth_return_to
 const oauthNextCookieName = (provider) => `clutchq_${provider}_oauth_next`;
 const DEMO_EMAIL = "demo@clutchq.com";
 const DEMO_PASSWORD = "demo123";
+const DEMO_EMAILS = new Set(["demo@clutchq.com", "captain@clutchq.com", "sentinel@clutchq.com", "flex@clutchq.com"]);
+const MAX_FAILED_LOGIN_ATTEMPTS = 10;
+const LOGIN_LOCK_MS = 15 * 60 * 1000;
+const OTP_PUBLIC_MESSAGE = "If this email can receive a code, an OTP has been sent.";
+const PUBLIC_OTP_PURPOSES = new Set(["email_verification", "password_reset"]);
 const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
 const safeNextPath = (value) => (typeof value === "string" && value.startsWith("/") && !value.startsWith("//") ? value : null);
+const isDemoEmail = (email) => DEMO_EMAILS.has(normalizeEmail(email));
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizeEmail(email));
+const strongEnoughPassword = (password) => {
+  const value = String(password || "");
+  const lower = value.toLowerCase();
+  const weak = new Set(["password", "password123", "12345678", "qwerty123", "admin123"]);
+  return value.length >= 8 && /[a-z]/i.test(value) && /\d/.test(value) && !weak.has(lower);
+};
+const getRemoteIp = (req) => req.ip || req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket?.remoteAddress || "";
+const genericOtpSuccess = (res, extra = {}) =>
+  res.json({
+    success: true,
+    message: OTP_PUBLIC_MESSAGE,
+    data: extra
+  });
+
+const verifyPublicTurnstile = async (req) => {
+  const result = await verifyTurnstileToken(req.body?.turnstileToken, getRemoteIp(req));
+  if (!result.success) {
+    const error = new Error("Security check failed. Please try again.");
+    error.statusCode = 400;
+    throw error;
+  }
+  return result;
+};
+
+const createAndSendOtpIfEligible = async ({ req, email, purpose }) => {
+  const normalizedEmail = normalizeEmail(email);
+  const user = await User.findOne({ email: normalizedEmail });
+  const eligible =
+    purpose === "email_verification"
+      ? Boolean(user && !user.emailVerified)
+      : Boolean(user?.passwordHash);
+
+  if (!eligible) {
+    return { sent: false };
+  }
+
+  const created = await createOtp({
+    email: normalizedEmail,
+    purpose,
+    ip: getRemoteIp(req),
+    userAgent: req.get("user-agent")
+  });
+
+  if (created.cooldown) {
+    return { sent: false, cooldown: true, retryAfterSeconds: created.retryAfterSeconds };
+  }
+
+  await sendOtpEmail({ to: normalizedEmail, otp: created.otp, purpose });
+  return { sent: true, resendSeconds: created.resendSeconds, ttlMinutes: created.ttlMinutes };
+};
 
 const normalizeUrl = (value) => {
   if (!value) return null;
@@ -168,6 +228,8 @@ const createOrUpdateOAuthUser = async ({ provider, providerData }) => {
     user.name = user.name || name;
     user.email = user.email || fallbackEmail;
     user.avatar = providerData.avatar || user.avatar;
+    user.emailVerified = true;
+    user.emailVerifiedAt = user.emailVerifiedAt || new Date();
     user.authProviders = {
       ...(user.authProviders?.toObject?.() || user.authProviders || {}),
       [provider]: providerData
@@ -180,6 +242,8 @@ const createOrUpdateOAuthUser = async ({ provider, providerData }) => {
     name,
     email: fallbackEmail,
     avatar: providerData.avatar,
+    emailVerified: true,
+    emailVerifiedAt: new Date(),
     authProviders: {
       [provider]: providerData
     }
@@ -224,6 +288,8 @@ const createOrUpdateSteamUser = async ({ req, steamId, summary }) => {
       steam: steamData
     };
     linkUser.avatar = linkUser.avatar || steamData.avatar;
+    linkUser.emailVerified = true;
+    linkUser.emailVerifiedAt = linkUser.emailVerifiedAt || new Date();
     await linkUser.save();
     return linkUser;
   }
@@ -232,6 +298,8 @@ const createOrUpdateSteamUser = async ({ req, steamId, summary }) => {
   if (existing) {
     existing.name = existing.name || steamData.displayName;
     existing.avatar = steamData.avatar || existing.avatar;
+    existing.emailVerified = true;
+    existing.emailVerifiedAt = existing.emailVerifiedAt || new Date();
     existing.authProviders = {
       ...(existing.authProviders?.toObject?.() || existing.authProviders || {}),
       steam: steamData
@@ -244,6 +312,8 @@ const createOrUpdateSteamUser = async ({ req, steamId, summary }) => {
     name: steamData.displayName,
     email: `steam-${steamId}@steam.clutchq.local`,
     avatar: steamData.avatar,
+    emailVerified: true,
+    emailVerifiedAt: new Date(),
     authProviders: { steam: steamData }
   });
 
@@ -271,15 +341,15 @@ export const register = asyncHandler(async (req, res) => {
     throw new Error("Name, email, and password are required");
   }
 
-  if (password.length < 6) {
+  if (!strongEnoughPassword(password)) {
     res.status(400);
-    throw new Error("Password must be at least 6 characters");
+    throw new Error("Password must be at least 8 characters and include a letter and a number.");
   }
 
   const existingUser = await User.findOne({ email: normalizedEmail });
   if (existingUser) {
     res.status(409);
-    throw new Error("An account with this email already exists");
+    throw new Error("Unable to create account. Please use different details or sign in.");
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
@@ -287,6 +357,7 @@ export const register = asyncHandler(async (req, res) => {
     name: String(name).trim(),
     email: normalizedEmail,
     passwordHash,
+    emailVerified: false,
     avatar: `https://api.dicebear.com/8.x/identicon/svg?seed=${encodeURIComponent(normalizedEmail)}`
   });
 
@@ -314,7 +385,12 @@ export const login = asyncHandler(async (req, res) => {
     throw new Error("This account is suspended");
   }
 
-  let isMatch = await bcrypt.compare(password, user.passwordHash);
+  if (user.lockedUntil && user.lockedUntil > new Date() && !isDemoEmail(normalizedEmail)) {
+    res.status(429);
+    throw new Error("Invalid email or password");
+  }
+
+  let isMatch = Boolean(user.passwordHash) && (await bcrypt.compare(password, user.passwordHash));
   if (!isMatch && normalizedEmail === DEMO_EMAIL && password === DEMO_PASSWORD) {
     user.passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
     await user.save();
@@ -322,9 +398,25 @@ export const login = asyncHandler(async (req, res) => {
   }
 
   if (!isMatch) {
+    if (!isDemoEmail(normalizedEmail)) {
+      user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+      if (user.failedLoginAttempts >= MAX_FAILED_LOGIN_ATTEMPTS) {
+        user.lockedUntil = new Date(Date.now() + LOGIN_LOCK_MS);
+      }
+      await user.save();
+    }
     res.status(401);
     throw new Error("Invalid email or password");
   }
+
+  user.failedLoginAttempts = 0;
+  user.lockedUntil = undefined;
+  user.lastLoginAt = new Date();
+  if (isDemoEmail(normalizedEmail)) {
+    user.emailVerified = true;
+    user.emailVerifiedAt = user.emailVerifiedAt || new Date();
+  }
+  await user.save();
 
   await authResponse(res, user, "Logged in successfully");
 });
@@ -339,8 +431,16 @@ export const demoLogin = asyncHandler(async (req, res) => {
       email: DEMO_EMAIL,
       passwordHash,
       role: "user",
-      avatar: "/clutchq-logo.svg"
+      avatar: "/clutchq-logo.svg",
+      emailVerified: true,
+      emailVerifiedAt: new Date()
     });
+  }
+
+  if (!user.emailVerified) {
+    user.emailVerified = true;
+    user.emailVerifiedAt = new Date();
+    await user.save();
   }
 
   const profile = await GamerProfile.findOne({ userId: user._id });
@@ -361,6 +461,112 @@ export const logout = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     message: "Logged out"
+  });
+});
+
+export const requestOtp = asyncHandler(async (req, res) => {
+  const { email, purpose = "email_verification" } = req.body;
+  const normalizedEmail = normalizeEmail(email);
+
+  if (!isValidEmail(normalizedEmail) || !PUBLIC_OTP_PURPOSES.has(purpose)) {
+    res.status(400);
+    throw new Error("Enter a valid email address.");
+  }
+
+  await verifyPublicTurnstile(req);
+  const result = await createAndSendOtpIfEligible({ req, email: normalizedEmail, purpose });
+  genericOtpSuccess(res, {
+    retryAfterSeconds: result.retryAfterSeconds || result.resendSeconds || Number(process.env.OTP_RESEND_COOLDOWN_SECONDS || 60)
+  });
+});
+
+export const verifyEmailOtp = asyncHandler(async (req, res) => {
+  const { email, purpose = "email_verification", otp } = req.body;
+  const normalizedEmail = normalizeEmail(email);
+
+  if (!isValidEmail(normalizedEmail) || purpose !== "email_verification" || !/^\d{6}$/.test(String(otp || "").trim())) {
+    res.status(400);
+    throw new Error("Enter a valid verification code.");
+  }
+
+  const result = await verifyOtp({ email: normalizedEmail, purpose, otp });
+  if (!result.success) {
+    res.status(result.reason === "locked" ? 429 : 400);
+    throw new Error(result.reason === "locked" ? "Too many wrong codes. Request a new OTP." : "Invalid or expired verification code.");
+  }
+
+  const user = await User.findOne({ email: normalizedEmail });
+  if (!user) {
+    res.status(400);
+    throw new Error("Invalid or expired verification code.");
+  }
+
+  user.emailVerified = true;
+  user.emailVerifiedAt = new Date();
+  await user.save();
+
+  res.json({
+    success: true,
+    message: "Email verified successfully.",
+    data: {
+      user: user.toSafeJSON ? user.toSafeJSON() : user
+    }
+  });
+});
+
+export const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  const normalizedEmail = normalizeEmail(email);
+
+  if (!isValidEmail(normalizedEmail)) {
+    res.status(400);
+    throw new Error("Enter a valid email address.");
+  }
+
+  await verifyPublicTurnstile(req);
+  const result = await createAndSendOtpIfEligible({ req, email: normalizedEmail, purpose: "password_reset" });
+  genericOtpSuccess(res, {
+    retryAfterSeconds: result.retryAfterSeconds || result.resendSeconds || Number(process.env.OTP_RESEND_COOLDOWN_SECONDS || 60)
+  });
+});
+
+export const resetPassword = asyncHandler(async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+  const normalizedEmail = normalizeEmail(email);
+
+  if (!isValidEmail(normalizedEmail) || !/^\d{6}$/.test(String(otp || "").trim())) {
+    res.status(400);
+    throw new Error("Enter a valid reset code.");
+  }
+
+  if (!strongEnoughPassword(newPassword)) {
+    res.status(400);
+    throw new Error("Password must be at least 8 characters and include a letter and a number.");
+  }
+
+  const result = await verifyOtp({ email: normalizedEmail, purpose: "password_reset", otp });
+  if (!result.success) {
+    res.status(result.reason === "locked" ? 429 : 400);
+    throw new Error(result.reason === "locked" ? "Too many wrong codes. Request a new OTP." : "Invalid or expired reset code.");
+  }
+
+  const user = await User.findOne({ email: normalizedEmail });
+  if (!user || !user.passwordHash) {
+    res.status(400);
+    throw new Error("Unable to reset password. Request a new code.");
+  }
+
+  user.passwordHash = await bcrypt.hash(newPassword, 10);
+  user.failedLoginAttempts = 0;
+  user.lockedUntil = undefined;
+  user.emailVerified = true;
+  user.emailVerifiedAt = user.emailVerifiedAt || new Date();
+  await user.save();
+  await invalidateOtps(normalizedEmail, "password_reset");
+
+  res.json({
+    success: true,
+    message: "Password reset successfully."
   });
 });
 

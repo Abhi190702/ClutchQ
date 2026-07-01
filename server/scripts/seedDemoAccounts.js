@@ -134,7 +134,9 @@ const upsertDemoUsers = async () => {
           passwordHash,
           role: "user",
           avatar: "/brand/clutchq-logo.png",
-          isSuspended: false
+          isSuspended: false,
+          emailVerified: true,
+          emailVerifiedAt: new Date()
         }
       },
       { new: true, upsert: true, setDefaultsOnInsert: true }
@@ -586,6 +588,10 @@ const createActivityAndSteamData = async (users) => {
 
 const run = async () => {
   await connectDB();
+  if (process.env.NODE_ENV === "production") {
+    console.log("Production demo seed: refreshing demo-only records in the configured MongoDB database.");
+    console.log("Confirm MONGO_URI points to the intended Atlas database before running this command.");
+  }
   const users = await upsertDemoUsers();
   await resetDemoOnlyCollections(users);
   await createLobbiesAndRequests(users);

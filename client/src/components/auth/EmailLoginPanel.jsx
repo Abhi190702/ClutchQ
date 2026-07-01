@@ -3,11 +3,13 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { getErrorMessage } from "../../services/api";
+import ForgotPasswordPanel from "./ForgotPasswordPanel";
 
 const EmailLoginPanel = forwardRef(function EmailLoginPanel(_, ref) {
   const [form, setForm] = useState({ email: "demo@clutchq.com", password: "demo123" });
   const [loading, setLoading] = useState(false);
   const [errorText, setErrorText] = useState("");
+  const [resetOpen, setResetOpen] = useState(false);
   const emailInputRef = useRef(null);
   const { login, demoLogin } = useAuth();
   const { showToast } = useToast();
@@ -85,6 +87,11 @@ const EmailLoginPanel = forwardRef(function EmailLoginPanel(_, ref) {
         value={form.password}
         onChange={(event) => setForm({ ...form, password: event.target.value })}
       />
+      <div className="-mt-3 mb-5 flex justify-end">
+        <button type="button" className="text-sm font-semibold text-clutch-blue hover:text-white" onClick={() => setResetOpen((current) => !current)}>
+          Forgot password?
+        </button>
+      </div>
 
       <button disabled={loading} className="btn-primary w-full" type="submit">
         {loading ? "Signing in..." : "Continue with Email"}
@@ -99,6 +106,16 @@ const EmailLoginPanel = forwardRef(function EmailLoginPanel(_, ref) {
           Create account
         </Link>
       </p>
+
+      {resetOpen ? (
+        <ForgotPasswordPanel
+          initialEmail={form.email}
+          onDone={() => {
+            setResetOpen(false);
+            showToast("Password reset. Sign in with your new password.");
+          }}
+        />
+      ) : null}
     </form>
   );
 });

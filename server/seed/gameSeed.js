@@ -25,7 +25,9 @@ const ensureUser = async ({ name, email, role = "user" }) =>
         email,
         passwordHash,
         role,
-        avatar: "/clutchq-logo.svg"
+        avatar: "/clutchq-logo.svg",
+        emailVerified: true,
+        emailVerifiedAt: new Date()
       }
     },
     { new: true, upsert: true }

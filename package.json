@@ -12,6 +12,7 @@
     "seed": "cd server && npm run seed",
     "seed:demo": "cd server && npm run seed:demo",
     "seed:games": "cd server && npm run seed:games",
+    "sync:external-games": "cd server && npm run sync:external-games",
     "clear": "cd server && npm run clear",
     "build": "cd client && npm run build",
     "serve": "node serve-dist.cjs"

@@ -11,7 +11,8 @@
 9. Show the generated scorecard analysis and explain that Python is an internal worker with a safe JS fallback.
 10. Open Profile and show the Gameplay Graph, situational strengths, connected platforms, Steam library, avatar upload, and teammate edges.
 11. Create or open a lobby and show member fit, ready checks, squad chemistry, and the Discord voice room controls if env is configured.
-12. If time remains, open Leaderboards and Admin Dashboard to show activity ranking and moderation.
+12. If asked about reliability, open `/api/intelligence/health` and explain Python/fallback status.
+13. If time remains, open Leaderboards and Admin Dashboard to show activity ranking and moderation.
 
 Close with future scope:
 

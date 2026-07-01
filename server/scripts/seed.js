@@ -59,7 +59,9 @@ const admin = await User.create({
   email: "admin@clutchq.com",
   passwordHash: adminPassword,
   role: "admin",
-  avatar: "/clutchq-logo.svg"
+  avatar: "/clutchq-logo.svg",
+  emailVerified: true,
+  emailVerifiedAt: new Date()
 });
 
 const demoUsers = [];
@@ -70,7 +72,9 @@ for (const account of demoAccounts) {
       email: account.email,
       passwordHash: userPassword,
       role: "user",
-      avatar: "/brand/clutchq-logo.png"
+      avatar: "/brand/clutchq-logo.png",
+      emailVerified: true,
+      emailVerifiedAt: new Date()
     })
   );
 }
@@ -83,7 +87,9 @@ for (const [index, name] of gamerNames.entries()) {
       name,
       email: `${name.toLowerCase()}@clutchq.gg`,
       passwordHash: userPassword,
-      avatar: `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(name)}&backgroundColor=0f172a`
+      avatar: `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(name)}&backgroundColor=0f172a`,
+      emailVerified: true,
+      emailVerifiedAt: new Date()
     })
   );
 }

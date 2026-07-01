@@ -68,6 +68,8 @@ Final Score = clamp(0, 100)
 
 The Gameplay Intelligence Pipeline uses only public, manual, or user-consented data: Steam sync data, ClutchQ sessions, optional scorecard uploads, user-confirmed stats, teammate feedback, reviews, lobbies, and demo seed records. It does not inspect game memory, hook processes, packet sniff, bypass anti-cheat, or claim live telemetry.
 
+This is explainable squad intelligence, not win prediction. Scores describe how complete and useful a player profile is for matchmaking, not whether a player will win the next match. Missing data lowers confidence and falls back to clear recommendations instead of inventing certainty.
+
 ### Scorecard Performance
 
 Scorecard analysis normalizes uploaded or manually entered stats into 0-100 scores:

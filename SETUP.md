@@ -60,6 +60,8 @@ npm run seed:demo
 
 This does not wipe the database. It upserts the four demo users and refreshes demo-only lobbies, requests, activity, and Steam-like data. Run it only when `MONGO_URI` points to the Atlas database used by your Render backend.
 
+Production seeding warning: `seed:demo` is safe for demo accounts, but it still writes to the live database configured by `MONGO_URI`. Confirm the Render/Atlas database first.
+
 ## Atlas Path
 
 If you use MongoDB Atlas, replace this line in `server/.env`:
@@ -112,6 +114,37 @@ STEAM_CALLBACK_URL=https://clutchq-backend.onrender.com/api/auth/steam/callback
 
 Do not put `STEAM_API_KEY` in `client/.env` or Vercel. Steam library, friends, achievements, and recent activity depend on the connected Steam account privacy settings. Set Steam Profile and Game Details to Public, then sync again.
 
+## Email OTP, Turnstile, And SMTP
+
+Local development can run without real Turnstile or SMTP. If `TURNSTILE_SECRET_KEY` is blank and `NODE_ENV` is not production, the frontend shows a development security fallback and the backend allows the OTP request. If SMTP is blank in development, the OTP is printed in the server console.
+
+Backend `server/.env` or Render:
+
+```env
+TURNSTILE_SECRET_KEY=
+OTP_EMAIL_FROM=ClutchQ <no-reply@example.com>
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASS=
+OTP_TTL_MINUTES=10
+OTP_RESEND_COOLDOWN_SECONDS=60
+OTP_MAX_ATTEMPTS=5
+```
+
+Frontend `client/.env` or Vercel:
+
+```env
+VITE_TURNSTILE_SITE_KEY=
+```
+
+Production rules:
+
+- Add `TURNSTILE_SECRET_KEY` to Render and `VITE_TURNSTILE_SITE_KEY` to Vercel from the same Cloudflare Turnstile widget.
+- Add SMTP values to Render before testing live OTP email.
+- Redeploy both backend and frontend after changing these values.
+- Do not put SMTP or Turnstile secret keys in Vercel.
+
 ## Gameplay Intelligence Worker
 
 Python is optional but recommended for the richer scorecard, rhythm, teammate fit, and Gameplay Graph analysis. The app never exposes Python as a second backend; the Express server launches it as an internal worker and falls back safely if Python is missing.
@@ -136,6 +169,34 @@ Get-Content -Raw analytics-worker/sample_inputs/session_bundle.json | python ana
 
 Expected result: one JSON object with `success: true`, `task: "build_rhythm"`, and a `data.summary`. On Render or local machines without Python, `/api/intelligence/health` will report Python unavailable and the server will use the lightweight JS analyzer instead.
 
+Render notes:
+
+```env
+PYTHON_BIN=python
+```
+
+If the Render image reports Python unavailable, try `PYTHON_BIN=python3`. Fallback analysis is expected and safe when Python is missing.
+
+## External Game Metadata
+
+External game metadata is optional and backend-only. The app works without these keys.
+
+```env
+RAWG_API_KEY=
+IGDB_CLIENT_ID=
+IGDB_CLIENT_SECRET=
+```
+
+FreeToGame does not need a key. RAWG enriches game covers when `RAWG_API_KEY` is present. IGDB is reserved for a future sync path and can stay blank.
+
+Admin/local sync:
+
+```powershell
+npm run sync:external-games
+```
+
+If sync fails, the app still uses the built-in game catalog and cached MongoDB metadata.
+
 ## Check Commands
 
 Client `.env` should keep the localhost fallback while still supporting deployed builds:
@@ -144,6 +205,7 @@ Client `.env` should keep the localhost fallback while still supporting deployed
 VITE_API_URL=http://localhost:5000/api
 VITE_LOCAL_API_URL=http://localhost:5000/api
 VITE_PRODUCTION_API_URL=https://clutchq-backend.onrender.com/api
+VITE_TURNSTILE_SITE_KEY=
 ```
 
 Frontend build:
@@ -172,3 +234,5 @@ http://localhost:5000/api/intelligence/health
 - Demo login missing: run `npm run seed`.
 - Frontend API errors: confirm backend is running on `http://localhost:5000`.
 - Scorecard analysis says lightweight analyzer: Python is unavailable or `PYTHON_BIN` is wrong; the app is still working with fallback analysis.
+- OTP email not received locally: check the backend terminal for `DEV OTP`.
+- OTP fails in production: confirm `TURNSTILE_SECRET_KEY`, `VITE_TURNSTILE_SITE_KEY`, and SMTP values are set, then redeploy Render and Vercel.

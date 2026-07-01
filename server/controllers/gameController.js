@@ -7,6 +7,7 @@ import GamerProfile from "../models/GamerProfile.js";
 import { gameCatalog, getGameBySlug } from "../data/gameCatalog.js";
 import { buildDemoRooms, countDemoRoomPlayers } from "../data/demoGameRooms.js";
 import { asyncHandler } from "../middleware/errorMiddleware.js";
+import { applyMetadataToGames } from "../services/externalApis/gameMetadataService.js";
 
 const toGameObject = (game) => (game?.toObject ? game.toObject() : game);
 
@@ -61,6 +62,7 @@ export const listGames = asyncHandler(async (req, res) => {
   if (teamSize) games = games.filter((game) => Number(game.teamSize) === teamSize);
 
   let enriched = await Promise.all(games.map(enrichGameWithLiveStats));
+  enriched = await applyMetadataToGames(enriched);
   if (minRooms) enriched = enriched.filter((game) => Number(game.activeRooms || 0) >= minRooms);
 
   res.json({
@@ -82,7 +84,7 @@ export const getGame = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     message: "Game loaded",
-    data: await enrichGameWithLiveStats(game)
+    data: (await applyMetadataToGames([await enrichGameWithLiveStats(game)]))[0]
   });
 });
 

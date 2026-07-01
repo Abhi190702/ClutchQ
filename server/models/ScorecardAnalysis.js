@@ -44,6 +44,7 @@ const scorecardAnalysisSchema = new mongoose.Schema(
 );
 
 scorecardAnalysisSchema.index({ userId: 1, sessionId: 1, createdAt: -1 });
+scorecardAnalysisSchema.index({ userId: 1, sessionId: 1, gameSlug: 1 });
 scorecardAnalysisSchema.index({ userId: 1, gameSlug: 1, createdAt: -1 });
 
 const ScorecardAnalysis = mongoose.model("ScorecardAnalysis", scorecardAnalysisSchema);

@@ -34,6 +34,8 @@ ClutchQ matches gamers using rank, role, region, language, availability, playsty
 - Game-first browse hub with poster cards, filters, game detail pages, and room queues
 - Steam-powered profile identity, library, recent activity, achievements, friends, heatmap, and player score
 - Python-backed Gameplay Intelligence Pipeline for scorecards, rhythm, teammate fit, and profile graph insights
+- Backend-cached external game metadata enrichment with safe catalog fallback
+- Email OTP verification, password reset OTP, Cloudflare Turnstile validation, Helmet headers, and route-level rate limiting
 - Profile account menu, mobile bottom navigation, retryable error states, and safer empty states
 - Manual playtime tracking with session timer, match ratings, and match analysis
 - Game and player leaderboards for weekly, monthly, and all-time activity
@@ -63,6 +65,8 @@ docs/             Architecture, API, algorithm, and demo script notes
 For final demo checks, use [docs/final-qa-checklist.md](docs/final-qa-checklist.md).
 
 The backend owns source-of-truth scoring. Python is not a public backend; Express launches it as an internal worker, parses structured JSON, and falls back to a lightweight JS analyzer if Python is unavailable.
+
+Production behavior is intentionally conservative: scorecard payloads are capped, Python failures fall back to deterministic JS analysis, external gaming APIs are cached through Express/MongoDB, and normal users never depend on optional MCP tooling.
 
 ## Folder Structure
 
@@ -129,7 +133,8 @@ Final Score = clamp(0, 100)
 
 ## Database Schema Summary
 
-- User: account, email, password hash, role, avatar, suspension state
+- User: account, email, password hash, verification state, login safety counters, role, avatar, suspension state
+- OtpToken: hashed one-time email/password reset codes with TTL, attempts, cooldown, and single-use consumption
 - GamerProfile: game/rank/roles, region, languages, availability, playstyle, trust, badges
 - Lobby: owner, game, rank range, region, language, members, requests, invite code, Discord voice room metadata
 - Game: game catalog, poster/cover URLs, roles, platforms, modes, status, and activity metadata
@@ -151,6 +156,10 @@ Final Score = clamp(0, 100)
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `POST /api/auth/demo`
+- `POST /api/auth/otp/request`
+- `POST /api/auth/otp/verify`
+- `POST /api/auth/password/forgot`
+- `POST /api/auth/password/reset`
 - `GET /api/auth/me`
 - `GET /api/auth/google`
 - `GET /api/auth/google/callback`
@@ -224,6 +233,9 @@ Final Score = clamp(0, 100)
 - `GET /api/intelligence/graph/me`
 - `GET /api/intelligence/rhythm/me`
 - `GET /api/intelligence/teammates/me`
+- `GET /api/external/games/search?q=`
+- `GET /api/external/games/:slug/metadata`
+- `POST /api/external/games/sync`
 - `POST /api/activity/start`
 - `POST /api/activity/:id/stop`
 - `GET /api/activity/me`
@@ -290,6 +302,18 @@ STEAM_API_KEY=
 STEAM_REALM=http://localhost:5000
 STEAM_CALLBACK_URL=http://localhost:5000/api/auth/steam/callback
 PYTHON_BIN=python
+RAWG_API_KEY=
+IGDB_CLIENT_ID=
+IGDB_CLIENT_SECRET=
+TURNSTILE_SECRET_KEY=
+OTP_EMAIL_FROM=ClutchQ <no-reply@example.com>
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASS=
+OTP_TTL_MINUTES=10
+OTP_RESEND_COOLDOWN_SECONDS=60
+OTP_MAX_ATTEMPTS=5
 ```
 
 Client `.env`:
@@ -298,6 +322,7 @@ Client `.env`:
 VITE_API_URL=http://localhost:5000/api
 VITE_LOCAL_API_URL=http://localhost:5000/api
 VITE_PRODUCTION_API_URL=https://clutchq-backend.onrender.com/api
+VITE_TURNSTILE_SITE_KEY=
 ```
 
 Start MongoDB locally, use MongoDB Atlas, or start the included Docker MongoDB service:
@@ -370,6 +395,38 @@ STEAM_CALLBACK_URL=https://clutchq-backend.onrender.com/api/auth/steam/callback
 
 Steam privacy matters: library, friends, achievements, and recent activity only sync when the connected Steam profile exposes that data publicly.
 
+## Security Hardening
+
+ClutchQ keeps public auth actions small and guarded:
+
+- Email accounts register first, then verify email through a 6-digit OTP banner inside the app.
+- OTPs are HMAC hashed with the server secret, expire by TTL, are single-use, and lock after repeated wrong attempts.
+- Password reset uses the same OTP system and returns generic responses so email existence is not exposed.
+- Cloudflare Turnstile is verified only on the backend for OTP and password reset requests.
+- `TURNSTILE_SECRET_KEY`, SMTP credentials, OAuth secrets, Steam keys, and MongoDB URIs stay server-only.
+- Helmet sets security headers, Render proxy trust is enabled, strict CORS allows only known frontend origins, and auth/OTP/scorecard routes are rate-limited.
+- Demo and OAuth/Steam users are treated as verified so judging accounts and provider sign-ins stay usable.
+
+Turnstile production values:
+
+```env
+# server / Render
+TURNSTILE_SECRET_KEY=
+
+# client / Vercel
+VITE_TURNSTILE_SITE_KEY=
+```
+
+SMTP production values:
+
+```env
+OTP_EMAIL_FROM=ClutchQ <no-reply@example.com>
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASS=
+```
+
 ## Gameplay Intelligence Pipeline
 
 ClutchQ combines public and user-consented signals into a Gameplay Graph:
@@ -382,6 +439,15 @@ ClutchQ combines public and user-consented signals into a Gameplay Graph:
 - Demo seed data for judge-ready accounts
 
 The React UI calls Express. Express stores validated data in MongoDB, launches `analytics-worker/main.py` with JSON over stdin, reads one JSON response from stdout, and stores the result. If Python is missing or fails, `server/services/fallbackAnalyticsService.js` returns deterministic fallback analysis so the app stays usable.
+
+Scorecard safety:
+
+- Express accepts JSON/urlencoded payloads up to 1.5MB.
+- Scorecard images must be PNG, JPG, or WebP data URLs.
+- SVG uploads are rejected.
+- The controller rejects compressed scorecard data above 900KB.
+- Manual stats are validated as non-negative numbers and teammate ratings must be 1-5.
+- Intelligence routes use the logged-in `req.user._id`; client-provided user IDs are not trusted.
 
 Intelligence routes:
 
@@ -401,6 +467,32 @@ Get-Content -Raw analytics-worker/sample_inputs/session_bundle.json | python ana
 ```
 
 The worker uses only Python standard library in this stable version. OCR can be added later with Pillow, pytesseract, or OpenCV, but scorecard upload works today with manual stat confirmation and fallback analysis. ClutchQ does not read game memory, hook processes, packet sniff, bypass anti-cheat, or scrape private account data.
+
+## External Game Metadata Cache
+
+ClutchQ can enrich game covers and metadata through backend-only external API services:
+
+- FreeToGame works without a key.
+- RAWG is optional through `RAWG_API_KEY`.
+- IGDB is documented as future optional setup and is not required today.
+
+React never calls these APIs directly. Express syncs and caches metadata in MongoDB through `ExternalGameMetadata`, then game pages read cached data. If an external API is down or no key is configured, `/api/games` and game detail pages continue using the built-in catalog.
+
+Admin-only sync:
+
+```bash
+npm run sync:external-games
+```
+
+Route-level sync is admin protected:
+
+```txt
+POST /api/external/games/sync
+```
+
+## Optional MCP Tooling
+
+MCP is optional dev/admin tooling only. It is not required for users, production matchmaking, scorecard analysis, or demo flow. See [docs/mcp-plan.md](docs/mcp-plan.md) for the planned tools and safety boundaries.
 
 ## Demo Credentials
 

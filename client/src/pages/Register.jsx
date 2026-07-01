@@ -17,7 +17,9 @@ const Register = () => {
     const nextErrors = {};
     if (!form.name.trim()) nextErrors.name = "Name is required";
     if (!form.email.includes("@")) nextErrors.email = "Valid email is required";
-    if (form.password.length < 6) nextErrors.password = "Password must be at least 6 characters";
+    if (form.password.length < 8 || !/[a-z]/i.test(form.password) || !/\d/.test(form.password)) {
+      nextErrors.password = "Use at least 8 characters with a letter and a number";
+    }
     if (form.password !== form.confirmPassword) nextErrors.confirmPassword = "Passwords do not match";
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -29,7 +31,7 @@ const Register = () => {
     setLoading(true);
     try {
       await register({ name: form.name, email: form.email, password: form.password });
-      showToast("Account created. Build your gamer profile.");
+      showToast("Account created. Verify your email when you land inside ClutchQ.");
       navigate("/onboarding");
     } catch (error) {
       showToast(getErrorMessage(error), "error");

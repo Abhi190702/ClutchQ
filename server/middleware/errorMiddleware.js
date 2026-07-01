@@ -13,7 +13,7 @@ export const errorHandler = (err, req, res, next) => {
   res.status(statusCode).json({
     success: false,
     message: safeMessage,
-    stack: isProduction ? undefined : err.stack
+    ...(isProduction ? {} : { stack: err.stack })
   });
 };
 

@@ -32,6 +32,33 @@ Python is used only as an internal analytics worker. It is launched by the Expre
 6. Requests, reviews, lobbies, reports, and sessions update trust and admin analytics.
 7. Activity and profile pages call `/api/intelligence/*` for rhythm, scorecard analysis, Gameplay Graph, and teammate fit data.
 
+## Production Intelligence Diagram
+
+```mermaid
+flowchart LR
+  React["React + Vite UI"] --> Express["Express API"]
+  Express --> Mongo["MongoDB / Mongoose"]
+  Express --> Python["Python analytics worker"]
+  Python --> Express
+  Express --> Fallback["JS fallback analyzer"]
+  External["External gaming APIs"] --> Sync["Express metadata sync"]
+  Sync --> Mongo
+  MCP["Optional MCP dev/admin tooling"] --> Express
+```
+
+The Python worker is internal and optional. If it times out, exits, or is unavailable, Express stores fallback analysis instead of crashing. External APIs are used by sync/cache code only; page loads read MongoDB and built-in catalog fallbacks.
+
+## External Metadata Cache
+
+- `server/services/externalApis/*` owns FreeToGame and optional RAWG calls.
+- `ExternalGameMetadata` stores normalized cover, banner, screenshot, genre, platform, release, developer, and publisher data.
+- `POST /api/external/games/sync` is admin-only.
+- `/api/games` and `/api/games/:slug` apply cached metadata when it exists and otherwise keep using the catalog.
+
+## Optional MCP Boundary
+
+MCP is planned as dev/admin tooling that calls existing Express endpoints. It is not required for users, production gameplay intelligence, lobbies, or the demo path. See `docs/mcp-plan.md`.
+
 ## Security
 
 - Passwords are hashed with bcryptjs.

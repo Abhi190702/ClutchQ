@@ -32,6 +32,15 @@ http://localhost:5000/api/health
 
 - Demo login works with `demo@clutchq.com / demo123`.
 - Email registration creates a new account without a network error.
+- New email accounts show the verification banner after register/login.
+- Get OTP requires Turnstile in production and uses the dev fallback only outside production.
+- OTP email sends through SMTP in production or logs `DEV OTP` locally.
+- Wrong OTP fails with a clean message.
+- Repeated wrong OTP attempts are denied.
+- Correct OTP marks the user as verified and cannot be reused.
+- Forgot password returns the generic OTP message without revealing whether an email exists.
+- Reset password works with a valid password reset OTP.
+- Login with the new password works and failed login messages stay generic.
 - Google, Discord, and Steam buttons redirect back to the frontend, not to a blank backend page.
 - Logging out clears the session and protected pages return to login.
 
@@ -63,6 +72,9 @@ Confirm:
 - ScorecardAnalysis and GameplayGraph records update after analysis.
 - Python unavailable simulation returns lightweight fallback analysis, not a server crash.
 - A brand new account with no data shows calm empty states.
+- Scorecard payloads above 900KB are rejected by the controller.
+- Unsupported image MIME types and SVG data URLs are rejected.
+- Feedback ratings outside 1-5 are rejected with a clean message.
 
 ## Games And Rooms
 
@@ -71,6 +83,14 @@ Confirm:
 - Room cards disable joining when the room is full, cancelled, or a preview room.
 - Creating a room trims long titles and caps members to the supported range.
 - A full room changes to full state after the last slot is taken.
+
+## External Game Metadata
+
+- `GET /api/external/games/search?q=valorant` returns cached/external metadata or an empty safe response.
+- `GET /api/external/games/valorant/metadata` returns catalog fallback even when no external cache exists.
+- `POST /api/external/games/sync` requires admin auth.
+- If `RAWG_API_KEY` is blank or external APIs fail, `/games` still loads from the catalog.
+- Cached metadata improves posters/covers but does not clutter game pages.
 
 ## Lobbies
 
@@ -89,6 +109,12 @@ DISCORD_GUILD_ID=
 DISCORD_CATEGORY_ID=
 STEAM_API_KEY=
 PYTHON_BIN=python
+TURNSTILE_SECRET_KEY=
+OTP_EMAIL_FROM=ClutchQ <no-reply@example.com>
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASS=
 STEAM_REALM=https://clutchq-backend.onrender.com
 STEAM_CALLBACK_URL=https://clutchq-backend.onrender.com/api/auth/steam/callback
 ```
@@ -121,6 +147,44 @@ Vercel frontend:
 VITE_API_URL=https://clutchq-backend.onrender.com/api
 VITE_PRODUCTION_API_URL=https://clutchq-backend.onrender.com/api
 VITE_LOCAL_API_URL=http://localhost:5000/api
+VITE_TURNSTILE_SITE_KEY=
 ```
 
 Never commit real `.env` files or provider secrets.
+
+Optional external metadata:
+
+```env
+RAWG_API_KEY=
+IGDB_CLIENT_ID=
+IGDB_CLIENT_SECRET=
+```
+
+## Optional MCP
+
+- Normal app usage works without MCP.
+- `docs/mcp-plan.md` clearly marks MCP as dev/admin optional.
+- No production route requires MCP.
+
+## Secret Scan
+
+Before pushing, scan changed files for:
+
+```txt
+STEAM_API_KEY
+DISCORD_BOT_TOKEN
+GOOGLE_CLIENT_SECRET
+DISCORD_CLIENT_SECRET
+JWT_SECRET
+MONGO_URI
+mongodb+srv
+RAWG_API_KEY
+IGDB_CLIENT_SECRET
+CLUTCHQ_MCP_TOKEN
+TURNSTILE_SECRET_KEY
+SMTP_PASS
+SMTP_USER
+sk-
+xoxb
+123456
+```

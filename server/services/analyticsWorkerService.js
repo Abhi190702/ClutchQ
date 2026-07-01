@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { runFallbackTask } from "./fallbackAnalyticsService.js";
@@ -121,6 +122,7 @@ export const computeTeammateFit = (payload, options) => runAnalyticsTask("comput
 export const analyticsHealth = async () => {
   const bins = candidateBins();
   const checks = [];
+  const workerPathExists = fs.existsSync(workerPath);
 
   for (const pythonBin of bins) {
     try {
@@ -130,7 +132,9 @@ export const analyticsHealth = async () => {
         return {
           pythonAvailable: true,
           pythonBin,
+          workerPathExists,
           fallbackAvailable: true,
+          environment: process.env.NODE_ENV || "development",
           checks
         };
       }
@@ -142,7 +146,9 @@ export const analyticsHealth = async () => {
   return {
     pythonAvailable: false,
     pythonBin: bins[0],
+    workerPathExists,
     fallbackAvailable: true,
+    environment: process.env.NODE_ENV || "development",
     checks
   };
 };

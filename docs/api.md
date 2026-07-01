@@ -24,6 +24,10 @@ Errors use:
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `POST /api/auth/demo`
+- `POST /api/auth/otp/request`
+- `POST /api/auth/otp/verify`
+- `POST /api/auth/password/forgot`
+- `POST /api/auth/password/reset`
 - `GET /api/auth/me`
 - `GET /api/auth/google`
 - `GET /api/auth/google/callback`
@@ -31,6 +35,8 @@ Errors use:
 - `GET /api/auth/discord/callback`
 - `GET /api/auth/steam`
 - `GET /api/auth/steam/callback`
+
+OTP request and password reset request routes require backend-verified Cloudflare Turnstile. Responses stay generic and never reveal whether an email exists. OTP hashes are stored server-side only and expire by TTL.
 
 ## Profiles
 
@@ -107,6 +113,14 @@ Errors use:
 - `GET /api/intelligence/teammates/me`
 
 These routes use the logged-in user from JWT and never accept a client-provided `userId` as authority. Scorecard uploads accept PNG, JPG, or WebP data URLs only, with a compressed payload limit of 900KB.
+
+## External Game Metadata
+
+- `GET /api/external/games/search?q=`
+- `GET /api/external/games/:slug/metadata`
+- `POST /api/external/games/sync` admin only
+
+External metadata is cached in MongoDB. React never calls FreeToGame, RAWG, or future IGDB endpoints directly.
 
 ## Requests
 

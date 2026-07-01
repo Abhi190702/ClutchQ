@@ -5,8 +5,7 @@ const gameplayGraphSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
-      unique: true
+      required: true
     },
     gameplayProfileScore: {
       type: Number,
@@ -31,6 +30,8 @@ const gameplayGraphSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+gameplayGraphSchema.index({ userId: 1 }, { unique: true });
 
 const GameplayGraph = mongoose.model("GameplayGraph", gameplayGraphSchema);
 

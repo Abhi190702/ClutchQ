@@ -10,6 +10,7 @@ import {
   uploadScorecard
 } from "../controllers/intelligenceController.js";
 import { protect } from "../middleware/authMiddleware.js";
+import { scorecardUploadLimiter } from "../middleware/rateLimiters.js";
 
 const router = express.Router();
 
@@ -17,7 +18,7 @@ router.get("/health", getIntelligenceHealth);
 
 router.use(protect);
 
-router.post("/scorecards", uploadScorecard);
+router.post("/scorecards", scorecardUploadLimiter, uploadScorecard);
 router.get("/scorecards/me", getMyScorecards);
 router.post("/sessions/:sessionId/feedback", submitSessionFeedback);
 router.post("/graph/rebuild", rebuildMyGraph);

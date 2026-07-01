@@ -8,7 +8,9 @@ const optionalIntegrations = [
   ["Discord voice rooms", ["DISCORD_BOT_TOKEN", "DISCORD_GUILD_ID"]],
   ["Steam integration", ["STEAM_API_KEY"]],
   ["Epic Games OAuth", ["EPIC_CLIENT_ID", "EPIC_CLIENT_SECRET"]],
-  ["Microsoft OAuth", ["MICROSOFT_CLIENT_ID", "MICROSOFT_CLIENT_SECRET"]]
+  ["Microsoft OAuth", ["MICROSOFT_CLIENT_ID", "MICROSOFT_CLIENT_SECRET"]],
+  ["Cloudflare Turnstile", ["TURNSTILE_SECRET_KEY"]],
+  ["OTP email SMTP", ["SMTP_HOST", "SMTP_USER", "SMTP_PASS"]]
 ];
 
 const present = (key) => Boolean(String(process.env[key] || "").trim());

@@ -3,6 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import Sidebar from "./Sidebar";
 import MobileBottomNav from "./MobileBottomNav";
 import ProfileAccountMenu from "../navigation/ProfileAccountMenu";
+import EmailVerificationBanner from "../auth/EmailVerificationBanner";
 
 const PageShell = ({ children, title, eyebrow, actions, fullWidth = false, hideSidebar = false }) => {
   const { user, profile, logout } = useAuth();
@@ -42,6 +43,7 @@ const PageShell = ({ children, title, eyebrow, actions, fullWidth = false, hideS
         <div className="min-w-0 flex-1">
           <main className="min-w-0 flex-1 px-4 pb-28 pt-5 sm:px-6 lg:px-8 lg:pb-8 lg:pt-7">
             <div className={`mx-auto w-full ${fullWidth ? "max-w-[1520px]" : "max-w-[1240px]"}`}>
+              <EmailVerificationBanner />
               {(title || eyebrow || actions) && (
                 <div className="mb-8 flex flex-col gap-4 border-b border-white/10 pb-6 md:flex-row md:items-end md:justify-between">
                   <div>
