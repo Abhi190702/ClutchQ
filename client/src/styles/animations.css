@@ -40,6 +40,54 @@
   display: none;
 }
 
+.landing-marquee {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+
+.landing-marquee-track {
+  display: flex;
+  width: max-content;
+  gap: 1rem;
+  animation: landing-marquee-left var(--landing-marquee-duration, 44s) linear infinite;
+  will-change: transform;
+}
+
+.landing-marquee:hover .landing-marquee-track {
+  animation-play-state: paused;
+}
+
+.landing-marquee-track-right {
+  animation-name: landing-marquee-right;
+}
+
+.landing-marquee-group {
+  display: flex;
+  flex-shrink: 0;
+  gap: 1rem;
+}
+
+@keyframes landing-marquee-left {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(calc(-50% - 0.5rem), 0, 0);
+  }
+}
+
+@keyframes landing-marquee-right {
+  from {
+    transform: translate3d(calc(-50% - 0.5rem), 0, 0);
+  }
+
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -48,5 +96,20 @@
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .landing-marquee {
+    overflow-x: auto;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .landing-marquee-track {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .landing-marquee-group[aria-hidden="true"] {
+    display: none;
   }
 }
