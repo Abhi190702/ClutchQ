@@ -32,6 +32,14 @@
   background: rgba(148, 163, 184, 0.5);
 }
 
+.landing-scrollbar-none {
+  scrollbar-width: none;
+}
+
+.landing-scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

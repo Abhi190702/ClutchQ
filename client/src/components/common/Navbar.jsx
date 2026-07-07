@@ -3,11 +3,11 @@ import { useAuth } from "../../context/AuthContext";
 import ProfileAccountMenu from "../navigation/ProfileAccountMenu";
 
 const navLinks = [
+  { to: "/", label: "Discover" },
   { to: "/games", label: "Games" },
   { to: "/activity", label: "Activity" },
-  { to: "/leaderboards", label: "Leaderboards" },
   { to: "/lobbies", label: "Lobbies" },
-  { to: "/requests", label: "Requests" }
+  { to: "/leaderboards", label: "Leaderboards" }
 ];
 
 const Navbar = () => {
@@ -30,7 +30,7 @@ const Navbar = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-clutch-border bg-clutch-bg/95 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-[#121216]/[0.92] backdrop-blur-xl">
       <div className="mx-auto flex max-w-[1480px] items-center justify-between px-4 py-3 md:px-6">
         <Link to="/" className="flex items-center gap-3">
           <img src="/brand/clutchq-logo.png" alt="ClutchQ" className="h-10 w-10 rounded-xl object-cover" />

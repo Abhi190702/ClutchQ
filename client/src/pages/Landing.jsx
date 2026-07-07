@@ -1,18 +1,29 @@
 import Navbar from "../components/common/Navbar";
-import DemoPreview from "../components/landing/DemoPreview";
-import FeatureSection from "../components/landing/FeatureSection";
-import HeroSection from "../components/landing/HeroSection";
+import CafeValidationSection from "../components/landing/CafeValidationSection";
+import FeaturedGameShowcase from "../components/landing/FeaturedGameShowcase";
+import GameDiscoveryRail from "../components/landing/GameDiscoveryRail";
+import GameFirstHero from "../components/landing/GameFirstHero";
+import GameplayGraphPreview from "../components/landing/GameplayGraphPreview";
+import HowItWorksSection from "../components/landing/HowItWorksSection";
 import LandingCTA from "../components/landing/LandingCTA";
-import ProblemSection from "../components/landing/ProblemSection";
+import LiveSquadPreview from "../components/landing/LiveSquadPreview";
 
 const Landing = () => (
-  <div className="noise-bg min-h-screen text-clutch-text">
+  <div className="noise-bg min-h-screen overflow-x-hidden text-clutch-text">
     <Navbar />
-    <HeroSection />
-    <ProblemSection />
-    <FeatureSection />
-    <DemoPreview />
-    <LandingCTA />
+    <main>
+      <GameFirstHero />
+      <FeaturedGameShowcase />
+      <LiveSquadPreview />
+      <GameDiscoveryRail />
+      <CafeValidationSection />
+      <HowItWorksSection />
+      <GameplayGraphPreview />
+      <LandingCTA />
+    </main>
+    <footer className="border-t border-white/10 px-4 py-8 text-center text-sm font-semibold text-zinc-500 sm:px-6">
+      ClutchQ - Built for gamers who hate random queues.
+    </footer>
   </div>
 );
 
