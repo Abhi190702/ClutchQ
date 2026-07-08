@@ -7,8 +7,8 @@ const RecommendedPlayers = ({ recommendations, loading, onSendRequest, requested
 
   if (loading) {
     return (
-      <div className="grid gap-4 lg:grid-cols-2">
-        {Array.from({ length: 4 }).map((_, index) => <SkeletonCard key={index} rows={5} />)}
+      <div className="grid gap-4">
+        {Array.from({ length: 3 }).map((_, index) => <SkeletonCard key={index} rows={5} />)}
       </div>
     );
   }
@@ -25,14 +25,14 @@ const RecommendedPlayers = ({ recommendations, loading, onSendRequest, requested
 
   return (
     <section>
-      <div className="mb-4 flex items-end justify-between gap-4">
+      <div className="mb-5 flex items-end justify-between gap-4">
         <div>
           <div className="eyebrow mb-2">Recommended players</div>
-          <h2 className="text-2xl font-black tracking-tight text-clutch-text">Best squad fits</h2>
+          <h2 className="text-3xl font-black tracking-tight text-clutch-text">Best squad fits</h2>
         </div>
         <span className="text-sm font-semibold text-clutch-muted">Top {visibleRecommendations.length} of {recommendations.length}</span>
       </div>
-      <div className="grid gap-x-5 lg:grid-cols-2">
+      <div className="grid gap-3">
       {visibleRecommendations.map((item) => (
         <PlayerCard
           key={item.profile._id}

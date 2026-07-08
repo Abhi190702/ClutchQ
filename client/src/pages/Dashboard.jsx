@@ -87,27 +87,27 @@ const Dashboard = () => {
 
   return (
     <PageShell fullWidth>
-      <div className="grid gap-7">
-        <section className="relative overflow-hidden rounded-[18px] border border-white/10 bg-white/[0.025] px-5 py-6 md:px-7">
+      <div className="grid gap-10">
+        <section className="relative overflow-hidden rounded-[30px] bg-[linear-gradient(135deg,rgba(56,189,248,0.08),rgba(255,255,255,0.025)_42%,rgba(167,139,250,0.06))] px-6 py-8 ring-1 ring-white/10 md:px-10 md:py-10">
           <SoftGlow />
-          <div className="relative">
+          <div className="relative space-y-8">
             <SectionHeader
               eyebrow="Squad console"
               title={profile?.displayName ? `Welcome, ${profile.displayName}` : "Dashboard"}
               description={`${filtered.length} strong squad matches · Best ${bestScoreLabel} · Trust ${trustLabel}`}
               actions={
                 <>
-                  <a href="#squad-controls" className="btn-primary">Find Squad Now</a>
-                  <Link to="/lobbies/create" className="btn-secondary">Create Lobby</Link>
+                  <a href="#squad-controls" className="btn-primary rounded-2xl px-5 py-3">Find Squad Now</a>
+                  <Link to="/lobbies/create" className="btn-secondary rounded-2xl px-5 py-3">Create Lobby</Link>
                 </>
               }
             />
-            <MetricStrip metrics={metrics} className="mt-6" />
+            <MetricStrip metrics={metrics} variant="quiet" />
           </div>
         </section>
         {error ? <ErrorState message={error} onRetry={load} /> : null}
-        <div className="grid gap-8 xl:grid-cols-[0.38fr_0.62fr]">
-          <div id="squad-controls" className="space-y-6">
+        <div className="grid gap-10 xl:grid-cols-[minmax(320px,0.36fr)_1fr]">
+          <div id="squad-controls" className="h-fit rounded-[28px] bg-white/[0.025] p-6 ring-1 ring-white/10">
             <FindSquadNow />
             <PlayerFilters filters={filters} onChange={setFilters} />
           </div>

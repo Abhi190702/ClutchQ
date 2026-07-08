@@ -21,14 +21,14 @@ const PlayerCard = ({ item, onSendRequest, requested = false }) => {
   ].filter(Boolean).slice(0, 2);
 
   return (
-    <article className="group border-b border-white/10 py-4 transition hover:bg-white/[0.025]">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex gap-3">
-          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-white/[0.055] font-semibold text-clutch-blue">
+    <article className="group rounded-[28px] p-5 transition hover:bg-white/[0.028] hover:ring-1 hover:ring-white/10">
+      <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+        <div className="flex min-w-0 gap-4">
+          <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-white/[0.055] text-lg font-bold text-clutch-blue ring-1 ring-white/10">
             {initials(profile?.displayName)}
           </div>
           <div className="min-w-0">
-            <h3 className="text-lg font-semibold text-clutch-text">{profile?.displayName}</h3>
+            <h3 className="text-xl font-black tracking-tight text-clutch-text">{profile?.displayName}</h3>
             <p className="mt-1 truncate text-sm text-clutch-muted">{game?.gameName} - {game?.roles?.slice(0, 2).join(", ")}</p>
             <div className="mt-3 flex flex-wrap gap-2">
               <RankBadge rank={game?.rank} />
@@ -37,7 +37,7 @@ const PlayerCard = ({ item, onSendRequest, requested = false }) => {
             </div>
           </div>
         </div>
-        <ScoreRing score={match?.totalScore} size={68} label="Match" />
+        <ScoreRing score={match?.totalScore} size={64} label="Match" />
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -45,14 +45,14 @@ const PlayerCard = ({ item, onSendRequest, requested = false }) => {
         {visibleBadges.map((badge) => <Badge key={badge}>{badge}</Badge>)}
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-3">
-        <button type="button" className="btn-primary py-2" disabled={requested} onClick={() => onSendRequest?.(profile)}>
+      <div className="mt-5 flex flex-wrap items-center gap-4 border-t border-white/10 pt-4">
+        <button type="button" className="btn-primary rounded-2xl px-5 py-2.5" disabled={requested} onClick={() => onSendRequest?.(profile)}>
           {requested ? "Request Sent" : "Send Request"}
         </button>
-        <Link to={`/player/${profile?._id}`} className="btn-secondary py-2">
+        <Link to={`/player/${profile?._id}`} className="text-sm font-bold text-clutch-text transition hover:text-clutch-blue">
           View Profile
         </Link>
-        <button type="button" className="btn-secondary py-2" onClick={() => setOpen((current) => !current)}>
+        <button type="button" className="text-sm font-bold text-clutch-muted transition hover:text-clutch-text" onClick={() => setOpen((current) => !current)}>
           Why?
         </button>
       </div>

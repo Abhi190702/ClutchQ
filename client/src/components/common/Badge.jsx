@@ -14,7 +14,7 @@ const Badge = ({ children, tone, title }) => {
   const resolvedTone = toneClasses[tone] || tone || badgeTone(String(children)) || toneClasses.default;
 
   return (
-    <span title={title} className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-semibold ${resolvedTone}`}>
+    <span title={title} className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${resolvedTone}`}>
       {children}
     </span>
   );

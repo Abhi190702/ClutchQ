@@ -4,7 +4,11 @@ const PlayerFilters = ({ filters, onChange }) => {
   const field = (name, label, options) => (
     <label>
       <span className="form-label">{label}</span>
-      <select className="form-input" value={filters[name] || ""} onChange={(event) => onChange({ ...filters, [name]: event.target.value })}>
+      <select
+        className="w-full rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3 text-sm text-clutch-text outline-none transition focus:border-clutch-blue/60"
+        value={filters[name] || ""}
+        onChange={(event) => onChange({ ...filters, [name]: event.target.value })}
+      >
         <option value="">Any</option>
         {options.map((option) => <option key={option}>{option}</option>)}
       </select>
@@ -12,7 +16,7 @@ const PlayerFilters = ({ filters, onChange }) => {
   );
 
   return (
-    <div className="grid gap-4 border-y border-white/10 py-5 md:grid-cols-3">
+    <div className="mt-6 grid gap-4 border-t border-white/10 pt-6 md:grid-cols-3 xl:grid-cols-1">
       {field("game", "Game", GAMES)}
       {field("region", "Region", REGIONS)}
       {field("role", "Role", ROLES)}

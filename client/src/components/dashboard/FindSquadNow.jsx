@@ -29,20 +29,20 @@ const FindSquadNow = () => {
   };
 
   return (
-    <section className="border-b border-white/10 pb-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <section>
+      <div className="flex flex-col gap-5">
         <div>
           <div className="eyebrow mb-2">Squad engine</div>
-          <h3 className="text-xl font-black">Quick squad suggestion</h3>
-          <p className="mt-1 text-sm text-clutch-muted">Find the best players and lobby from your current profile.</p>
+          <h3 className="text-2xl font-black tracking-tight">Quick squad suggestion</h3>
+          <p className="mt-2 text-sm leading-6 text-clutch-muted">Find the best players and lobby from your current profile.</p>
         </div>
-        <button type="button" disabled={loading} onClick={run} className="btn-primary">
+        <button type="button" disabled={loading} onClick={run} className="btn-primary rounded-2xl py-3">
           {loading ? "Finding..." : "Find squad"}
         </button>
       </div>
 
       {loading && (
-        <div className="mt-5 rounded-md border border-clutch-blue/30 bg-clutch-blue/10 p-4">
+        <div className="mt-6 rounded-2xl border border-clutch-blue/25 bg-clutch-blue/10 p-4">
           <div className="h-2 overflow-hidden rounded-full bg-clutch-panelSoft">
             <div className="h-full w-2/3 animate-pulseLine rounded-full bg-clutch-blue" />
           </div>
@@ -51,7 +51,7 @@ const FindSquadNow = () => {
       )}
 
       {error && (
-        <div className="mt-4 rounded-md border border-clutch-red/30 bg-clutch-red/10 p-3 text-sm text-red-100">
+        <div className="mt-5 rounded-2xl border border-clutch-red/30 bg-clutch-red/10 p-3 text-sm text-red-100">
           <span>{error}</span>
           <button type="button" className="ml-3 font-bold underline" onClick={run}>
             Retry
@@ -61,7 +61,7 @@ const FindSquadNow = () => {
 
       {result && (
         <>
-          <div className="mt-5 rounded-[14px] border border-white/10 bg-white/[0.025] p-4">
+          <div className="mt-6 rounded-[24px] bg-black/20 p-4 ring-1 ring-white/10">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="text-sm font-semibold text-clutch-blue">Best squad found</div>
@@ -70,7 +70,7 @@ const FindSquadNow = () => {
                   Strongest match: <span className="font-bold text-clutch-text">{result.strongestMatch?.displayName || "Direct invite"}</span>
                 </p>
               </div>
-              <button type="button" className="btn-secondary" onClick={() => setOpen(true)}>
+              <button type="button" className="btn-secondary rounded-2xl" onClick={() => setOpen(true)}>
                 Why this squad?
               </button>
             </div>
