@@ -1,6 +1,13 @@
 const isProduction = () => process.env.NODE_ENV === "production";
 
 const requiredProductionKeys = ["MONGO_URI", "JWT_SECRET", "CLIENT_URL", "SERVER_URL"];
+const placeholderValues = new Set([
+  "replace_with_secure_secret",
+  "your_long_secret",
+  "your_mongodb_atlas_uri",
+  "your-vercel-frontend-url",
+  "..."
+]);
 
 const optionalIntegrations = [
   ["Google OAuth", ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"]],
@@ -14,6 +21,31 @@ const optionalIntegrations = [
 ];
 
 const present = (key) => Boolean(String(process.env[key] || "").trim());
+const valueFor = (key) => String(process.env[key] || "").trim();
+
+const isPlaceholder = (value) => {
+  const normalized = String(value || "").trim().toLowerCase();
+  return !normalized || placeholderValues.has(normalized) || normalized.startsWith("your_");
+};
+
+const assertValidUrl = (key) => {
+  const value = valueFor(key);
+  try {
+    const parsed = new URL(value);
+    if (!["http:", "https:"].includes(parsed.protocol)) {
+      throw new Error("invalid protocol");
+    }
+  } catch {
+    throw new Error(`${key} must be a valid http(s) URL.`);
+  }
+};
+
+const assertProductionSecret = () => {
+  const secret = valueFor("JWT_SECRET");
+  if (isPlaceholder(secret) || secret.length < 32) {
+    throw new Error("JWT_SECRET must be a real production secret with at least 32 characters.");
+  }
+};
 
 export const getJwtSecret = () => {
   if (present("JWT_SECRET")) return process.env.JWT_SECRET;
@@ -27,6 +59,15 @@ export const validateEnv = () => {
     if (missing.length) {
       throw new Error(`Missing required production environment variables: ${missing.join(", ")}`);
     }
+
+    const placeholders = requiredProductionKeys.filter((key) => isPlaceholder(process.env[key]));
+    if (placeholders.length) {
+      throw new Error(`Replace placeholder production environment variables: ${placeholders.join(", ")}`);
+    }
+
+    assertProductionSecret();
+    assertValidUrl("CLIENT_URL");
+    assertValidUrl("SERVER_URL");
   }
 
   optionalIntegrations.forEach(([label, keys]) => {

@@ -259,10 +259,14 @@ export const deleteGameRoom = asyncHandler(async (req, res) => {
 
 const sendDiscordRoomError = (res, error) => {
   if (error instanceof DiscordServiceError) {
-    return res.status(error.statusCode || 500).json({ success: false, message: error.message });
+    return res.status(error.statusCode || 500).json({ success: false, message: error.message, requestId: res.req?.id });
   }
 
-  return res.status(500).json({ success: false, message: "Discord voice rooms are unavailable right now." });
+  return res.status(500).json({
+    success: false,
+    message: "Discord voice rooms are unavailable right now.",
+    requestId: res.req?.id
+  });
 };
 
 export const createGameRoomDiscord = asyncHandler(async (req, res) => {

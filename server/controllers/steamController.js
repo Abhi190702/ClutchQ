@@ -20,13 +20,15 @@ const sendSteamError = (res, error) => {
     return res.status(error.statusCode || 502).json({
       success: false,
       message: error.message,
+      requestId: res.req?.id,
       data: { section: error.section }
     });
   }
 
   return res.status(500).json({
     success: false,
-    message: "Steam is unavailable right now. Try again later."
+    message: "Steam is unavailable right now. Try again later.",
+    requestId: res.req?.id
   });
 };
 

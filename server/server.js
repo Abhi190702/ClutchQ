@@ -3,6 +3,8 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import helmet from "helmet";
+import crypto from "crypto";
+import mongoose from "mongoose";
 import connectDB from "./config/db.js";
 import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
 import { publicLimiter } from "./middleware/rateLimiters.js";
@@ -33,8 +35,10 @@ const app = express();
 const isDevServer = process.env.npm_lifecycle_event === "dev";
 const isProduction = process.env.NODE_ENV === "production";
 const port = isDevServer ? process.env.LOCAL_PORT || 5000 : process.env.PORT || 5000;
+const mongoStates = ["disconnected", "connected", "connecting", "disconnecting"];
 
 app.set("trust proxy", 1);
+app.disable("x-powered-by");
 
 const normalizeOrigin = (origin) => {
   if (!origin) return null;
@@ -79,6 +83,14 @@ app.use(
     crossOriginResourcePolicy: { policy: "cross-origin" }
   })
 );
+
+app.use((req, res, next) => {
+  const incomingRequestId = String(req.get("x-request-id") || "").trim();
+  req.id = incomingRequestId || crypto.randomUUID();
+  res.setHeader("X-Request-Id", req.id);
+  next();
+});
+
 app.use(
   publicLimiter
 );
@@ -91,7 +103,9 @@ app.use(
         return;
       }
 
-      callback(new Error(`CORS blocked origin: ${origin}`));
+      const error = new Error(`CORS blocked origin: ${origin}`);
+      error.statusCode = 403;
+      callback(error);
     },
     credentials: true
   })
@@ -112,10 +126,21 @@ app.get("/", (req, res) => {
 });
 
 app.get("/api/health", (req, res) => {
+  const dbState = mongoStates[mongoose.connection.readyState] || "unknown";
+  const healthy = dbState === "connected";
+
+  res.status(healthy ? 200 : 503);
   res.json({
-    success: true,
-    message: "Healthy",
+    success: healthy,
+    message: healthy ? "Healthy" : "Degraded",
     data: {
+      database: {
+        state: dbState,
+        host: mongoose.connection.host || null,
+        name: mongoose.connection.name || null
+      },
+      environment: process.env.NODE_ENV || "development",
+      requestId: req.id,
       uptime: process.uptime(),
       timestamp: new Date().toISOString()
     }
@@ -144,6 +169,58 @@ app.use("/api/external", externalGameRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`ClutchQ API running on port ${port}`);
+});
+
+server.on("error", (error) => {
+  if (error.code === "EADDRINUSE") {
+    console.error(`Port ${port} is already in use. Stop the existing server or set LOCAL_PORT/PORT.`);
+    process.exit(1);
+  }
+
+  console.error("Server failed to start:", error);
+  process.exit(1);
+});
+
+let isShuttingDown = false;
+
+const shutdown = async (signal) => {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+  console.log(`${signal} received. Shutting down ClutchQ API...`);
+
+  const forceExit = setTimeout(() => {
+    console.error("Forced shutdown after timeout.");
+    process.exit(1);
+  }, 10000);
+  forceExit.unref();
+
+  server.close(async (error) => {
+    if (error) {
+      console.error("HTTP server shutdown failed:", error);
+      process.exit(1);
+    }
+
+    try {
+      await mongoose.connection.close(false);
+      console.log("ClutchQ API shutdown complete.");
+      process.exit(0);
+    } catch (dbError) {
+      console.error("MongoDB shutdown failed:", dbError);
+      process.exit(1);
+    }
+  });
+};
+
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled promise rejection:", reason);
+});
+
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught exception:", error);
+  shutdown("uncaughtException");
 });

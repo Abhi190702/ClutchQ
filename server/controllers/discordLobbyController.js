@@ -25,13 +25,15 @@ const sendDiscordError = (res, action, error) => {
   if (error instanceof DiscordServiceError) {
     return res.status(error.statusCode || 500).json({
       success: false,
-      message: error.message
+      message: error.message,
+      requestId: res.req?.id
     });
   }
 
   return res.status(500).json({
     success: false,
-    message: "Discord voice rooms are unavailable right now."
+    message: "Discord voice rooms are unavailable right now.",
+    requestId: res.req?.id
   });
 };
 
