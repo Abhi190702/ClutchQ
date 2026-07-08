@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="client/public/clutchq-logo.svg" alt="ClutchQ logo" width="104" />
+  <img src="client/public/brand/clutchq-logo.png" alt="ClutchQ logo" width="180" />
   <h1>ClutchQ</h1>
   <p><strong>Squad intelligence for gamers who want reliable teammates before they queue.</strong></p>
   <p>Verified identity · Steam depth · Discord voice rooms · Gameplay analytics</p>
@@ -12,18 +12,6 @@
       <img alt="API Health" src="https://img.shields.io/badge/API-Health%20Check-22C55E?style=for-the-badge&logo=render&logoColor=white" />
     </a>
     <img alt="Status" src="https://img.shields.io/badge/Status-Demo%20Ready-8B5CF6?style=for-the-badge" />
-  </p>
-
-  <p>
-    <img alt="React" src="https://img.shields.io/badge/React-111827?style=for-the-badge&logo=react&logoColor=61DAFB" />
-    <img alt="Vite" src="https://img.shields.io/badge/Vite-111827?style=for-the-badge&logo=vite&logoColor=FFD62E" />
-    <img alt="Node.js" src="https://img.shields.io/badge/Node.js-111827?style=for-the-badge&logo=node.js&logoColor=5FA04E" />
-    <img alt="Express" src="https://img.shields.io/badge/Express-111827?style=for-the-badge&logo=express&logoColor=white" />
-    <img alt="MongoDB" src="https://img.shields.io/badge/MongoDB-111827?style=for-the-badge&logo=mongodb&logoColor=47A248" />
-    <img alt="Python" src="https://img.shields.io/badge/Python-111827?style=for-the-badge&logo=python&logoColor=FFD43B" />
-    <img alt="Steam" src="https://img.shields.io/badge/Steam-111827?style=for-the-badge&logo=steam&logoColor=white" />
-    <img alt="Discord" src="https://img.shields.io/badge/Discord-111827?style=for-the-badge&logo=discord&logoColor=5865F2" />
-    <img alt="JWT" src="https://img.shields.io/badge/JWT-111827?style=for-the-badge&logo=jsonwebtokens&logoColor=white" />
   </p>
 </div>
 
