@@ -42,6 +42,25 @@ const normalizeSeries = (series = [], length = 30) => {
 const formatGames = (games = []) =>
   games.length ? ` · ${games.slice(0, 2).map((game) => game.gameName || game.name).filter(Boolean).join(", ")}` : "";
 
+const getAxisLabelIndexes = (length) => {
+  if (length <= 1) return [0];
+
+  const indexes = [];
+  for (let index = 0; index < length; index += 7) {
+    indexes.push(index);
+  }
+
+  const lastIndex = length - 1;
+  const previousIndex = indexes[indexes.length - 1];
+  if (lastIndex - previousIndex < 4) {
+    indexes[indexes.length - 1] = lastIndex;
+  } else {
+    indexes.push(lastIndex);
+  }
+
+  return [...new Set(indexes)];
+};
+
 const GamingRhythmChart = ({ series = [] }) => {
   const days = normalizeSeries(series);
   const maxMinutes = Math.max(...days.map((item) => safeNumber(item.minutes)), 0);
@@ -50,8 +69,8 @@ const GamingRhythmChart = ({ series = [] }) => {
   const peak = days.reduce((best, item) => (item.minutes > best.minutes ? item : best), days[0]);
   const hasActivity = activeDays > 0;
   const chartWidth = 720;
-  const chartHeight = 210;
-  const padding = { top: 26, right: 16, bottom: 34, left: 44 };
+  const chartHeight = 224;
+  const padding = { top: 26, right: 24, bottom: 48, left: 44 };
   const plotWidth = chartWidth - padding.left - padding.right;
   const plotHeight = chartHeight - padding.top - padding.bottom;
   const points = days.map((day, index) => {
@@ -61,6 +80,7 @@ const GamingRhythmChart = ({ series = [] }) => {
   });
   const linePath = points.map((point, index) => `${index ? "L" : "M"} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(" ");
   const areaPath = `${linePath} L ${padding.left + plotWidth} ${padding.top + plotHeight} L ${padding.left} ${padding.top + plotHeight} Z`;
+  const axisLabelIndexes = getAxisLabelIndexes(points.length);
 
   if (!hasActivity) {
     return (
@@ -115,16 +135,31 @@ const GamingRhythmChart = ({ series = [] }) => {
           <path d={linePath} fill="none" stroke="#38bdf8" strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" />
           {points.map((point, index) => {
             const isPeak = point.date === peak.date;
-            const shouldLabel = index === 0 || index === points.length - 1 || index % 7 === 0;
             return (
               <g key={point.date}>
                 <circle cx={point.x} cy={point.y} r={isPeak ? 5.5 : 3.5} fill={isPeak ? "#e0f2fe" : "#101217"} stroke="#bae6fd" strokeWidth="2" />
                 <title>{`${formatShortDate(point.date)}: ${formatMinutes(point.minutes)}${formatGames(point.games)}`}</title>
-                {shouldLabel ? (
-                  <text x={point.x} y={chartHeight - 10} textAnchor="middle" fill="rgba(212,212,216,0.56)" fontSize="11" fontWeight="700">
-                    {formatShortDate(point.date).replace(" ", "\u00a0")}
-                  </text>
-                ) : null}
+              </g>
+            );
+          })}
+          {axisLabelIndexes.map((index) => {
+            const point = points[index];
+            const isFirst = index === 0;
+            const isLast = index === points.length - 1;
+            const textAnchor = isFirst ? "start" : isLast ? "end" : "middle";
+            return (
+              <g key={`axis-${point.date}`}>
+                <line
+                  x1={point.x}
+                  x2={point.x}
+                  y1={padding.top + plotHeight + 5}
+                  y2={padding.top + plotHeight + 12}
+                  stroke="rgba(212,212,216,0.34)"
+                  strokeWidth="1.5"
+                />
+                <text x={point.x} y={chartHeight - 13} textAnchor={textAnchor} fill="rgba(228,228,231,0.78)" fontSize="12" fontWeight="800">
+                  {formatShortDate(point.date).replace(" ", "\u00a0")}
+                </text>
               </g>
             );
           })}
