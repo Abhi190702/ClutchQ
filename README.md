@@ -1,9 +1,46 @@
-# ClutchQ
+<div align="center">
+  <img src="client/public/clutchq-logo.svg" alt="ClutchQ logo" width="104" />
+  <h1>ClutchQ</h1>
+  <p><strong>Squad intelligence for gamers who want reliable teammates before they queue.</strong></p>
+  <p>Verified identity · Steam depth · Discord voice rooms · Gameplay analytics</p>
 
-ClutchQ is a MERN squad-finder for gamers who want reliable teammates before they queue. It combines lobby discovery, verified gaming identities, Steam profile depth, Discord voice rooms, session history, and gameplay analytics into one clean matchmaking console.
+  <p>
+    <a href="https://clutch-q.vercel.app">
+      <img alt="Live Demo" src="https://img.shields.io/badge/Live%20Demo-ClutchQ-38BDF8?style=for-the-badge&logo=vercel&logoColor=white" />
+    </a>
+    <a href="https://clutchq-backend.onrender.com/api/health">
+      <img alt="API Health" src="https://img.shields.io/badge/API-Health%20Check-22C55E?style=for-the-badge&logo=render&logoColor=white" />
+    </a>
+    <img alt="Status" src="https://img.shields.io/badge/Status-Demo%20Ready-8B5CF6?style=for-the-badge" />
+  </p>
 
-- **Live app:** [https://clutch-q.vercel.app](https://clutch-q.vercel.app)
-- **API:** [https://clutchq-backend.onrender.com](https://clutchq-backend.onrender.com)
+  <p>
+    <img alt="React" src="https://img.shields.io/badge/React-111827?style=for-the-badge&logo=react&logoColor=61DAFB" />
+    <img alt="Vite" src="https://img.shields.io/badge/Vite-111827?style=for-the-badge&logo=vite&logoColor=FFD62E" />
+    <img alt="Node.js" src="https://img.shields.io/badge/Node.js-111827?style=for-the-badge&logo=node.js&logoColor=5FA04E" />
+    <img alt="Express" src="https://img.shields.io/badge/Express-111827?style=for-the-badge&logo=express&logoColor=white" />
+    <img alt="MongoDB" src="https://img.shields.io/badge/MongoDB-111827?style=for-the-badge&logo=mongodb&logoColor=47A248" />
+    <img alt="Python" src="https://img.shields.io/badge/Python-111827?style=for-the-badge&logo=python&logoColor=FFD43B" />
+    <img alt="Steam" src="https://img.shields.io/badge/Steam-111827?style=for-the-badge&logo=steam&logoColor=white" />
+    <img alt="Discord" src="https://img.shields.io/badge/Discord-111827?style=for-the-badge&logo=discord&logoColor=5865F2" />
+    <img alt="JWT" src="https://img.shields.io/badge/JWT-111827?style=for-the-badge&logo=jsonwebtokens&logoColor=white" />
+  </p>
+</div>
+
+---
+
+ClutchQ is a full-stack MERN squad-finder that combines lobby discovery, verified gaming identities, Steam profile depth, Discord voice rooms, session history, and gameplay analytics into one clean matchmaking console.
+
+## Product Snapshot
+
+| Area | What ClutchQ Delivers |
+| --- | --- |
+| Matchmaking | Game, rank, role, region, language, mic, and availability-aware squad discovery |
+| Identity | Email, Google, Discord, and Steam auth paths with account-link visibility |
+| Steam Intelligence | Library, recent playtime, achievements, friends, heatmap, and player score |
+| Voice | Discord bot-powered lobby voice rooms with reusable invite links |
+| Analytics | Gameplay rhythm, scorecards, teammate fit, and Python-backed graph signals |
+| Demo Readiness | Seeded players, rooms, games, activity, and polished product flows |
 
 ## Product Story
 
@@ -285,32 +322,38 @@ ClutchQ/
   README.md
 ```
 
-## Design Direction
+## Product Proof
 
-The interface is intentionally dark, calm, and premium. It avoids heavy glow effects and focuses on:
+ClutchQ is not just a static UI concept. The current build includes deployed frontend/backend services, persistent MongoDB data, real authentication paths, external gaming integrations, Discord room automation, and seeded demo flows for live judging.
 
-- Large readable typography
-- High-quality game artwork
-- Minimal cards with rounded edges
-- Clear account and profile menus
-- Fewer boxes, more spacing, and cleaner hierarchy
-- Dashboard-style information only where it helps the player decide
+| Proof Point | Status |
+| --- | --- |
+| Frontend deployment | Vercel-hosted React app |
+| Backend deployment | Render-hosted Express API |
+| Database | MongoDB Atlas/local Mongo support |
+| OAuth | Google, Discord, and Steam paths wired |
+| Voice rooms | Discord bot API integration |
+| Analytics | Node API connected to Python graph/scorecard pipeline |
+| Demo mode | Seeded accounts, rooms, games, sessions, and profiles |
+| Reliability | Health checks, request IDs, rate limits, safe error responses |
 
-## Roadmap
+## Engineering Notes
 
-- Finish Epic Games and Microsoft OAuth
-- Add real-time lobby presence with sockets
-- Add richer Steam achievement comparisons
-- Add production analytics jobs for scheduled graph refresh
-- Add notification preferences
-- Add stronger admin moderation analytics
-- Add CI checks for backend and frontend builds
+- The frontend stays lightweight: React, Vite, custom CSS, and no heavy UI framework dependency.
+- The backend keeps product logic server-side so match, trust, Steam, Discord, and analytics behavior stays consistent.
+- Optional integrations fail gracefully, so missing Steam/Discord/SMTP credentials do not take down the whole app.
+- Production `.env` values are validated on boot to catch placeholder URLs, weak JWT secrets, and missing core config.
+- The README intentionally avoids secrets and only documents variable names, setup shape, and public endpoints.
 
-## LinkedIn Summary
+## Next Milestones
 
-I built ClutchQ, a full-stack MERN gaming squad-finder that helps players find reliable teammates before they queue. It includes email and OAuth login, Steam profile sync, Discord voice room automation, lobby matching, player trust signals, session history, and a Python-backed gameplay analytics pipeline.
-
-The biggest learning was turning a broad product idea into a real system: robust backend APIs, production deployment, OAuth integrations, MongoDB models, seeded demo data, and a polished frontend that can be judged live.
+| Milestone | Why It Matters |
+| --- | --- |
+| Real-time lobby presence | Make rooms feel live without refreshes |
+| Epic Games and Microsoft OAuth | Complete the remaining identity providers |
+| Scheduled graph refresh | Keep activity and teammate signals fresh automatically |
+| CI checks | Protect build quality before deployment |
+| Admin analytics | Give moderation and demo operators stronger visibility |
 
 ## License
 
