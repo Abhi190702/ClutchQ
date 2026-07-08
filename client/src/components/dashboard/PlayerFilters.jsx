@@ -16,7 +16,7 @@ const PlayerFilters = ({ filters, onChange }) => {
   );
 
   return (
-    <div className="mt-6 grid gap-4 border-t border-white/10 pt-6 md:grid-cols-3 xl:grid-cols-1">
+    <div className="grid gap-4 md:grid-cols-3">
       {field("game", "Game", GAMES)}
       {field("region", "Region", REGIONS)}
       {field("role", "Role", ROLES)}

@@ -30,13 +30,13 @@ const FindSquadNow = () => {
 
   return (
     <section>
-      <div className="flex flex-col gap-5">
-        <div>
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="max-w-xl">
           <div className="eyebrow mb-2">Squad engine</div>
           <h3 className="text-2xl font-black tracking-tight">Quick squad suggestion</h3>
           <p className="mt-2 text-sm leading-6 text-clutch-muted">Find the best players and lobby from your current profile.</p>
         </div>
-        <button type="button" disabled={loading} onClick={run} className="btn-primary rounded-2xl py-3">
+        <button type="button" disabled={loading} onClick={run} className="btn-primary w-full rounded-2xl px-6 py-3 sm:w-auto lg:min-w-[160px]">
           {loading ? "Finding..." : "Find squad"}
         </button>
       </div>

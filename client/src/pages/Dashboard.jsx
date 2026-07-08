@@ -106,11 +106,14 @@ const Dashboard = () => {
           </div>
         </section>
         {error ? <ErrorState message={error} onRetry={load} /> : null}
-        <div className="grid gap-10 xl:grid-cols-[360px_minmax(0,1fr)] 2xl:grid-cols-[390px_minmax(0,1fr)]">
-          <div id="squad-controls" className="h-fit rounded-[28px] bg-white/[0.025] p-6 ring-1 ring-white/10">
-            <FindSquadNow />
-            <PlayerFilters filters={filters} onChange={setFilters} />
-          </div>
+        <div className="grid gap-8">
+          <section id="squad-controls" className="relative overflow-hidden rounded-[30px] bg-[linear-gradient(135deg,rgba(255,255,255,0.052),rgba(255,255,255,0.016))] p-6 ring-1 ring-white/10 md:p-7">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-clutch-blue/50 to-transparent" />
+            <div className="relative grid gap-6 xl:grid-cols-[minmax(260px,0.72fr)_minmax(0,1.28fr)] xl:items-end">
+              <FindSquadNow />
+              <PlayerFilters filters={filters} onChange={setFilters} />
+            </div>
+          </section>
           <RecommendedPlayers recommendations={filtered} loading={loading} onSendRequest={sendRequest} requestedIds={requestedIds} />
         </div>
       </div>

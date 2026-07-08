@@ -24,19 +24,19 @@ const PlayerCard = ({ item, onSendRequest, requested = false }) => {
   ].filter(Boolean).slice(0, 2);
 
   return (
-    <article className="group relative overflow-hidden rounded-[30px] bg-white/[0.018] px-5 py-5 ring-1 ring-white/[0.08] transition hover:bg-white/[0.03] hover:ring-white/15 md:px-6">
+    <article className="group relative overflow-hidden rounded-[34px] bg-[linear-gradient(135deg,rgba(255,255,255,0.055),rgba(255,255,255,0.016))] px-5 py-5 shadow-[0_24px_70px_rgba(0,0,0,0.24)] ring-1 ring-white/10 transition hover:-translate-y-0.5 hover:ring-white/15 md:px-6">
       {gameArt ? (
         <>
           <img
             src={gameArt}
             alt=""
             loading="lazy"
-            className="pointer-events-none absolute -right-12 top-1/2 h-44 w-72 -translate-y-1/2 rounded-[32px] object-cover opacity-[0.13] blur-2xl saturate-150 transition duration-500 group-hover:opacity-[0.18]"
+            className="pointer-events-none absolute inset-y-[-35%] right-[-8%] h-[170%] w-[58%] scale-110 rounded-[36px] object-cover opacity-[0.24] blur-xl saturate-150 transition duration-500 group-hover:opacity-[0.32]"
           />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-clutch-bg via-clutch-bg/90 to-clutch-bg/60" />
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,#121216_0%,rgba(18,18,22,0.92)_45%,rgba(18,18,22,0.58)_100%)]" />
         </>
       ) : null}
-      <div className="relative grid gap-6 xl:grid-cols-[minmax(260px,1.05fr)_minmax(220px,0.8fr)_minmax(190px,0.42fr)] xl:items-center">
+      <div className="relative grid gap-6 xl:grid-cols-[minmax(260px,1.1fr)_minmax(160px,0.55fr)_minmax(190px,0.45fr)] xl:items-center">
         <div className="flex min-w-0 gap-4">
           <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-white/[0.055] text-lg font-bold text-clutch-blue ring-1 ring-white/10">
             {initials(profile?.displayName)}
@@ -52,14 +52,9 @@ const PlayerCard = ({ item, onSendRequest, requested = false }) => {
           </div>
         </div>
 
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <MatchConfidence confidence={match?.confidence} />
-            {visibleBadges.map((badge) => <Badge key={badge}>{badge}</Badge>)}
-          </div>
-          <p className="mt-3 max-w-md text-sm leading-6 text-clutch-muted">
-            Good fit for {rolesText.toLowerCase()} queues.
-          </p>
+        <div className="flex min-w-0 flex-wrap items-center gap-2 xl:justify-center">
+          <MatchConfidence confidence={match?.confidence} />
+          {visibleBadges.map((badge) => <Badge key={badge}>{badge}</Badge>)}
         </div>
 
         <div className="flex items-center justify-between gap-4 xl:justify-end">
