@@ -9,6 +9,7 @@ import MatchBreakdown from "./MatchBreakdown";
 import MatchConfidence from "./MatchConfidence";
 import { getPrimaryGame } from "../../utils/rankLogic";
 import { initials } from "../../utils/formatters";
+import { getGameArt } from "../../utils/gameArt";
 
 const PlayerCard = ({ item, onSendRequest, requested = false }) => {
   const [open, setOpen] = useState(false);
@@ -16,16 +17,26 @@ const PlayerCard = ({ item, onSendRequest, requested = false }) => {
   const match = item?.match;
   const game = getPrimaryGame(profile);
   const rolesText = game?.roles?.slice(0, 2).join(", ") || "Flexible role";
-  const overlapHours = match?.availability?.overlapHours ?? 0;
-  const reliabilityScore = profile?.reliabilityScore != null ? `${profile.reliabilityScore}%` : "Building";
+  const gameArt = getGameArt(game?.gameName);
   const visibleBadges = [
     ...(profile?.badges || []),
     profile?.micAvailable ? "Mic Ready" : null
   ].filter(Boolean).slice(0, 2);
 
   return (
-    <article className="group rounded-[30px] bg-white/[0.018] px-5 py-5 ring-1 ring-white/[0.08] transition hover:bg-white/[0.03] hover:ring-white/15 md:px-6">
-      <div className="grid gap-6 xl:grid-cols-[minmax(260px,1.05fr)_minmax(260px,0.95fr)_minmax(190px,0.45fr)] xl:items-center">
+    <article className="group relative overflow-hidden rounded-[30px] bg-white/[0.018] px-5 py-5 ring-1 ring-white/[0.08] transition hover:bg-white/[0.03] hover:ring-white/15 md:px-6">
+      {gameArt ? (
+        <>
+          <img
+            src={gameArt}
+            alt=""
+            loading="lazy"
+            className="pointer-events-none absolute -right-12 top-1/2 h-44 w-72 -translate-y-1/2 rounded-[32px] object-cover opacity-[0.13] blur-2xl saturate-150 transition duration-500 group-hover:opacity-[0.18]"
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-clutch-bg via-clutch-bg/90 to-clutch-bg/60" />
+        </>
+      ) : null}
+      <div className="relative grid gap-6 xl:grid-cols-[minmax(260px,1.05fr)_minmax(220px,0.8fr)_minmax(190px,0.42fr)] xl:items-center">
         <div className="flex min-w-0 gap-4">
           <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-white/[0.055] text-lg font-bold text-clutch-blue ring-1 ring-white/10">
             {initials(profile?.displayName)}
@@ -42,21 +53,13 @@ const PlayerCard = ({ item, onSendRequest, requested = false }) => {
         </div>
 
         <div className="min-w-0">
-          <div className="eyebrow mb-3">Match signals</div>
           <div className="flex flex-wrap items-center gap-2">
             <MatchConfidence confidence={match?.confidence} />
             {visibleBadges.map((badge) => <Badge key={badge}>{badge}</Badge>)}
           </div>
-          <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-            <div className="border-l border-white/10 pl-3">
-              <div className="font-black text-clutch-text">{reliabilityScore}</div>
-              <div className="mt-0.5 text-xs font-semibold uppercase tracking-[0.12em] text-clutch-muted">Reliability</div>
-            </div>
-            <div className="border-l border-white/10 pl-3">
-              <div className="font-black text-clutch-text">{overlapHours}h</div>
-              <div className="mt-0.5 text-xs font-semibold uppercase tracking-[0.12em] text-clutch-muted">Overlap</div>
-            </div>
-          </div>
+          <p className="mt-3 max-w-md text-sm leading-6 text-clutch-muted">
+            Good fit for {rolesText.toLowerCase()} queues.
+          </p>
         </div>
 
         <div className="flex items-center justify-between gap-4 xl:justify-end">
