@@ -106,7 +106,7 @@ const Dashboard = () => {
           </div>
         </section>
         {error ? <ErrorState message={error} onRetry={load} /> : null}
-        <div className="grid gap-10 xl:grid-cols-[minmax(320px,0.36fr)_1fr]">
+        <div className="grid gap-10 xl:grid-cols-[360px_minmax(0,1fr)] 2xl:grid-cols-[390px_minmax(0,1fr)]">
           <div id="squad-controls" className="h-fit rounded-[28px] bg-white/[0.025] p-6 ring-1 ring-white/10">
             <FindSquadNow />
             <PlayerFilters filters={filters} onChange={setFilters} />
