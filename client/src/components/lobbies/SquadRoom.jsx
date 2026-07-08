@@ -2,7 +2,7 @@ import SquadChemistryGraph from "./SquadChemistryGraph";
 import SquadRoleBalance from "./SquadRoleBalance";
 import ReadyCheck from "./ReadyCheck";
 import Badge from "../common/Badge";
-import { shortDateTime } from "../../utils/formatters";
+import { formatServerDateTime } from "../../utils/formatters";
 
 const SquadRoom = ({ data, onLobbyUpdate }) => {
   const { lobby, memberProfiles, chemistry } = data;
@@ -14,7 +14,9 @@ const SquadRoom = ({ data, onLobbyUpdate }) => {
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
               <h2 className="text-2xl font-semibold">{lobby.title}</h2>
-              <p className="mt-2 text-sm text-clutch-muted">{lobby.game} - {lobby.region} - starts {shortDateTime(lobby.startTime || lobby.startsAt || lobby.createdAt || lobby.updatedAt, "when full")}</p>
+              <p className="mt-2 text-sm text-clutch-muted">
+                {lobby.game} - {lobby.region} - starts {formatServerDateTime(lobby.displayStartTime || lobby.startTime || lobby.startsAt || lobby.createdAt || lobby.updatedAt, "when full")}
+              </p>
             </div>
             <Badge>{lobby.inviteCode}</Badge>
           </div>

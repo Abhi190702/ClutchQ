@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
-import Badge from "../common/Badge";
-import RankBadge from "../common/RankBadge";
 import { gameInitials, getGameArt } from "../../utils/gameArt";
-import { shortDateTime } from "../../utils/formatters";
+import { formatServerDateTime } from "../../utils/formatters";
 import { getLobbyState } from "../../utils/lobbyState";
 import LobbyHostBadge from "./LobbyHostBadge";
+
+const formatMode = (value) => String(value || "open").replace(/^\w/, (letter) => letter.toUpperCase());
 
 const LobbyRow = ({ item, onJoin, requested = false }) => {
   const lobby = item.lobby;
@@ -12,6 +12,15 @@ const LobbyRow = ({ item, onJoin, requested = false }) => {
   const joinDisabled = requested || !state.canRequest;
   const joinLabel = requested ? "Requested" : state.joinLabel;
   const art = getGameArt(lobby.game);
+  const schedule = formatServerDateTime(lobby.displayStartTime || lobby.startTime || lobby.createdAt || lobby.updatedAt);
+  const rankRange = [lobby.rankMin, lobby.rankMax].filter(Boolean).join(" to ") || "Any rank";
+  const roles = (lobby.neededRoles || []).slice(0, 3).join(" / ");
+  const requirements = [
+    { label: rankRange, className: "text-amber-100" },
+    { label: lobby.language || "Any language", className: "text-zinc-300" },
+    { label: lobby.micRequired ? "Mic required" : "Mic optional", className: lobby.micRequired ? "text-sky-200" : "text-zinc-400" },
+    roles ? { label: roles, className: "text-zinc-400" } : null
+  ].filter(Boolean);
 
   return (
     <article className="group grid gap-4 border-b border-white/10 py-5 last:border-b-0 lg:grid-cols-[76px_minmax(0,1fr)_190px_120px_90px_270px] lg:items-center">
@@ -32,18 +41,20 @@ const LobbyRow = ({ item, onJoin, requested = false }) => {
         </div>
         <div className="min-w-0 lg:hidden">
           <h3 className="text-lg font-black text-white">{lobby.title}</h3>
-          <p className="mt-1 text-sm text-zinc-500">{lobby.game} · {lobby.mode} · {lobby.region}</p>
+          <p className="mt-1 text-sm text-zinc-500">{lobby.game} · {formatMode(lobby.mode)} · {lobby.region} · {schedule}</p>
         </div>
       </div>
 
       <div className="min-w-0">
         <h3 className="hidden truncate text-lg font-black text-white lg:block">{lobby.title}</h3>
-        <p className="mt-1 text-sm text-zinc-500">{lobby.game} · {lobby.mode} · {lobby.region} · {shortDateTime(lobby.startTime, "Starts when full")}</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <RankBadge rank={`${lobby.rankMin} - ${lobby.rankMax}`} />
-          <Badge>{lobby.language || "Any language"}</Badge>
-          <Badge tone={lobby.micRequired ? "info" : "default"}>{lobby.micRequired ? "Mic required" : "Mic optional"}</Badge>
-          {(lobby.neededRoles || []).slice(0, 3).map((role) => <Badge key={role}>{role}</Badge>)}
+        <p className="mt-1 text-sm text-zinc-500">{lobby.game} · {formatMode(lobby.mode)} · {lobby.region} · {schedule}</p>
+        <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-semibold">
+          {requirements.map((part, index) => (
+            <span key={part.label} className="inline-flex items-center gap-x-2">
+              {index ? <span className="text-zinc-700">·</span> : null}
+              <span className={part.className}>{part.label}</span>
+            </span>
+          ))}
         </div>
         {!!item.compatibility?.warnings?.length && (
           <p className="mt-3 line-clamp-1 text-xs font-semibold text-amber-200">{item.compatibility.warnings.join(" · ")}</p>
@@ -53,7 +64,7 @@ const LobbyRow = ({ item, onJoin, requested = false }) => {
       <LobbyHostBadge host={lobby.ownerId} />
 
       <div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-white/[0.06] px-3 py-2">
+        <div className="inline-flex items-center gap-2">
           <span className="h-2 w-2 rounded-full bg-clutch-blue" />
           <span className="text-sm font-black text-white">{state.scoreLabel}</span>
         </div>
@@ -66,13 +77,13 @@ const LobbyRow = ({ item, onJoin, requested = false }) => {
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row lg:justify-end">
-        <button type="button" disabled={joinDisabled} title={state.disabledTitle} onClick={() => !joinDisabled && onJoin?.(lobby)} className="btn-primary py-2">
+        <button type="button" disabled={joinDisabled} title={state.disabledTitle} onClick={() => !joinDisabled && onJoin?.(lobby)} className="btn-primary rounded-2xl py-3">
           {joinLabel}
         </button>
-        <Link to={`/lobbies/${lobby._id}`} className="btn-secondary py-2">
+        <Link to={`/lobbies/${lobby._id}`} className="px-3 py-3 text-sm font-black text-zinc-300 transition hover:text-white">
           Details
         </Link>
-        <Link to={`/squad/${lobby._id}`} className="btn-secondary py-2">
+        <Link to={`/squad/${lobby._id}`} className="px-3 py-3 text-sm font-black text-zinc-300 transition hover:text-white">
           Room
         </Link>
       </div>

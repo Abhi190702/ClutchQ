@@ -18,6 +18,30 @@ const getLobbyMemberProfiles = async (lobby) => {
 
 const getUserId = (value) => String(value?._id || value || "");
 
+const stableHash = (value = "") =>
+  String(value)
+    .split("")
+    .reduce((sum, char) => sum + char.charCodeAt(0), 0);
+
+const getDisplayStartTime = (lobbyObject, serverNow = new Date()) => {
+  const rawTime = lobbyObject.startTime || lobbyObject.createdAt || lobbyObject.updatedAt;
+  const parsed = rawTime ? new Date(rawTime) : null;
+
+  if (!parsed || Number.isNaN(parsed.getTime())) return null;
+
+  const staleWindowMs = 15 * 60 * 1000;
+  const isStaleOpenLobby = lobbyObject.status !== "closed" && parsed.getTime() < serverNow.getTime() - staleWindowMs;
+
+  if (!isStaleOpenLobby) return parsed.toISOString();
+
+  const source = lobbyObject._id || lobbyObject.inviteCode || lobbyObject.title;
+  const offsetMinutes = 15 + (stableHash(source) % 8) * 15;
+  const displayTime = new Date(serverNow.getTime() + offsetMinutes * 60 * 1000);
+  displayTime.setSeconds(0, 0);
+
+  return displayTime.toISOString();
+};
+
 const canAccessLobbyDiscord = (lobby, userId) => {
   const viewerId = getUserId(userId);
   const ownerId = getUserId(lobby.ownerId);
@@ -28,6 +52,10 @@ const canAccessLobbyDiscord = (lobby, userId) => {
 
 const sanitizeLobbyForViewer = (lobby, userId) => {
   const lobbyObject = lobby.toObject ? lobby.toObject({ virtuals: true }) : { ...lobby };
+  const serverNow = new Date();
+
+  lobbyObject.displayStartTime = getDisplayStartTime(lobbyObject, serverNow);
+  lobbyObject.serverTime = serverNow.toISOString();
 
   if (lobbyObject.discord && !canAccessLobbyDiscord(lobbyObject, userId)) {
     lobbyObject.discord = lobbyObject.discord.channelName
@@ -92,6 +120,12 @@ export const listLobbies = asyncHandler(async (req, res) => {
       compatibility: await calculateLobbyViewerCompatibility(viewerProfile, lobby)
     }))
   );
+
+  enriched.sort((left, right) => {
+    const leftTime = new Date(left.lobby.displayStartTime || left.lobby.startTime || left.lobby.createdAt || 0).getTime();
+    const rightTime = new Date(right.lobby.displayStartTime || right.lobby.startTime || right.lobby.createdAt || 0).getTime();
+    return leftTime - rightTime;
+  });
 
   res.json({
     success: true,

@@ -46,6 +46,19 @@ export const shortDateTime = (value, fallback = "Not available") => {
   }).format(date);
 };
 
+export const formatServerDateTime = (value, fallback = "Server time pending") => {
+  const date = getDate(value);
+  if (!date) return fallback;
+  return `${new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone: "UTC"
+  }).format(date)} UTC`;
+};
+
 export const formatDate = (value, fallback = "Not available") => {
   const date = getDate(value);
   if (!date) return fallback;

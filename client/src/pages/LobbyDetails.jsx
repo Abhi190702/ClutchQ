@@ -12,7 +12,7 @@ import SquadRoleBalance from "../components/lobbies/SquadRoleBalance";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import api, { getErrorMessage } from "../services/api";
-import { shortDateTime } from "../utils/formatters";
+import { formatServerDateTime } from "../utils/formatters";
 import { getLobbyState } from "../utils/lobbyState";
 
 const LobbyDetails = () => {
@@ -94,7 +94,7 @@ const LobbyDetails = () => {
               <Badge>{lobby.region}</Badge>
               <Badge>{lobby.language}</Badge>
               <Badge>{lobby.micRequired ? "Mic Required" : "Mic Optional"}</Badge>
-              <Badge>{shortDateTime(lobby.startTime || lobby.startsAt || lobby.createdAt || lobby.updatedAt, "Starts when full")}</Badge>
+              <Badge>{formatServerDateTime(lobby.displayStartTime || lobby.startTime || lobby.startsAt || lobby.createdAt || lobby.updatedAt, "Starts when full")}</Badge>
             </div>
             <p className="mt-5 text-sm leading-6 text-clutch-muted">{lobby.description}</p>
           </div>
