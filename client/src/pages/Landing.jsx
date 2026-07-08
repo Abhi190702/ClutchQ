@@ -1,6 +1,4 @@
 import Navbar from "../components/common/Navbar";
-import CafeValidationSection from "../components/landing/CafeValidationSection";
-import FeaturedGameShowcase from "../components/landing/FeaturedGameShowcase";
 import GameDiscoveryRail from "../components/landing/GameDiscoveryRail";
 import GameFirstHero from "../components/landing/GameFirstHero";
 import GameplayGraphPreview from "../components/landing/GameplayGraphPreview";
@@ -13,10 +11,8 @@ const Landing = () => (
     <Navbar />
     <main>
       <GameFirstHero />
-      <FeaturedGameShowcase />
-      <LiveSquadPreview />
       <GameDiscoveryRail />
-      <CafeValidationSection />
+      <LiveSquadPreview />
       <HowItWorksSection />
       <GameplayGraphPreview />
       <LandingCTA />
