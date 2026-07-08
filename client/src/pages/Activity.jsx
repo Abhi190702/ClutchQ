@@ -131,14 +131,16 @@ const Activity = () => {
               <div className="min-w-0 space-y-6">
                 <GamingRhythmChart series={series} />
                 <ActivityCalendarStrip days={series} />
-                <RecentGameTimeline sessions={sessions} analyses={scorecardAnalyses} />
               </div>
               <aside className="min-w-0 space-y-6">
                 <GameTimeSplit items={split} />
                 <ActivityInsightPanel snapshot={snapshot} split={split} insights={rhythmIntel?.insights || []} rhythmSummary={rhythmIntel?.summary} />
               </aside>
             </div>
-            <FriendCompatibilityStrip friends={compatibleFriends} />
+            <div className="grid min-w-0 gap-7 xl:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)]">
+              <FriendCompatibilityStrip friends={compatibleFriends} />
+              <RecentGameTimeline sessions={sessions} analyses={scorecardAnalyses} compact limit={4} />
+            </div>
           </>
         )}
 

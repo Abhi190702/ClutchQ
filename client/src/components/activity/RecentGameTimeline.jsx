@@ -33,12 +33,13 @@ const formatConfidence = (value) => {
   return formatPercentage(numeric <= 1 ? numeric * 100 : numeric);
 };
 
-const RecentGameTimeline = ({ sessions = [], analyses = [] }) => {
+const RecentGameTimeline = ({ sessions = [], analyses = [], compact = false, limit = 10 }) => {
   const [selected, setSelected] = useState(null);
   const selectedAnalysis = selected ? analyses.find((item) => String(item.sessionId) === String(selected._id)) : null;
+  const visibleSessions = sessions.slice(0, limit);
 
   return (
-    <section className="border-b border-white/10 pb-6">
+    <section className={compact ? "h-full rounded-[28px] border border-white/10 bg-[#18191f] p-5 shadow-2xl shadow-black/10 sm:p-6" : "border-b border-white/10 pb-6"}>
       <div className="flex items-end justify-between gap-4">
         <div>
           <div className="eyebrow mb-3">Previous games</div>
@@ -48,34 +49,43 @@ const RecentGameTimeline = ({ sessions = [], analyses = [] }) => {
       </div>
 
       {sessions.length ? (
-        <div className="mt-6 divide-y divide-white/10">
-          {sessions.slice(0, 10).map((session) => {
+        <div className={compact ? "mt-6 space-y-3" : "mt-6 divide-y divide-white/10"}>
+          {visibleSessions.map((session) => {
             const image = getGameArt(session.gameName || session.gameSlug);
             const analysis = analyses.find((item) => String(item.sessionId) === String(session._id));
             const hasFeedback = [session.teamworkScore, session.communicationScore, session.performanceScore].some((value) => value !== undefined && value !== null);
             return (
-              <article key={session._id || `${session.gameName}-${session.startedAt}`} className="grid gap-4 py-4 sm:grid-cols-[56px_1fr_auto] sm:items-center">
-                <div className="h-14 w-14 overflow-hidden rounded-2xl bg-white/[0.06]">
-                  <GameThumb image={image} gameName={session.gameName || session.gameSlug} />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="truncate text-base font-black text-white">{session.gameName || "Unknown game"}</h3>
-                    {session.result ? <span className="rounded-full bg-white/[0.07] px-2 py-1 text-xs font-bold uppercase text-zinc-300">{session.result}</span> : null}
-                    {analysis ? <span className="rounded-full bg-emerald-500/15 px-2 py-1 text-xs font-bold text-emerald-100">scorecard</span> : null}
-                    {hasFeedback ? <span className="rounded-full bg-sky-500/15 px-2 py-1 text-xs font-bold text-sky-100">feedback</span> : null}
-                    {formatConfidence(analysis?.confidence) ? <span className="rounded-full bg-white/[0.06] px-2 py-1 text-xs font-bold text-zinc-300">{formatConfidence(analysis.confidence)} confidence</span> : null}
+              <article
+                key={session._id || `${session.gameName}-${session.startedAt}`}
+                className={
+                  compact
+                    ? "rounded-[22px] border border-white/10 bg-black/[0.18] p-4 transition hover:border-white/20 hover:bg-white/[0.04]"
+                    : "grid gap-4 py-4 sm:grid-cols-[56px_1fr_auto] sm:items-center"
+                }
+              >
+                <div className={compact ? "flex items-start gap-3" : "contents"}>
+                  <div className={`${compact ? "h-12 w-12" : "h-14 w-14"} overflow-hidden rounded-2xl bg-white/[0.06]`}>
+                    <GameThumb image={image} gameName={session.gameName || session.gameSlug} />
                   </div>
-                  <p className="mt-1 text-sm text-zinc-500">{formatSafeDateTime(session.startedAt, "Time unknown")} · {formatMinutes(session.durationMinutes)}</p>
-                  {analysis?.summary?.[0] ? <p className="mt-2 line-clamp-1 text-sm text-zinc-300">{analysis.summary[0]}</p> : null}
-                  {session.notes ? <p className="mt-2 line-clamp-1 text-sm text-zinc-400">{session.notes}</p> : null}
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="truncate text-base font-black text-white">{session.gameName || "Unknown game"}</h3>
+                      {session.result ? <span className="rounded-full bg-white/[0.07] px-2 py-1 text-xs font-bold uppercase text-zinc-300">{session.result}</span> : null}
+                      {analysis ? <span className="rounded-full bg-emerald-500/15 px-2 py-1 text-xs font-bold text-emerald-100">scorecard</span> : null}
+                      {hasFeedback ? <span className="rounded-full bg-sky-500/15 px-2 py-1 text-xs font-bold text-sky-100">feedback</span> : null}
+                      {formatConfidence(analysis?.confidence) ? <span className="rounded-full bg-white/[0.06] px-2 py-1 text-xs font-bold text-zinc-300">{formatConfidence(analysis.confidence)} confidence</span> : null}
+                    </div>
+                    <p className="mt-1 text-sm text-zinc-500">{formatSafeDateTime(session.startedAt, "Time unknown")} · {formatMinutes(session.durationMinutes)}</p>
+                    {analysis?.summary?.[0] ? <p className="mt-2 line-clamp-1 text-sm text-zinc-300">{analysis.summary[0]}</p> : null}
+                    {session.notes ? <p className="mt-2 line-clamp-1 text-sm text-zinc-400">{session.notes}</p> : null}
+                  </div>
                 </div>
-                <div className="flex items-center justify-between gap-3 sm:block sm:text-right">
+                <div className={compact ? "mt-4 flex items-center justify-between border-t border-white/10 pt-3" : "flex items-center justify-between gap-3 sm:block sm:text-right"}>
                   <div>
                     <div className="text-lg font-black text-white">{formatRating(session.matchRating)}</div>
                     <div className="text-xs text-zinc-500">rating</div>
                   </div>
-                  <button type="button" className="btn-secondary py-2 text-sm" onClick={() => setSelected(session)}>
+                  <button type="button" className={compact ? "text-sm font-black text-white hover:text-clutch-blue" : "btn-secondary py-2 text-sm"} onClick={() => setSelected(session)}>
                     View details
                   </button>
                 </div>
