@@ -2,13 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import PageShell from "../components/common/PageShell";
 import GameFilters from "../components/games/GameFilters";
 import ErrorState from "../components/common/ErrorState";
-import GameGenreRail from "../components/games/GameGenreRail";
 import GamePosterGrid from "../components/games/GamePosterGrid";
 import GameSkeletonGrid from "../components/games/GameSkeletonGrid";
 import { useToast } from "../context/ToastContext";
 import gameApi from "../services/gameApi";
 import { getErrorMessage } from "../services/api";
-import { gameGenres } from "../data/gameCatalog";
 
 const tabs = ["Discover", "Browse", "Trending", "My Games"];
 
@@ -81,7 +79,6 @@ const Games = () => {
           </div>
 
           <GameFilters filters={filters} onChange={setFilters} />
-          <GameGenreRail genres={gameGenres} activeGenre={filters.genre} onSelect={(genre) => setFilters({ ...filters, genre })} />
         </section>
 
         <section className="space-y-5">
