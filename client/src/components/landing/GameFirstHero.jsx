@@ -14,7 +14,7 @@ const proofItems = [
 const badges = ["Steam-ready profiles", "Discord voice rooms", "Gameplay Graph", "Scorecard analysis"];
 
 const posterCropClass = (title) => {
-  if (title === "Minecraft") return "object-top scale-[1.08]";
+  if (title === "Minecraft") return "object-center scale-[1.42]";
   if (title === "Fortnite") return "object-center scale-[1.03]";
   return "object-center scale-[1.04]";
 };
@@ -127,7 +127,7 @@ const GameFirstHero = () => {
                   <LandingPoster
                     game={game}
                     className="h-16 w-16 shrink-0 rounded-2xl"
-                    imageClassName={game.title === "Minecraft" ? "object-top" : "object-center"}
+                    imageClassName={game.title === "Minecraft" ? "object-center scale-[1.18]" : "object-center"}
                   />
                   <div className="min-w-0">
                     <div className="truncate text-sm font-black text-white">{game.title}</div>
