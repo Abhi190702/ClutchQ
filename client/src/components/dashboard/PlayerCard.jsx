@@ -11,7 +11,7 @@ import { getPrimaryGame } from "../../utils/rankLogic";
 import { initials } from "../../utils/formatters";
 import { getGameArt } from "../../utils/gameArt";
 
-const PlayerCard = ({ item, onSendRequest, requested = false }) => {
+const PlayerCard = ({ item, onSendRequest, requested = false, featured = false }) => {
   const [open, setOpen] = useState(false);
   const profile = item?.profile;
   const match = item?.match;
@@ -24,26 +24,39 @@ const PlayerCard = ({ item, onSendRequest, requested = false }) => {
   ].filter(Boolean).slice(0, 2);
 
   return (
-    <article className="group relative overflow-hidden rounded-[34px] bg-[linear-gradient(135deg,rgba(255,255,255,0.055),rgba(255,255,255,0.016))] px-5 py-5 shadow-[0_24px_70px_rgba(0,0,0,0.24)] ring-1 ring-white/10 transition hover:-translate-y-0.5 hover:ring-white/15 md:px-6">
+    <article className={`group relative overflow-hidden rounded-[34px] px-5 py-6 shadow-[0_24px_70px_rgba(0,0,0,0.24)] ring-1 transition duration-300 hover:-translate-y-1 hover:shadow-[0_30px_90px_rgba(0,0,0,0.34)] md:px-7 ${featured ? "bg-[linear-gradient(115deg,rgba(61,187,250,0.095),rgba(255,255,255,0.025)_44%,rgba(55,216,164,0.045))] ring-clutch-blue/25" : "bg-[linear-gradient(135deg,rgba(255,255,255,0.055),rgba(255,255,255,0.016))] ring-white/10 hover:ring-white/15"}`}>
+      {featured ? <div className="pointer-events-none absolute bottom-8 left-0 top-8 w-1 rounded-r-full bg-clutch-blue" /> : null}
       {gameArt ? (
         <>
           <img
             src={gameArt}
             alt=""
             loading="lazy"
-            className="pointer-events-none absolute inset-y-[-35%] right-[-8%] h-[170%] w-[58%] scale-110 rounded-[36px] object-cover opacity-[0.24] blur-xl saturate-150 transition duration-500 group-hover:opacity-[0.32]"
+            className="pointer-events-none absolute inset-y-[-40%] right-[-5%] h-[180%] w-[44%] scale-110 rounded-[36px] object-cover opacity-[0.2] blur-lg saturate-150 transition duration-500 group-hover:opacity-[0.3]"
           />
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,#121216_0%,rgba(18,18,22,0.92)_45%,rgba(18,18,22,0.58)_100%)]" />
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,#0d0f14_0%,rgba(13,15,20,0.93)_48%,rgba(13,15,20,0.58)_100%)]" />
         </>
       ) : null}
-      <div className="relative grid gap-6 xl:grid-cols-[minmax(260px,1.1fr)_minmax(160px,0.55fr)_minmax(190px,0.45fr)] xl:items-center">
+      <div className="relative grid gap-6 xl:grid-cols-[minmax(300px,1.1fr)_minmax(190px,0.58fr)_minmax(210px,0.45fr)] xl:items-center">
         <div className="flex min-w-0 gap-4">
-          <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-white/[0.055] text-lg font-bold text-clutch-blue ring-1 ring-white/10">
-            {initials(profile?.displayName)}
+          <div className="relative shrink-0">
+            <div className="grid h-16 w-16 place-items-center rounded-[22px] bg-white/[0.055] text-lg font-black text-clutch-blue shadow-[0_14px_34px_rgba(0,0,0,0.25)] ring-1 ring-white/10">
+              {initials(profile?.displayName)}
+            </div>
+            {gameArt ? (
+              <span className="absolute -bottom-2 -right-2 h-9 w-9 overflow-hidden rounded-[12px] border-2 border-[#111318] bg-clutch-panel shadow-[0_8px_22px_rgba(0,0,0,0.45)] ring-1 ring-white/15" title={game?.gameName || "Primary game"}>
+                <img src={gameArt} alt={`${game?.gameName || "Game"} icon`} className="h-full w-full object-cover" loading="lazy" />
+              </span>
+            ) : null}
           </div>
           <div className="min-w-0">
+            {featured ? <div className="mb-1.5 text-[0.64rem] font-black uppercase tracking-[0.18em] text-clutch-blue">Best overall fit</div> : null}
             <h3 className="text-xl font-black tracking-tight text-clutch-text">{profile?.displayName}</h3>
-            <p className="mt-1 truncate text-sm text-clutch-muted">{game?.gameName || "Game profile"} - {rolesText}</p>
+            <p className="mt-1 flex items-center gap-2 truncate text-sm text-clutch-muted">
+              <span className="font-bold text-zinc-300">{game?.gameName || "Game profile"}</span>
+              <span className="text-zinc-700">/</span>
+              <span className="truncate">{rolesText}</span>
+            </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <RankBadge rank={game?.rank} />
               <TrustBadge score={profile?.trustScore} />
