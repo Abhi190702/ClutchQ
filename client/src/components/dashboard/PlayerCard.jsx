@@ -39,25 +39,25 @@ const PlayerCard = ({ item, onSendRequest, requested = false, featured = false }
       ) : null}
       <div className="relative grid gap-6 xl:grid-cols-[minmax(300px,1.1fr)_minmax(190px,0.58fr)_minmax(210px,0.45fr)] xl:items-center">
         <div className="flex min-w-0 gap-4">
-          <div className="relative shrink-0">
-            <div className="grid h-16 w-16 place-items-center rounded-[22px] bg-white/[0.055] text-lg font-black text-clutch-blue shadow-[0_14px_34px_rgba(0,0,0,0.25)] ring-1 ring-white/10">
-              {initials(profile?.displayName)}
-            </div>
-            {gameArt ? (
-              <span className="absolute -bottom-2 -right-2 h-9 w-9 overflow-hidden rounded-[12px] border-2 border-[#111318] bg-clutch-panel shadow-[0_8px_22px_rgba(0,0,0,0.45)] ring-1 ring-white/15" title={game?.gameName || "Primary game"}>
-                <img src={gameArt} alt={`${game?.gameName || "Game"} icon`} className="h-full w-full object-cover" loading="lazy" />
-              </span>
-            ) : null}
+          <div className="grid h-[72px] w-[72px] shrink-0 place-items-center rounded-[24px] bg-white/[0.055] text-lg font-black text-clutch-blue shadow-[0_14px_34px_rgba(0,0,0,0.25)] ring-1 ring-white/10">
+            {initials(profile?.displayName)}
           </div>
           <div className="min-w-0">
-            {featured ? <div className="mb-1.5 text-[0.64rem] font-black uppercase tracking-[0.18em] text-clutch-blue">Best overall fit</div> : null}
-            <h3 className="text-xl font-black tracking-tight text-clutch-text">{profile?.displayName}</h3>
-            <p className="mt-1 flex items-center gap-2 truncate text-sm text-clutch-muted">
+            <div className="flex flex-wrap items-center gap-3">
+              <h3 className="text-xl font-black tracking-tight text-clutch-text">{profile?.displayName}</h3>
+              {featured ? <span className="rounded-full border border-clutch-blue/25 bg-clutch-blue/10 px-2.5 py-1 text-[0.62rem] font-black uppercase tracking-[0.16em] text-clutch-blue">Best fit</span> : null}
+            </div>
+            <p className="mt-2 flex items-center gap-2 truncate text-sm text-clutch-muted">
+              {gameArt ? (
+                <span className="h-7 w-7 shrink-0 overflow-hidden rounded-[9px] bg-clutch-panel shadow-[0_6px_16px_rgba(0,0,0,0.35)] ring-1 ring-white/15" title={game?.gameName || "Primary game"}>
+                  <img src={gameArt} alt={`${game?.gameName || "Game"} icon`} className="h-full w-full object-cover" loading="lazy" />
+                </span>
+              ) : null}
               <span className="font-bold text-zinc-300">{game?.gameName || "Game profile"}</span>
               <span className="text-zinc-700">/</span>
               <span className="truncate">{rolesText}</span>
             </p>
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-3.5 flex flex-wrap gap-2">
               <RankBadge rank={game?.rank} />
               <TrustBadge score={profile?.trustScore} />
               {profile?.region ? <Badge>{profile.region}</Badge> : null}

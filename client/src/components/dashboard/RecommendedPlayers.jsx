@@ -29,17 +29,19 @@ const RecommendedPlayers = ({ recommendations, loading, onSendRequest, requested
 
   return (
     <section>
-      <div className="mb-6 flex items-end justify-between gap-4">
-        <div className="flex items-center gap-4">
-          {leadGameArt ? (
-            <div className="h-14 w-14 overflow-hidden rounded-[18px] bg-clutch-panel shadow-[0_14px_36px_rgba(0,0,0,0.36)] ring-1 ring-white/10">
-              <img src={leadGameArt} alt="" className="h-full w-full object-cover" />
-            </div>
-          ) : null}
-          <div>
-            <div className="eyebrow mb-2">Recommended players</div>
+      <div className="mb-7 flex items-end justify-between gap-4">
+        <div>
+          <div className="eyebrow mb-3">Recommended players</div>
+          <div className="flex items-center gap-3.5">
+            {leadGameArt ? (
+              <div className="h-11 w-11 shrink-0 overflow-hidden rounded-[14px] bg-clutch-panel shadow-[0_12px_30px_rgba(0,0,0,0.34)] ring-1 ring-white/10">
+                <img src={leadGameArt} alt="" className="h-full w-full object-cover" />
+              </div>
+            ) : null}
+            <div>
             <h2 className="text-3xl font-black tracking-[-0.04em] text-clutch-text md:text-4xl">Best squad fits</h2>
             <p className="mt-2 text-sm text-zinc-500">Rank, role, trust, voice, and schedule aligned.</p>
+            </div>
           </div>
         </div>
         <span className="text-sm font-semibold text-clutch-muted">Top {visibleRecommendations.length} of {recommendations.length}</span>
