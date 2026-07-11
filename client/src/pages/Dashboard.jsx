@@ -87,8 +87,8 @@ const Dashboard = () => {
 
   return (
     <PageShell fullWidth>
-      <div className="grid gap-10">
-        <section className="relative overflow-hidden rounded-[30px] bg-[linear-gradient(135deg,rgba(56,189,248,0.08),rgba(255,255,255,0.025)_42%,rgba(167,139,250,0.06))] px-6 py-8 ring-1 ring-white/10 md:px-10 md:py-10">
+      <div className="grid gap-12">
+        <section className="page-intro">
           <SoftGlow />
           <div className="relative space-y-8">
             <SectionHeader
@@ -106,9 +106,8 @@ const Dashboard = () => {
           </div>
         </section>
         {error ? <ErrorState message={error} onRetry={load} /> : null}
-        <div className="grid gap-8">
-          <section id="squad-controls" className="relative overflow-hidden rounded-[30px] bg-[linear-gradient(135deg,rgba(255,255,255,0.052),rgba(255,255,255,0.016))] p-6 ring-1 ring-white/10 md:p-7">
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-clutch-blue/50 to-transparent" />
+        <div className="grid gap-10">
+          <section id="squad-controls" className="relative overflow-hidden border-y border-white/[0.08] py-8 md:py-10">
             <div className="relative grid gap-6 xl:grid-cols-[minmax(260px,0.72fr)_minmax(0,1.28fr)] xl:items-end">
               <FindSquadNow />
               <PlayerFilters filters={filters} onChange={setFilters} />

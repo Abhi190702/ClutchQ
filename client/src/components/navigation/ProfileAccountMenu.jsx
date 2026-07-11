@@ -62,11 +62,11 @@ const ProfileAccountMenu = ({ user, profile, steamSummary, steamLinked, onLogout
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className={`${isSidebar && !compact ? "w-full justify-start rounded-xl border border-white/10 bg-white/[0.035] px-3 py-3" : "rounded-full bg-clutch-panel px-2.5 py-2"} flex items-center gap-2 text-left transition hover:bg-clutch-panelSoft`}
+        className={`${isSidebar && !compact ? "w-full justify-start rounded-[18px] border border-white/[0.08] bg-white/[0.03] px-3 py-3" : "rounded-[16px] border border-white/[0.08] bg-white/[0.04] px-2 py-2"} flex items-center gap-2 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] transition hover:border-white/15 hover:bg-white/[0.075]`}
         aria-expanded={open}
         aria-haspopup="menu"
       >
-        <span className="grid h-9 w-9 place-items-center overflow-hidden rounded-full bg-[#3a3a42] text-sm font-bold text-clutch-text">
+        <span className="grid h-9 w-9 place-items-center overflow-hidden rounded-[12px] bg-[#242832] text-sm font-bold text-clutch-text ring-1 ring-white/10">
           {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : getInitials(displayName)}
         </span>
         {!compact && (
@@ -79,12 +79,12 @@ const ProfileAccountMenu = ({ user, profile, steamSummary, steamLinked, onLogout
 
       {open && (
         <div
-          className={`${isSidebar ? "bottom-14 left-0" : "right-0 top-14"} absolute z-50 w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-md border border-white/10 bg-[#242428] shadow-2xl`}
+          className={`${isSidebar ? "bottom-14 left-0" : "right-0 top-14"} absolute z-50 w-[min(380px,calc(100vw-2rem))] overflow-hidden rounded-[24px] border border-white/10 bg-[#15171d]/95 shadow-[0_28px_90px_rgba(0,0,0,0.55)] backdrop-blur-2xl`}
           role="menu"
         >
-          <div className="bg-gradient-to-br from-white/[0.06] to-transparent px-4 py-4">
+          <div className="bg-[linear-gradient(135deg,rgba(61,187,250,0.1),rgba(255,255,255,0.025))] px-5 py-5">
             <div className="flex items-center gap-3">
-              <span className="grid h-12 w-12 place-items-center overflow-hidden rounded-full bg-[#3a3a42] text-sm font-black text-clutch-text">
+              <span className="grid h-12 w-12 place-items-center overflow-hidden rounded-[15px] bg-[#242832] text-sm font-black text-clutch-text ring-1 ring-white/10">
                 {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : getInitials(displayName)}
               </span>
               <div className="min-w-0 flex-1">
@@ -95,7 +95,7 @@ const ProfileAccountMenu = ({ user, profile, steamSummary, steamLinked, onLogout
             </div>
           </div>
 
-          <div className="p-2">
+          <div className="p-2.5">
             {menuGroups.map((group, groupIndex) => (
               <div key={groupIndex} className={groupIndex ? "mt-2 border-t border-white/10 pt-2" : ""}>
                 {group.map((item) => (
@@ -103,7 +103,7 @@ const ProfileAccountMenu = ({ user, profile, steamSummary, steamLinked, onLogout
                     key={item.label}
                     type="button"
                     onClick={() => goTo(item.path)}
-                    className="group flex w-full items-center justify-between gap-4 rounded-md px-3 py-3 text-left transition hover:bg-white/[0.055]"
+                    className="group flex w-full items-center justify-between gap-4 rounded-[15px] px-3.5 py-3 text-left transition hover:bg-white/[0.06]"
                     role="menuitem"
                   >
                     <span className="min-w-0">
@@ -117,11 +117,11 @@ const ProfileAccountMenu = ({ user, profile, steamSummary, steamLinked, onLogout
             ))}
           </div>
 
-          <div className="border-t border-white/10 p-2">
+          <div className="border-t border-white/[0.08] p-2.5">
             <button
               type="button"
               onClick={handleLogout}
-              className="flex w-full items-center justify-between rounded-md px-3 py-3 text-left text-sm font-semibold text-red-100 transition hover:bg-clutch-red/10"
+              className="flex w-full items-center justify-between rounded-[15px] px-3.5 py-3 text-left text-sm font-semibold text-red-100 transition hover:bg-clutch-red/10"
               role="menuitem"
             >
               <span>Sign out</span>

@@ -73,22 +73,22 @@ const Sidebar = () => {
   }, [collapsed]);
 
   return (
-    <aside className={`hidden shrink-0 border-r border-white/10 bg-[#101014]/95 transition-all duration-300 lg:block ${collapsed ? "w-[76px]" : "w-[276px]"}`}>
-      <div className="sticky top-0 flex h-screen flex-col px-3 py-4">
-        <div className={`mb-8 flex items-center ${collapsed ? "flex-col justify-center gap-3" : "justify-between"}`}>
+    <aside className={`hidden shrink-0 border-r border-white/[0.07] bg-[#0b0d12]/94 shadow-[18px_0_60px_rgba(0,0,0,0.14)] backdrop-blur-2xl transition-all duration-300 lg:block ${collapsed ? "w-[88px]" : "w-[288px]"}`}>
+      <div className="sticky top-0 flex h-screen flex-col px-4 py-5">
+        <div className={`mb-9 flex items-center ${collapsed ? "flex-col justify-center gap-4" : "justify-between"}`}>
           <div className={`flex min-w-0 items-center ${collapsed ? "justify-center" : "gap-3"}`}>
-            <img src="/brand/clutchq-logo.png" alt="ClutchQ" className="h-10 w-10 shrink-0 rounded-xl object-cover" />
+            <img src="/brand/clutchq-logo.png" alt="ClutchQ" className="h-11 w-11 shrink-0 rounded-[15px] object-cover shadow-[0_12px_28px_rgba(0,0,0,0.3)] ring-1 ring-white/10" />
             {!collapsed && (
               <div className="min-w-0">
-                <div className="text-[11px] font-black uppercase tracking-[0.24em] text-zinc-500">ClutchQ</div>
-                <div className="mt-1 truncate text-sm font-bold text-zinc-100">Squad Console</div>
+                <div className="text-[11px] font-black uppercase tracking-[0.24em] text-clutch-blue">ClutchQ</div>
+                <div className="mt-1 truncate text-sm font-black text-zinc-100">Squad Console</div>
               </div>
             )}
           </div>
           <button
             type="button"
             onClick={() => setCollapsed((current) => !current)}
-            className="grid h-10 w-10 place-items-center rounded-md border border-white/10 text-zinc-400 transition hover:bg-white/[0.06] hover:text-white"
+            className="grid h-10 w-10 place-items-center rounded-[14px] border border-white/[0.08] bg-white/[0.025] text-zinc-500 transition hover:border-white/15 hover:bg-white/[0.065] hover:text-white"
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             <ChevronIcon direction={collapsed ? "right" : "left"} size={18} />
@@ -97,29 +97,28 @@ const Sidebar = () => {
 
         <nav className="thin-scrollbar min-h-0 flex-1 overflow-y-auto pr-1">
           {Object.entries(groups).map(([group, groupLinks]) => (
-            <div key={group} className="mb-6">
-              {!collapsed && <div className="mb-2 px-3 text-[11px] font-black uppercase tracking-[0.24em] text-zinc-600">{group}</div>}
-              <div className="space-y-1">
+            <div key={group} className="mb-7">
+              {!collapsed && <div className="mb-2.5 px-3 text-[10px] font-black uppercase tracking-[0.24em] text-zinc-600">{group}</div>}
+              <div className="space-y-1.5">
                 {groupLinks.map((link) => (
                   <NavLink
                     key={link.to}
                     to={link.to}
                     title={collapsed ? link.label : undefined}
                     className={({ isActive }) =>
-                      `group relative flex h-11 items-center rounded-xl text-sm font-bold transition ${
+                      `group relative flex h-12 items-center rounded-[16px] text-sm font-bold transition duration-200 ${
                         collapsed ? "justify-center px-0" : "gap-3 px-3"
                       } ${
                         isActive
-                          ? "bg-white/[0.09] text-white"
-                          : "text-zinc-500 hover:bg-white/[0.055] hover:text-white"
+                          ? "bg-[linear-gradient(90deg,rgba(61,187,250,0.16),rgba(61,187,250,0.055))] text-white ring-1 ring-clutch-blue/20"
+                          : "text-zinc-500 hover:bg-white/[0.045] hover:text-white"
                       }`
                     }
                   >
                     {({ isActive }) => (
                       <>
-                        {isActive ? <span className="absolute left-0 top-2 h-7 w-1 rounded-r-full bg-clutch-blue" /> : null}
                         <span className={`flex min-w-0 items-center ${collapsed ? "justify-center" : "gap-3"}`}>
-                          <span className={isActive ? "text-clutch-blue" : "text-zinc-600 group-hover:text-zinc-200"}>
+                          <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-[11px] transition ${isActive ? "bg-clutch-blue/15 text-clutch-blue" : "text-zinc-600 group-hover:bg-white/[0.04] group-hover:text-zinc-200"}`}>
                             <SidebarIcon name={link.icon} />
                           </span>
                           {!collapsed && <span className="truncate">{link.label}</span>}
@@ -133,7 +132,7 @@ const Sidebar = () => {
           ))}
         </nav>
 
-        <div className={`${collapsed ? "mt-4 flex justify-center" : "mt-4 border-t border-white/10 pt-4"}`}>
+        <div className={`${collapsed ? "mt-4 flex justify-center" : "mt-4 border-t border-white/[0.07] pt-4"}`}>
           {user ? (
             <ProfileAccountMenu
               user={user}

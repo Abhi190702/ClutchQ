@@ -86,11 +86,12 @@ const GameRooms = () => {
 
   return (
     <PageShell fullWidth>
-      <div className="mx-auto max-w-[1480px] space-y-8 px-1 py-4">
-        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      <div className="mx-auto max-w-[1540px] space-y-10 px-1 py-1">
+        <div className="page-intro flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div>
-            <h1 className="text-4xl font-black tracking-tight text-white">{game.title} Rooms</h1>
-            <p className="mt-3 max-w-2xl text-zinc-400">Join active squads, create a room, or wait for a compatible party.</p>
+            <div className="eyebrow mb-3">Live squad rooms</div>
+            <h1 className="page-title">{game.title} Rooms</h1>
+            <p className="page-description">Join active squads, create a room, or wait for a compatible party.</p>
           </div>
           <button type="button" className="btn-primary" onClick={() => setShowCreate((value) => !value)}>
             {showCreate ? "Close" : "Create Room"}
@@ -98,7 +99,7 @@ const GameRooms = () => {
         </div>
 
         {showCreate ? (
-          <form onSubmit={createRoom} className="rounded-[10px] border border-[#2f2f36] bg-[#202024] p-5">
+          <form onSubmit={createRoom} className="premium-panel p-6">
             <h2 className="text-xl font-black text-white">Create {game.title} Room</h2>
             <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <label className="md:col-span-2">
@@ -156,15 +157,15 @@ const GameRooms = () => {
         <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
           <ActiveRoomsPanel rooms={rooms} user={user} onUpdated={load} />
           <aside className="space-y-4">
-            <div className="rounded-[10px] border border-[#2f2f36] bg-[#202024] p-5">
+            <div className="premium-panel-soft p-5">
               <h3 className="text-lg font-black text-white">Waiting Queue</h3>
               <p className="mt-2 text-sm leading-6 text-zinc-400">Create a room if no current squad fits your region, rank, or role. Compatible players can join from the browse page.</p>
             </div>
-            <div className="rounded-[10px] border border-[#2f2f36] bg-[#202024] p-5">
+            <div className="premium-panel-soft p-5">
               <h3 className="text-lg font-black text-white">Quick Filters</h3>
               <div className="mt-4 flex flex-wrap gap-2">
                 {["Open Lobby", "Ranked Push", "Casual Chill", "Mic Required", "Beginner Friendly", "Competitive"].map((tag) => (
-                  <span key={tag} className="rounded-full border border-[#33333a] px-3 py-2 text-xs font-bold text-zinc-300">
+                  <span key={tag} className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-bold text-zinc-300">
                     {tag}
                   </span>
                 ))}

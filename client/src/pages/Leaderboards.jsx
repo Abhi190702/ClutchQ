@@ -46,15 +46,16 @@ const Leaderboards = () => {
 
   return (
     <PageShell fullWidth>
-      <div className="mx-auto max-w-[1480px] space-y-8 px-1 py-4">
-        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      <div className="mx-auto max-w-[1540px] space-y-10 px-1 py-1">
+        <div className="page-intro flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div>
-            <h1 className="text-4xl font-black tracking-tight text-white">Leaderboards</h1>
-            <p className="mt-3 max-w-2xl text-zinc-400">Most played games, active players, trending rooms, and trust-heavy teammate rankings.</p>
+            <div className="eyebrow mb-3">Competitive pulse</div>
+            <h1 className="page-title">Leaderboards</h1>
+            <p className="page-description">Most played games, active players, trending rooms, and trust-heavy teammate rankings.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             {ranges.map((item) => (
-              <button key={item.id} type="button" className={`rounded-full px-4 py-2 text-sm font-bold ${range === item.id ? "bg-white text-black" : "bg-[#202024] text-zinc-300"}`} onClick={() => setRange(item.id)}>
+              <button key={item.id} type="button" className={`rounded-full px-4 py-2.5 text-sm font-bold transition ${range === item.id ? "bg-white text-black" : "bg-black/20 text-zinc-400 hover:bg-white/[0.06] hover:text-white"}`} onClick={() => setRange(item.id)}>
                 {item.label}
               </button>
             ))}

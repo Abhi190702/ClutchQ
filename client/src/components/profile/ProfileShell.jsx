@@ -2,7 +2,7 @@ import PageShell from "../common/PageShell";
 
 const ProfileShell = ({ children, actions }) => (
   <PageShell actions={actions} fullWidth>
-    <div className="mx-auto min-w-0 space-y-6">
+    <div className="mx-auto min-w-0 space-y-8">
       {children}
     </div>
   </PageShell>

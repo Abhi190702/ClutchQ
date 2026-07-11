@@ -10,8 +10,8 @@ const navItems = [
 
 const MobileBottomNav = () => (
   <nav
-    className="fixed inset-x-0 bottom-0 z-50 border-t border-clutch-border bg-clutch-bg/95 px-2 pt-2 backdrop-blur lg:hidden"
-    style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 0.5rem)" }}
+    className="fixed inset-x-3 bottom-3 z-50 rounded-[24px] border border-white/10 bg-[#0d0f14]/92 p-2 shadow-[0_24px_70px_rgba(0,0,0,0.48)] backdrop-blur-2xl lg:hidden"
+    style={{ marginBottom: "env(safe-area-inset-bottom)" }}
     aria-label="Primary mobile navigation"
   >
     <div className="mx-auto grid max-w-md grid-cols-5 gap-1">
@@ -21,8 +21,8 @@ const MobileBottomNav = () => (
           to={item.to}
           aria-label={item.label}
           className={({ isActive }) =>
-            `flex flex-col items-center gap-1 rounded-md px-2 py-2 text-[11px] font-bold transition ${
-              isActive ? "bg-clutch-blue text-black" : "text-clutch-muted hover:bg-white/[0.06] hover:text-clutch-text"
+            `flex min-h-14 flex-col items-center justify-center gap-1 rounded-[17px] px-2 py-2 text-[10px] font-black transition ${
+              isActive ? "bg-clutch-blue text-[#071017] shadow-[0_10px_24px_rgba(61,187,250,0.2)]" : "text-zinc-500 hover:bg-white/[0.06] hover:text-clutch-text"
             }`
           }
         >

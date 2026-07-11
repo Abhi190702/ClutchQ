@@ -59,8 +59,9 @@ const Login = () => {
   };
 
   return (
-    <main className="min-h-screen bg-[#18181b] px-4 py-8 text-white md:py-12">
-      <div className="relative mx-auto flex max-w-[760px] flex-col gap-8">
+    <main className="noise-bg relative min-h-screen overflow-hidden px-4 py-10 text-white md:py-16">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-96 bg-[linear-gradient(180deg,rgba(61,187,250,0.07),transparent)]" />
+      <div className="relative mx-auto flex max-w-[1120px] flex-col gap-10">
         <LoginBrandHeader />
 
         <AuthProviderGrid
@@ -79,7 +80,7 @@ const Login = () => {
           onProviderClick={handleProviderClick}
         />
 
-        <div ref={emailPanelWrapRef}>
+        <div ref={emailPanelWrapRef} className="mx-auto w-full max-w-3xl">
           <EmailLoginPanel ref={emailPanelRef} />
         </div>
 

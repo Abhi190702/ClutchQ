@@ -1,10 +1,10 @@
 import { gameplaySignals } from "../../data/landingShowcase";
 
 const GameplayGraphPreview = () => (
-  <section className="mx-auto grid max-w-[1480px] gap-8 px-4 py-12 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:py-16">
+  <section className="mx-auto grid max-w-[1540px] gap-12 px-4 py-14 sm:px-6 lg:grid-cols-[0.82fr_1.18fr] lg:items-center lg:py-20">
     <div>
       <div className="eyebrow mb-3">Gameplay Graph</div>
-      <h2 className="text-3xl font-black tracking-tight text-white sm:text-5xl">Your squad history becomes a Gameplay Graph.</h2>
+      <h2 className="text-3xl font-black tracking-[-0.04em] text-white sm:text-5xl">Your squad history becomes a Gameplay Graph.</h2>
       <p className="mt-5 max-w-xl text-base leading-7 text-zinc-300">
         After sessions, scorecards, and teammate feedback, ClutchQ builds a living profile of your strengths, rhythm, and best teammate fits.
       </p>
@@ -13,7 +13,7 @@ const GameplayGraphPreview = () => (
       </p>
     </div>
 
-    <div className="rounded-[28px] border border-white/10 bg-[#1d1d22] p-5 sm:p-6">
+    <div className="premium-panel p-5 sm:p-7">
       <div className="grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
         <div className="rounded-3xl bg-black/[0.26] p-5">
           <div className="flex items-center gap-4">

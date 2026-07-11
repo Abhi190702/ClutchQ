@@ -63,16 +63,16 @@ const Lobbies = () => {
 
   return (
     <PageShell fullWidth>
-      <div className="space-y-7">
-        <section className="flex flex-col gap-5 border-b border-white/10 pb-8 md:flex-row md:items-end md:justify-between">
+      <div className="space-y-10">
+        <section className="page-intro flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div>
             <div className="eyebrow mb-3">Squad Finder</div>
-            <h1 className="text-4xl font-black tracking-tight text-white md:text-5xl">Open Lobbies</h1>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-400">
+            <h1 className="page-title">Open Lobbies</h1>
+            <p className="page-description">
               Join ranked stacks, casual squads, and active voice-ready rooms.
             </p>
           </div>
-          <Link to="/lobbies/create" className="btn-primary shrink-0">
+          <Link to="/lobbies/create" className="btn-primary shrink-0 px-6 py-3">
             Create Lobby
           </Link>
         </section>

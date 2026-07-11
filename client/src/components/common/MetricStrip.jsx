@@ -5,7 +5,7 @@ const MetricStrip = ({ metrics = [], className = "", variant = "default" }) => {
     <div
       className={
         quiet
-          ? `grid gap-5 sm:grid-cols-2 xl:grid-cols-5 ${className}`
+          ? `grid gap-0 overflow-hidden rounded-[24px] border border-white/[0.075] bg-black/15 sm:grid-cols-2 xl:grid-cols-5 ${className}`
           : `flex flex-col divide-y divide-white/10 border-y border-white/10 md:flex-row md:divide-x md:divide-y-0 ${className}`
       }
     >
@@ -14,11 +14,11 @@ const MetricStrip = ({ metrics = [], className = "", variant = "default" }) => {
           key={metric.label}
           className={
             quiet
-              ? "min-w-0 border-t border-white/10 pt-4"
+              ? "min-w-0 border-b border-white/[0.07] px-5 py-5 sm:border-r xl:border-b-0 xl:last:border-r-0"
               : "min-w-0 flex-1 py-4 md:px-5 first:md:pl-0 last:md:pr-0"
           }
         >
-          <div className="truncate text-2xl font-black tracking-tight text-clutch-text md:text-3xl">{metric.value}</div>
+          <div className="truncate text-2xl font-black tracking-[-0.04em] text-clutch-text md:text-3xl">{metric.value}</div>
           <div className="mt-1 text-xs font-black uppercase tracking-[0.16em] text-clutch-muted">{metric.label}</div>
           {metric.helper ? <div className="mt-1 line-clamp-1 text-sm text-zinc-500">{metric.helper}</div> : null}
         </div>

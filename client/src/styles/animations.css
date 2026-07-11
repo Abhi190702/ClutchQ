@@ -1,17 +1,19 @@
 .noise-bg {
-  background: #121216;
+  background:
+    linear-gradient(180deg, rgba(61, 187, 250, 0.035), transparent 22rem),
+    #090a0e;
 }
 
 .glass-panel {
-  background: #202024;
-  border: 1px solid #2f2f36;
-  box-shadow: none;
-  backdrop-filter: none;
+  background: rgba(20, 22, 28, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(20px);
 }
 
 .thin-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #3a3a42 transparent;
+  scrollbar-color: #343945 transparent;
 }
 
 .thin-scrollbar::-webkit-scrollbar {
@@ -24,7 +26,7 @@
 }
 
 .thin-scrollbar::-webkit-scrollbar-thumb {
-  background: #3a3a42;
+  background: #343945;
   border-radius: 999px;
 }
 

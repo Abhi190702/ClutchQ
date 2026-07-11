@@ -80,11 +80,11 @@ const Requests = () => {
 
   return (
     <PageShell fullWidth>
-      <div className="space-y-7">
-        <section className="border-b border-white/10 pb-8">
+      <div className="space-y-10">
+        <section className="page-intro">
           <div className="eyebrow mb-3">Inbox</div>
-          <h1 className="text-4xl font-black tracking-tight text-white md:text-5xl">Requests</h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-400">
+          <h1 className="page-title">Requests</h1>
+          <p className="page-description">
             Manage teammate invites, lobby applications, and squad responses.
           </p>
         </section>

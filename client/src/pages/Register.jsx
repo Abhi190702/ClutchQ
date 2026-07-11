@@ -56,18 +56,29 @@ const Register = () => {
   return (
     <div className="noise-bg min-h-screen">
       <Navbar />
-      <main className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-md items-center px-4 py-10">
-        <form onSubmit={submit} className="card w-full space-y-4 p-6">
+      <main className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-[1180px] items-center gap-12 px-4 py-14 md:px-6 lg:grid-cols-[0.9fr_1.1fr]">
+        <section className="max-w-xl">
+          <div className="eyebrow mb-4">Create your identity</div>
+          <h1 className="text-5xl font-black leading-[0.95] tracking-[-0.055em] text-white md:text-7xl">Build the profile your next squad can trust.</h1>
+          <p className="mt-6 text-lg leading-8 text-zinc-400">Start with the basics, then add games, ranks, roles, availability, Steam history, and voice preferences.</p>
+          <div className="mt-8 grid grid-cols-2 gap-5 border-t border-white/[0.08] pt-6 text-sm font-bold text-zinc-300">
+            <span>Rank-aware matching</span>
+            <span>Steam-ready identity</span>
+            <span>Discord voice rooms</span>
+            <span>Gameplay history</span>
+          </div>
+        </section>
+        <form onSubmit={submit} className="card w-full space-y-5 p-6 sm:p-8">
           <div>
             <div className="eyebrow mb-3">New account</div>
-            <h1 className="text-2xl font-semibold text-clutch-text">Create your player profile</h1>
+            <h2 className="text-3xl font-black tracking-[-0.035em] text-clutch-text">Create your player profile</h2>
             <p className="mt-2 text-sm leading-6 text-clutch-muted">Add the basics now, then finish your game, rank, role, and availability in onboarding.</p>
           </div>
           {field("name", "Name")}
           {field("email", "Email", "email")}
           {field("password", "Password", "password")}
           {field("confirmPassword", "Confirm Password", "password")}
-          <button disabled={loading} className="btn-primary w-full" type="submit">
+          <button disabled={loading} className="btn-primary w-full py-3" type="submit">
             Create Account
           </button>
           <p className="text-sm text-clutch-muted">

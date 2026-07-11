@@ -10,16 +10,16 @@ const ActivityHero = ({ snapshot, rhythmSummary, active, onEndActive, children }
   const currentStreak = summary.currentStreak ?? 0;
 
   return (
-  <section className="relative overflow-hidden rounded-[18px] border border-white/10 bg-white/[0.025] px-5 py-6 md:px-7">
+  <section className="page-intro px-6 py-8 md:px-10 md:py-10">
     <SoftGlow />
     <div className="relative grid gap-7 xl:grid-cols-[minmax(0,1fr)_380px] xl:items-end">
       <div>
         <div className="eyebrow mb-3">Gameplay intelligence</div>
-        <h1 className="max-w-3xl text-4xl font-black tracking-tight text-white">Gaming rhythm</h1>
+        <h1 className="max-w-3xl text-4xl font-black tracking-[-0.045em] text-white md:text-6xl">Gaming rhythm</h1>
         <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-400">
           Your sessions, scorecards, teammate feedback, and Steam signals.
         </p>
-        <div className="mt-6 grid max-w-4xl grid-cols-2 gap-4 md:grid-cols-5">
+        <div className="mt-8 grid max-w-4xl grid-cols-2 gap-0 overflow-hidden rounded-[22px] border border-white/[0.07] bg-black/15 md:grid-cols-5">
           {[
             ["Rhythm score", `${rhythmScore || 0}%`],
             ["Tracked", formatHours(totalTracked)],
@@ -27,7 +27,7 @@ const ActivityHero = ({ snapshot, rhythmSummary, active, onEndActive, children }
             ["Best day", formatHours(bestDay)],
             ["Streak", `${formatNumber(currentStreak)}d`]
           ].map(([label, value]) => (
-            <div key={label} className="border-l border-white/10 pl-3">
+            <div key={label} className="border-b border-r border-white/[0.07] px-4 py-4 md:border-b-0 last:border-r-0">
               <div className="text-xl font-black text-white">{value}</div>
               <div className="text-xs font-bold uppercase tracking-[0.16em] text-zinc-600">{label}</div>
             </div>
@@ -35,7 +35,7 @@ const ActivityHero = ({ snapshot, rhythmSummary, active, onEndActive, children }
         </div>
       </div>
 
-      <div className="rounded-[16px] border border-white/10 bg-black/20 p-4">
+      <div className="rounded-[24px] border border-white/[0.09] bg-black/25 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] backdrop-blur-xl">
         {active ? (
           <div className="mb-4 flex items-center justify-between gap-4 border-b border-white/10 pb-4">
             <div>

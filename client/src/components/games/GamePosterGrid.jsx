@@ -7,7 +7,7 @@ const GamePosterGrid = ({ games = [] }) => {
   }
 
   return (
-    <div className="grid gap-x-5 gap-y-10 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
+    <div className="grid gap-x-6 gap-y-12 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
       {games.map((game) => (
         <GameCard key={game.slug} game={game} />
       ))}

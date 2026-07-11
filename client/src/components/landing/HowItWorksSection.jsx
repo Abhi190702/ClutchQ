@@ -23,19 +23,19 @@ const StepIcon = ({ path }) => (
 );
 
 const HowItWorksSection = () => (
-  <section className="mx-auto max-w-[1480px] px-4 py-12 sm:px-6 lg:py-16">
+  <section className="mx-auto max-w-[1540px] px-4 py-14 sm:px-6 lg:py-20">
     <div className="mb-8 max-w-3xl">
       <div className="eyebrow mb-3">How it works</div>
-      <h2 className="text-3xl font-black tracking-tight text-white sm:text-5xl">From game pick to voice-ready squad in three moves.</h2>
+      <h2 className="text-3xl font-black tracking-[-0.04em] text-white sm:text-5xl">From game pick to voice-ready squad in three moves.</h2>
     </div>
-    <div className="grid gap-4 lg:grid-cols-3">
+    <div className="grid border-y border-white/[0.08] lg:grid-cols-3 lg:divide-x lg:divide-white/[0.08]">
       {steps.map((step, index) => (
-        <div key={step.title} className="rounded-[28px] border border-white/10 bg-[#1d1d22] p-6 transition hover:bg-[#232329]">
+        <div key={step.title} className="px-2 py-8 sm:px-6 lg:px-8 lg:py-10 first:lg:pl-0 last:lg:pr-0">
           <div className="mb-8 flex items-center justify-between">
-            <div className="grid h-16 w-16 place-items-center rounded-3xl bg-white text-black">
+            <div className="grid h-14 w-14 place-items-center rounded-[18px] bg-clutch-blue text-[#071017] shadow-cyan">
               <StepIcon path={step.icon} />
             </div>
-            <div className="text-5xl font-black text-white/10">0{index + 1}</div>
+            <div className="text-5xl font-black tracking-[-0.05em] text-white/[0.08]">0{index + 1}</div>
           </div>
           <h3 className="text-2xl font-black text-white">{step.title}</h3>
           <p className="mt-4 text-base leading-7 text-zinc-300">{step.text}</p>

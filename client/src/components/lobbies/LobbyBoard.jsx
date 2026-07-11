@@ -5,7 +5,7 @@ import LobbyRow from "./LobbyRow";
 const LobbyBoard = ({ items = [], loading, onJoin, requested = [], onClearFilters }) => {
   if (loading) {
     return (
-      <section className="rounded-[32px] border border-white/10 bg-[#18191f] p-6 shadow-2xl shadow-black/10">
+      <section className="premium-panel p-6">
         {Array.from({ length: 5 }).map((_, index) => (
           <div key={index} className="grid animate-pulse gap-4 border-b border-white/10 py-5 last:border-b-0 lg:grid-cols-[76px_1fr_190px_120px_90px_270px]">
             <div className="h-24 rounded-2xl bg-white/[0.06]" />
@@ -38,7 +38,7 @@ const LobbyBoard = ({ items = [], loading, onJoin, requested = [], onClearFilter
   }
 
   return (
-    <section className="rounded-[32px] border border-white/10 bg-[#18191f] px-6 shadow-2xl shadow-black/10">
+    <section className="premium-panel px-6">
       {items.map((item) => (
         <LobbyRow key={item.lobby._id} item={item} onJoin={onJoin} requested={requested.includes(item.lobby._id)} />
       ))}

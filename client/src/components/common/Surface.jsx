@@ -1,5 +1,5 @@
 const toneClasses = {
-  default: "bg-white/[0.035]",
+  default: "bg-[linear-gradient(145deg,rgba(255,255,255,0.05),rgba(255,255,255,0.018))]",
   soft: "bg-white/[0.025]",
   transparent: "bg-transparent"
 };

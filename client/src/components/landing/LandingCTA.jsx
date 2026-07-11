@@ -30,8 +30,8 @@ const LandingCTA = () => {
   };
 
   return (
-    <section className="mx-auto max-w-[1480px] px-4 py-14 sm:px-6 lg:py-20">
-      <div className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[#1d1d22] p-6 sm:p-8 lg:p-10">
+    <section className="mx-auto max-w-[1540px] px-4 py-16 sm:px-6 lg:py-24">
+      <div className="relative overflow-hidden rounded-[36px] border border-white/10 bg-[linear-gradient(125deg,rgba(61,187,250,0.13),rgba(20,22,28,0.96)_38%,rgba(142,144,255,0.08))] p-7 shadow-[0_36px_120px_rgba(0,0,0,0.4)] sm:p-10 lg:p-14">
         <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 opacity-30 lg:block">
           <div className="absolute right-8 top-8 flex rotate-6 gap-4">
             {featuredGames.slice(0, 4).map((game, index) => (
@@ -47,7 +47,7 @@ const LandingCTA = () => {
         </div>
         <div className="relative z-10 max-w-3xl">
           <div className="eyebrow mb-3">Try the seeded demo</div>
-          <h2 className="text-3xl font-black tracking-tight text-white sm:text-5xl">Ready to build your next squad?</h2>
+          <h2 className="text-3xl font-black tracking-[-0.04em] text-white sm:text-6xl">Ready to build your next squad?</h2>
           <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-300">
             Try the seeded demo or create your own gamer profile. You will see games, lobbies, Steam-ready identity, Discord voice rooms, activity, and the Gameplay Graph flow.
           </p>

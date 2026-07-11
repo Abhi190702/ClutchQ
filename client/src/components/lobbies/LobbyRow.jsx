@@ -23,9 +23,9 @@ const LobbyRow = ({ item, onJoin, requested = false }) => {
   ].filter(Boolean);
 
   return (
-    <article className="group grid gap-4 border-b border-white/10 py-5 last:border-b-0 lg:grid-cols-[76px_minmax(0,1fr)_190px_120px_90px_270px] lg:items-center">
+    <article className="group grid gap-5 border-b border-white/[0.07] py-6 last:border-b-0 lg:grid-cols-[86px_minmax(0,1fr)_190px_120px_90px_270px] lg:items-center">
       <div className="flex items-start gap-4 lg:block">
-        <div className="relative h-24 w-[72px] shrink-0 overflow-hidden rounded-2xl bg-white/[0.06]">
+        <div className="relative h-24 w-20 shrink-0 overflow-hidden rounded-[20px] bg-white/[0.06] ring-1 ring-white/[0.08]">
           {art ? (
             <img
               src={art}
@@ -46,7 +46,7 @@ const LobbyRow = ({ item, onJoin, requested = false }) => {
       </div>
 
       <div className="min-w-0">
-        <h3 className="hidden truncate text-lg font-black text-white lg:block">{lobby.title}</h3>
+        <h3 className="hidden truncate text-xl font-black tracking-[-0.025em] text-white lg:block">{lobby.title}</h3>
         <p className="mt-1 text-sm text-zinc-500">{lobby.game} · {formatMode(lobby.mode)} · {lobby.region} · {schedule}</p>
         <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-semibold">
           {requirements.map((part, index) => (

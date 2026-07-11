@@ -30,7 +30,7 @@ const DiscoveryCard = ({ gameName, rowLabel, duplicate = false }) => {
       tabIndex={duplicate ? -1 : undefined}
       className="group block w-[188px] shrink-0 sm:w-[210px] lg:w-[226px]"
     >
-      <div className="relative h-full overflow-hidden rounded-[30px] border border-white/10 bg-[#202024] transition duration-300 group-hover:-translate-y-1 group-hover:border-white/20 group-hover:bg-[#25252a]">
+      <div className="relative h-full overflow-hidden rounded-[26px] border border-white/[0.09] bg-[#14161c] shadow-[0_20px_60px_rgba(0,0,0,0.24)] transition duration-300 group-hover:-translate-y-1.5 group-hover:border-white/20 group-hover:shadow-[0_28px_80px_rgba(0,0,0,0.34)]">
         <LandingPoster
           game={{ title: gameName, image: getGameArt(gameName) }}
           className="h-52 rounded-b-none sm:h-56 lg:h-60"
@@ -40,14 +40,15 @@ const DiscoveryCard = ({ gameName, rowLabel, duplicate = false }) => {
             Find squad
           </div>
         </LandingPoster>
-        <div className="space-y-3 p-4">
+        <div className="space-y-3 p-4.5">
           <div>
             <div className="line-clamp-1 text-lg font-black leading-tight text-white">{gameName}</div>
             <div className="mt-2 text-sm text-zinc-400">{cleanRowLabel(rowLabel)}</div>
           </div>
           <div className="flex flex-wrap gap-2 text-xs font-black text-zinc-200">
-            <span className="rounded-full bg-white/[0.075] px-3 py-1">{openLobbies} lobbies</span>
-            <span className="rounded-full bg-white/[0.075] px-3 py-1">{role}</span>
+            <span className="text-clutch-blue">{openLobbies} lobbies</span>
+            <span className="text-zinc-600">/</span>
+            <span className="text-zinc-400">{role}</span>
           </div>
         </div>
       </div>
@@ -56,24 +57,24 @@ const DiscoveryCard = ({ gameName, rowLabel, duplicate = false }) => {
 };
 
 const GameDiscoveryRail = () => (
-  <section className="mx-auto max-w-[1500px] px-4 py-10 sm:px-6 lg:py-14">
+  <section className="mx-auto max-w-[1540px] px-4 py-14 sm:px-6 lg:py-20">
     <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <div className="eyebrow mb-3">Game discovery</div>
-        <h2 className="text-3xl font-black tracking-tight text-white sm:text-5xl">Browse games like you are choosing tonight's queue.</h2>
+        <h2 className="max-w-4xl text-3xl font-black tracking-[-0.04em] text-white sm:text-5xl">Choose the game. See the squad waiting.</h2>
       </div>
       <Link to="/games" className="btn-secondary w-max rounded-xl px-5 py-3">
         Browse all games
       </Link>
     </div>
 
-    <div className="rounded-[36px] border border-white/10 bg-[#17171b] px-4 py-5 sm:px-5 lg:px-6">
-      <div className="space-y-7">
+    <div className="border-y border-white/[0.07] py-7">
+      <div className="space-y-10">
         {discoveryRows.map((row, rowIndex) => (
           <div key={row.label}>
             <div className="mb-4 flex items-center justify-between gap-4">
               <h3 className="text-2xl font-black text-white">{row.label}</h3>
-              <span className="hidden rounded-full bg-white/[0.06] px-3 py-1 text-xs font-black uppercase tracking-[0.22em] text-zinc-400 sm:inline-flex">
+              <span className="hidden text-xs font-black uppercase tracking-[0.22em] text-zinc-500 sm:inline-flex">
                 Live queues
               </span>
             </div>
