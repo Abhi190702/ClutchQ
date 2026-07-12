@@ -62,7 +62,11 @@ const ProfileAccountMenu = ({ user, profile, steamSummary, steamLinked, onLogout
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className={`${isSidebar && !compact ? "w-full justify-start rounded-[18px] border border-white/[0.08] bg-white/[0.03] px-3 py-3" : "rounded-[16px] border border-white/[0.08] bg-white/[0.04] px-2 py-2"} flex items-center gap-2 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] transition hover:border-white/15 hover:bg-white/[0.075]`}
+        className={`${isSidebar && !compact ? "w-full justify-start rounded-[18px] px-3 py-3" : "rounded-[16px] px-2 py-2"} ${
+          open
+            ? "border-clutch-blue/40 bg-[#161a22] ring-1 ring-clutch-blue/20"
+            : "border-white/[0.08] bg-white/[0.035] hover:border-white/15 hover:bg-white/[0.075]"
+        } flex items-center gap-2 border text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] outline-none transition focus-visible:ring-2 focus-visible:ring-clutch-blue/45 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0d12]`}
         aria-expanded={open}
         aria-haspopup="menu"
       >
@@ -79,10 +83,10 @@ const ProfileAccountMenu = ({ user, profile, steamSummary, steamLinked, onLogout
 
       {open && (
         <div
-          className={`${isSidebar ? "bottom-14 left-0" : "right-0 top-14"} absolute z-50 w-[min(380px,calc(100vw-2rem))] overflow-hidden rounded-[24px] border border-white/10 bg-[#15171d]/95 shadow-[0_28px_90px_rgba(0,0,0,0.55)] backdrop-blur-2xl`}
+          className={`${isSidebar ? "bottom-[calc(100%+12px)] left-0" : "right-0 top-[calc(100%+12px)]"} thin-scrollbar absolute z-50 max-h-[calc(100vh-120px)] w-[min(350px,calc(100vw-2rem))] overflow-y-auto rounded-[22px] border border-white/[0.12] bg-[#111319] shadow-[0_34px_100px_rgba(0,0,0,0.78),0_0_0_1px_rgba(255,255,255,0.025)]`}
           role="menu"
         >
-          <div className="bg-[linear-gradient(135deg,rgba(61,187,250,0.1),rgba(255,255,255,0.025))] px-5 py-5">
+          <div className="border-b border-white/[0.07] bg-[#171b23] px-5 py-5">
             <div className="flex items-center gap-3">
               <span className="grid h-12 w-12 place-items-center overflow-hidden rounded-[15px] bg-[#242832] text-sm font-black text-clutch-text ring-1 ring-white/10">
                 {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : getInitials(displayName)}
