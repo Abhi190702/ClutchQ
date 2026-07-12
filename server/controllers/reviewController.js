@@ -1,32 +1,19 @@
 import Review from "../models/Review.js";
-import GamerProfile from "../models/GamerProfile.js";
-import Report from "../models/Report.js";
 import Session from "../models/Session.js";
 import User from "../models/User.js";
+import Lobby from "../models/Lobby.js";
+import GamerProfile from "../models/GamerProfile.js";
 import { asyncHandler } from "../middleware/errorMiddleware.js";
-import calculateTrustScore from "../utils/calculateTrustScore.js";
-import generateBadges from "../utils/badgeEngine.js";
 import mongoose from "mongoose";
-
-const updateReviewedUserScores = async (reviewedUserId) => {
-  const profile = await GamerProfile.findOne({ userId: reviewedUserId });
-  if (!profile) return null;
-
-  const reviews = await Review.find({ reviewedUserId });
-  const validReports = await Report.countDocuments({ reportedUserId: reviewedUserId, status: { $ne: "dismissed" } });
-  const trust = calculateTrustScore({ profile, reviews, validReports });
-
-  profile.trustScore = trust.trustScore;
-  profile.averageRatings = trust.ratingSummary;
-  profile.totalReviews = reviews.length;
-  profile.validReports = validReports;
-  profile.badges = generateBadges({ profile: profile.toObject(), reviews, reportCount: validReports });
-  await profile.save();
-
-  return profile;
-};
+import { recalculateReputation } from "../services/reputationService.js";
+import { isSharedDemoUser } from "../utils/demoAccounts.js";
+import { cleanTextInput, numberInput } from "../utils/inputValue.js";
 
 export const createReview = asyncHandler(async (req, res) => {
+  if (isSharedDemoUser(req.user)) {
+    res.status(403);
+    throw new Error("Shared demo accounts cannot submit trust reviews.");
+  }
   const { reviewedUserId, sessionId, communication, teamwork, skill, punctuality, behavior, comment } = req.body;
 
   if (!reviewedUserId) {
@@ -44,14 +31,14 @@ export const createReview = asyncHandler(async (req, res) => {
     throw new Error("You cannot review yourself");
   }
 
-  const reviewedUser = await User.exists({ _id: reviewedUserId });
+  const reviewedUser = await User.exists({ _id: reviewedUserId, isSuspended: { $ne: true } });
   if (!reviewedUser) {
     res.status(404);
     throw new Error("Reviewed user not found");
   }
 
-  const scores = [communication, teamwork, skill, punctuality, behavior].map(Number);
-  if (scores.some((score) => score < 1 || score > 5 || Number.isNaN(score))) {
+  const scores = [communication, teamwork, skill, punctuality, behavior].map((value) => numberInput(value));
+  if (scores.some((score) => score === undefined || score < 1 || score > 5)) {
     res.status(400);
     throw new Error("All review scores must be between 1 and 5");
   }
@@ -74,6 +61,11 @@ export const createReview = asyncHandler(async (req, res) => {
       throw new Error("Reviews for a session can only be submitted by session teammates");
     }
 
+    if (session.result === "cancelled") {
+      res.status(400);
+      throw new Error("Cancelled sessions cannot be reviewed");
+    }
+
     const duplicate = await Review.findOne({
       reviewerId: req.user._id,
       reviewedUserId,
@@ -84,21 +76,45 @@ export const createReview = asyncHandler(async (req, res) => {
       res.status(409);
       throw new Error("You already reviewed this teammate for this session");
     }
+  } else {
+    const pair = [req.user._id, reviewedUserId];
+    const [sharedSession, sharedLobby, duplicate] = await Promise.all([
+      Session.exists({ "members.userId": { $all: pair }, result: { $ne: "cancelled" } }),
+      Lobby.exists({ "currentMembers.userId": { $all: pair }, status: "closed" }),
+      Review.exists({ reviewerId: req.user._id, reviewedUserId, sessionId: null })
+    ]);
+
+    if (!sharedSession && !sharedLobby) {
+      res.status(403);
+      throw new Error("You can only review players from a completed shared lobby or session");
+    }
+
+    if (duplicate) {
+      res.status(409);
+      throw new Error("You already reviewed this teammate");
+    }
   }
 
   const review = await Review.create({
     reviewerId: req.user._id,
     reviewedUserId,
     sessionId,
-    communication,
-    teamwork,
-    skill,
-    punctuality,
-    behavior,
-    comment: comment ? String(comment).trim().slice(0, 500) : ""
+    communication: scores[0],
+    teamwork: scores[1],
+    skill: scores[2],
+    punctuality: scores[3],
+    behavior: scores[4],
+    comment: cleanTextInput(comment, 500)
   });
 
-  const profile = await updateReviewedUserScores(reviewedUserId);
+  let profile = null;
+  const warnings = [];
+  try {
+    profile = await recalculateReputation(reviewedUserId);
+  } catch {
+    profile = await GamerProfile.findOne({ userId: reviewedUserId });
+    warnings.push("Review saved; reputation will refresh on the next profile or moderation update.");
+  }
 
   res.status(201).json({
     success: true,
@@ -106,16 +122,22 @@ export const createReview = asyncHandler(async (req, res) => {
     data: {
       review,
       profile
-    }
+    },
+    warnings
   });
 });
 
 export const listReviews = asyncHandler(async (req, res) => {
   const userId = req.query.userId || req.user._id;
+  if (!mongoose.isValidObjectId(userId)) {
+    res.status(400);
+    throw new Error("Invalid user");
+  }
   const reviews = await Review.find({ reviewedUserId: userId })
     .populate("reviewerId", "name avatar")
     .populate("reviewedUserId", "name avatar")
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .limit(100);
 
   res.json({
     success: true,

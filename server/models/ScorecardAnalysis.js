@@ -19,16 +19,18 @@ const scorecardAnalysisSchema = new mongoose.Schema(
     },
     gameSlug: {
       type: String,
+      trim: true,
+      maxlength: 80,
       index: true
     },
-    gameName: String,
-    detectedGame: String,
-    gameType: String,
+    gameName: { type: String, trim: true, maxlength: 120 },
+    detectedGame: { type: String, trim: true, maxlength: 120 },
+    gameType: { type: String, trim: true, maxlength: 40 },
     extractedStats: mongoose.Schema.Types.Mixed,
     performance: mongoose.Schema.Types.Mixed,
     situationalSignals: mongoose.Schema.Types.Mixed,
-    summary: [String],
-    warnings: [String],
+    summary: [{ type: String, maxlength: 500 }],
+    warnings: [{ type: String, maxlength: 500 }],
     confidence: {
       type: Number,
       min: 0,

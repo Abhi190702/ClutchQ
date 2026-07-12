@@ -32,15 +32,15 @@ export const createPasswordResetSession = async ({ email, ip, userAgent }) => {
     email: normalizedEmail,
     tokenHash: hashResetToken(resetToken),
     expiresAt: new Date(Date.now() + ttlMinutes() * 60 * 1000),
-    requestIp: ip,
-    userAgent
+    requestIp: String(ip || "").slice(0, 100),
+    userAgent: String(userAgent || "").slice(0, 500)
   });
 
   return { resetToken };
 };
 
 export const verifyPasswordResetSession = async (resetToken) => {
-  if (!resetToken || typeof resetToken !== "string") return { success: false, session: null };
+  if (!resetToken || typeof resetToken !== "string" || resetToken.length > 128) return { success: false, session: null };
 
   const session = await PasswordResetSession.findOne({
     tokenHash: hashResetToken(resetToken),
@@ -52,7 +52,7 @@ export const verifyPasswordResetSession = async (resetToken) => {
 };
 
 export const consumePasswordResetSession = async (resetToken) => {
-  if (!resetToken || typeof resetToken !== "string") return { success: false, session: null };
+  if (!resetToken || typeof resetToken !== "string" || resetToken.length > 128) return { success: false, session: null };
 
   const session = await PasswordResetSession.findOneAndUpdate(
     {

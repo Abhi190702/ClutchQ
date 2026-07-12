@@ -1,3 +1,5 @@
+import { fetchWithTimeout } from "../../utils/fetchWithTimeout.js";
+
 const DISCORD_AUTH_URL = "https://discord.com/oauth2/authorize";
 const DISCORD_TOKEN_URL = "https://discord.com/api/oauth2/token";
 const DISCORD_USER_URL = "https://discord.com/api/users/@me";
@@ -25,7 +27,7 @@ export const buildDiscordAuthUrl = (state) => {
 };
 
 export const exchangeDiscordCodeForToken = async (code) => {
-  const response = await fetch(DISCORD_TOKEN_URL, {
+  const response = await fetchWithTimeout(DISCORD_TOKEN_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
@@ -45,7 +47,7 @@ export const exchangeDiscordCodeForToken = async (code) => {
 };
 
 export const fetchDiscordProfile = async (accessToken) => {
-  const response = await fetch(DISCORD_USER_URL, {
+  const response = await fetchWithTimeout(DISCORD_USER_URL, {
     headers: { Authorization: `Bearer ${accessToken}` }
   });
 
@@ -65,9 +67,8 @@ export const handleDiscordOAuthCallback = async (code) => {
     username: profile.username,
     globalName: profile.global_name,
     email: profile.email,
+    emailVerified: Boolean(profile.verified),
     avatar: getDiscordAvatarUrl(profile),
-    accessToken: tokens.access_token,
-    refreshToken: tokens.refresh_token,
     tokenExpiresAt: tokens.expires_in ? new Date(Date.now() + tokens.expires_in * 1000) : undefined,
     connectedAt: new Date()
   };

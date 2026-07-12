@@ -13,12 +13,13 @@ import {
   syncSteam
 } from "../controllers/steamController.js";
 import { protect } from "../middleware/authMiddleware.js";
+import { steamSyncLimiter } from "../middleware/rateLimiters.js";
 
 const router = express.Router();
 
 router.use(protect);
 router.get("/me", getSteamMe);
-router.post("/sync", syncSteam);
+router.post("/sync", steamSyncLimiter, syncSteam);
 router.get("/sync-status", getSteamSyncStatus);
 router.get("/library", getSteamLibrary);
 router.get("/recent", getSteamRecent);

@@ -1,8 +1,9 @@
 import { calculateAvailabilityOverlap } from "./calculateAvailabilityOverlap.js";
-import { getPrimaryGame, getRankGap, rankGapLabel } from "./rankLogic.js";
+import { getGameForContext, getRankGap, normalizeGameKey, rankGapLabel } from "./rankLogic.js";
 
 const clamp = (value, min = 0, max = 100) => Math.max(min, Math.min(max, value));
-const intersect = (a = [], b = []) => a.filter((item) => b.includes(item));
+const normalizedSet = (values = []) => new Set(values.map((value) => String(value).trim().toLowerCase()).filter(Boolean));
+const hasPlaystyleData = (value) => value && typeof value === "object" && Object.values(value).some((item) => Number.isFinite(Number(item)));
 const averageDifference = (a = {}, b = {}) => {
   const keys = ["aggression", "support", "communication", "consistency", "adaptability"];
   const total = keys.reduce((sum, key) => sum + Math.abs((a[key] || 50) - (b[key] || 50)), 0);
@@ -43,60 +44,70 @@ export const calculateMatchScore = (profileA, profileB, options = {}) => {
   const partials = [];
   const warnings = [];
 
-  const gameA = getPrimaryGame(profileA);
-  const gameB = getPrimaryGame(profileB);
-  const targetGame = options.game || gameA?.gameName;
-  const sameGame = gameA?.gameName && gameB?.gameName && gameA.gameName === gameB.gameName;
+  const targetGame = options.game;
+  const gameA = getGameForContext(profileA, targetGame);
+  const gameB = getGameForContext(profileB, targetGame);
+  const sameGame =
+    gameA?.gameName &&
+    gameB?.gameName &&
+    normalizeGameKey(gameA.gameName) === normalizeGameKey(gameB.gameName);
+  const hasBothGames = Boolean(gameA?.gameName && gameB?.gameName);
 
   addCriterion(
     breakdown,
     "game",
     "Game Match",
-    sameGame ? 25 : targetGame && gameB?.gameName === targetGame ? 18 : 4,
+    sameGame ? 25 : hasBothGames ? 4 : 0,
     25,
-    sameGame ? `Both main ${gameA.gameName}.` : `${profileB.displayName} mains ${gameB?.gameName || "another game"}.`,
-    sameGame ? "matched" : "warning"
+    sameGame ? `Both main ${gameA.gameName}.` : hasBothGames ? `${profileB.displayName} mains ${gameB.gameName}.` : "Primary game data is incomplete.",
+    sameGame ? "matched" : hasBothGames ? "warning" : "missing"
   );
   if (sameGame) positives.push(`Same game: ${gameA.gameName}`);
   else warnings.push("Primary game differs");
 
-  const gap = getRankGap(gameA?.rankValue || 0, gameB?.rankValue || 0);
-  const rankScore = gap <= 2 ? 20 : gap <= 5 ? 14 : gap <= 8 ? 8 : 2;
+  const hasRank = (game) => Boolean(game?.rank && Number.isFinite(Number(game.rankValue)) && Number(game.rankValue) > 0);
+  const hasBothRanks = hasRank(gameA) && hasRank(gameB);
+  const gap = hasBothRanks ? getRankGap(Number(gameA.rankValue), Number(gameB.rankValue)) : null;
+  const rankScore = !hasBothRanks ? 0 : gap <= 2 ? 20 : gap <= 5 ? 14 : gap <= 8 ? 8 : 2;
   addCriterion(
     breakdown,
     "rank",
     "Rank Match",
     rankScore,
     20,
-    `${gameA?.rank || "Unknown"} vs ${gameB?.rank || "Unknown"}: ${rankGapLabel(gap)}.`,
-    gap <= 2 ? "matched" : gap <= 5 ? "partial" : "warning"
+    hasBothRanks ? `${gameA?.rank || "Unranked"} vs ${gameB?.rank || "Unranked"}: ${rankGapLabel(gap)}.` : "Rank data is incomplete.",
+    !hasBothRanks ? "missing" : gap <= 2 ? "matched" : gap <= 5 ? "partial" : "warning"
   );
-  if (gap <= 2) positives.push(`Similar rank: ${gameA.rank} and ${gameB.rank}`);
+  if (!hasBothRanks) warnings.push("Rank data is incomplete");
+  else if (gap <= 2) positives.push(`Similar rank: ${gameA.rank || "Unranked"} and ${gameB.rank || "Unranked"}`);
   else if (gap <= 5) partials.push("Rank gap is playable but not perfect");
   else warnings.push("Rank gap is high");
 
-  const sameRegion = profileA?.region && profileA.region === profileB?.region;
+  const hasBothRegions = Boolean(profileA?.region && profileB?.region);
+  const sameRegion = hasBothRegions && String(profileA.region).trim().toLowerCase() === String(profileB.region).trim().toLowerCase();
   addCriterion(
     breakdown,
     "region",
     "Region Match",
-    sameRegion ? 15 : 4,
+    sameRegion ? 15 : hasBothRegions ? 4 : 0,
     15,
     sameRegion ? `Same region: ${profileA.region}.` : `${profileA?.region || "Unknown"} vs ${profileB?.region || "Unknown"}.`,
-    sameRegion ? "matched" : "warning"
+    sameRegion ? "matched" : hasBothRegions ? "warning" : "missing"
   );
   if (sameRegion) positives.push(`Same region: ${profileA.region}`);
   else warnings.push("Different queue region");
 
-  const sharedLanguages = intersect(profileA?.languages || [], profileB?.languages || []);
+  const hasBothLanguages = Boolean(profileA?.languages?.length && profileB?.languages?.length);
+  const languagesB = normalizedSet(profileB?.languages || []);
+  const sharedLanguages = (profileA?.languages || []).filter((language) => languagesB.has(String(language).trim().toLowerCase()));
   addCriterion(
     breakdown,
     "language",
     "Language Match",
     sharedLanguages.length ? 10 : 0,
     10,
-    sharedLanguages.length ? `Shared language: ${sharedLanguages.join(", ")}.` : "No common language.",
-    sharedLanguages.length ? "matched" : "warning"
+    sharedLanguages.length ? `Shared language: ${sharedLanguages.join(", ")}.` : hasBothLanguages ? "No common language." : "Language data is incomplete.",
+    sharedLanguages.length ? "matched" : hasBothLanguages ? "warning" : "missing"
   );
   if (sharedLanguages.length) positives.push(`Language overlap: ${sharedLanguages.join(", ")}`);
   else warnings.push("No common language");
@@ -117,32 +128,38 @@ export const calculateMatchScore = (profileA, profileB, options = {}) => {
 
   const rolesA = gameA?.roles || [];
   const rolesB = gameB?.roles || [];
-  const roleConflict = rolesA.some((role) => rolesB.includes(role));
-  const complementary = rolesA.length && rolesB.length && !roleConflict;
+  const hasBothRoles = Boolean(rolesA.length && rolesB.length);
+  const normalizedRolesB = normalizedSet(rolesB);
+  const roleConflict = hasBothRoles && rolesA.some((role) => normalizedRolesB.has(String(role).trim().toLowerCase()));
+  const complementary = hasBothRoles && !roleConflict;
   addCriterion(
     breakdown,
     "roles",
     "Role Balance",
-    complementary ? 10 : roleConflict ? 6 : 2,
+    complementary ? 10 : roleConflict ? 6 : 0,
     10,
-    complementary ? `${rolesA.join("/")} pairs well with ${rolesB.join("/")}.` : `Role overlap: ${intersect(rolesA, rolesB).join(", ") || "unclear"}.`,
-    complementary ? "matched" : roleConflict ? "partial" : "warning"
+    complementary
+      ? `${rolesA.join("/")} pairs well with ${rolesB.join("/")}.`
+      : `Role overlap: ${rolesA.filter((role) => normalizedRolesB.has(String(role).trim().toLowerCase())).join(", ") || "unclear"}.`,
+    complementary ? "matched" : roleConflict ? "partial" : "missing"
   );
   if (complementary) positives.push(`Compatible roles: ${rolesA[0]} + ${rolesB[0]}`);
   else partials.push("Possible role conflict");
 
-  const styleGap = averageDifference(profileA?.playstyleStats, profileB?.playstyleStats);
-  const styleScore = styleGap <= 12 ? 5 : styleGap <= 28 ? 3 : 1;
+  const hasBothStyles = hasPlaystyleData(profileA?.playstyleStats) && hasPlaystyleData(profileB?.playstyleStats);
+  const styleGap = hasBothStyles ? averageDifference(profileA.playstyleStats, profileB.playstyleStats) : null;
+  const styleScore = !hasBothStyles ? 0 : styleGap <= 12 ? 5 : styleGap <= 28 ? 3 : 1;
   addCriterion(
     breakdown,
     "playstyle",
     "Playstyle",
     styleScore,
     5,
-    styleGap <= 12 ? "Playstyle profiles are closely aligned." : `Playstyle difference index: ${styleGap}.`,
-    styleGap <= 12 ? "matched" : styleGap <= 28 ? "partial" : "warning"
+    hasBothStyles ? (styleGap <= 12 ? "Playstyle profiles are closely aligned." : `Playstyle difference index: ${styleGap}.`) : "Playstyle data is incomplete.",
+    !hasBothStyles ? "missing" : styleGap <= 12 ? "matched" : styleGap <= 28 ? "partial" : "warning"
   );
-  if (styleGap <= 12) positives.push("Playstyle profiles line up");
+  if (!hasBothStyles) warnings.push("Playstyle data is incomplete");
+  else if (styleGap <= 12) positives.push("Playstyle profiles line up");
   else partials.push("Playstyle may need communication");
 
   const totalScore = clamp(breakdown.reduce((sum, item) => sum + item.score, 0));

@@ -21,6 +21,7 @@ const Login = () => {
 
     if (error === "oauth_failed") showToast("OAuth sign-in failed. Please try again.", "error");
     if (error === "provider_not_configured") showToast("This provider is not configured yet.", "error");
+    if (error === "oauth_link_expired") showToast("Account connection expired. Start it again from your profile.", "error");
 
     if (error) window.history.replaceState({}, "", "/login");
   }, [showToast]);

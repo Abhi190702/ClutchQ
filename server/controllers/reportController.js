@@ -2,10 +2,16 @@ import Report from "../models/Report.js";
 import User from "../models/User.js";
 import { asyncHandler } from "../middleware/errorMiddleware.js";
 import mongoose from "mongoose";
+import { isSharedDemoUser } from "../utils/demoAccounts.js";
+import { cleanTextInput } from "../utils/inputValue.js";
 
 export const createReport = asyncHandler(async (req, res) => {
+  if (isSharedDemoUser(req.user)) {
+    res.status(403);
+    throw new Error("Shared demo accounts cannot submit moderation reports.");
+  }
   const { reportedUserId, reason, details } = req.body;
-  const cleanReason = String(reason || "").trim();
+  const cleanReason = cleanTextInput(reason, 120);
 
   if (!reportedUserId || !cleanReason) {
     res.status(400);
@@ -22,17 +28,28 @@ export const createReport = asyncHandler(async (req, res) => {
     throw new Error("You cannot report yourself");
   }
 
-  const reportedUser = await User.exists({ _id: reportedUserId });
+  const reportedUser = await User.exists({ _id: reportedUserId, isSuspended: { $ne: true } });
   if (!reportedUser) {
     res.status(404);
     throw new Error("Reported user not found");
   }
 
+  const recentDuplicate = await Report.exists({
+    reporterId: req.user._id,
+    reportedUserId,
+    status: "pending",
+    createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+  });
+  if (recentDuplicate) {
+    res.status(409);
+    throw new Error("You already submitted this report for review");
+  }
+
   const report = await Report.create({
     reporterId: req.user._id,
     reportedUserId,
-    reason: cleanReason.slice(0, 120),
-    details: details ? String(details).trim().slice(0, 1000) : ""
+    reason: cleanReason,
+    details: cleanTextInput(details, 1000)
   });
 
   res.status(201).json({

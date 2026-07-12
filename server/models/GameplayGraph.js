@@ -9,15 +9,18 @@ const gameplayGraphSchema = new mongoose.Schema(
     },
     gameplayProfileScore: {
       type: Number,
+      min: 0,
+      max: 100,
       index: true
     },
-    confidence: Number,
+    confidence: { type: Number, min: 0, max: 1 },
     style: mongoose.Schema.Types.Mixed,
     gameProfiles: [mongoose.Schema.Types.Mixed],
     situationalStrengths: [mongoose.Schema.Types.Mixed],
     teammateEdges: [mongoose.Schema.Types.Mixed],
-    recommendations: [String],
+    recommendations: [{ type: String, maxlength: 500 }],
     rhythmSummary: mongoose.Schema.Types.Mixed,
+    rhythmUpdatedAt: Date,
     lastBuiltAt: {
       type: Date,
       index: true

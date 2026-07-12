@@ -2,13 +2,11 @@ import GamerProfile from "../models/GamerProfile.js";
 import GameActivity from "../models/GameActivity.js";
 import GameplayGraph from "../models/GameplayGraph.js";
 import MatchAnalysis from "../models/MatchAnalysis.js";
-import Review from "../models/Review.js";
-import Report from "../models/Report.js";
 import { asyncHandler } from "../middleware/errorMiddleware.js";
-import { normalizeGameRank } from "../utils/rankLogic.js";
-import generateBadges from "../utils/badgeEngine.js";
-import { summarizeReviewRatings } from "../utils/calculateTrustScore.js";
 import { calculatePlayerScore, getSteamIdentityForUser, getSteamSyncStatusForUser } from "../services/steamService.js";
+import { sanitizeProfileUpdate } from "../utils/profileInput.js";
+import { boundedQueryText } from "../utils/queryInput.js";
+import { recalculateReputation } from "../services/reputationService.js";
 
 const completenessFields = [
   "displayName",
@@ -37,18 +35,15 @@ const calculateProfileCompleteness = (payload) => {
 };
 
 const enrichProfileScores = async (profile) => {
-  if (!profile) return null;
-  const reviews = await Review.find({ reviewedUserId: profile.userId });
-  const reportCount = await Report.countDocuments({ reportedUserId: profile.userId, status: { $ne: "dismissed" } });
-  const averageRatings = summarizeReviewRatings(reviews);
-  const badges = generateBadges({ profile: { ...profile.toObject(), averageRatings }, reviews, reportCount });
-
-  profile.averageRatings = averageRatings;
-  profile.totalReviews = reviews.length;
-  profile.badges = badges;
-  await profile.save();
-
-  return profile;
+  if (!profile) return { profile: null, warnings: [] };
+  try {
+    return { profile: await recalculateReputation(profile.userId), warnings: [] };
+  } catch {
+    return {
+      profile,
+      warnings: ["Profile saved; reputation will refresh after the next review or moderation update."]
+    };
+  }
 };
 
 const connectedAccountsForUser = (user) => {
@@ -94,16 +89,33 @@ const buildProfileBundle = async (req) => {
 };
 
 const avatarMimePattern = /^data:image\/(png|jpeg|webp);base64,/;
+const hasImageSignature = (buffer, mime) => {
+  if (mime === "png") return buffer.length >= 8 && buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+  if (mime === "jpeg") return buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+  if (mime === "webp") return buffer.length >= 12 && buffer.toString("ascii", 0, 4) === "RIFF" && buffer.toString("ascii", 8, 12) === "WEBP";
+  return false;
+};
 
 const validateAvatarDataUrl = (dataUrl) => {
-  if (!dataUrl || typeof dataUrl !== "string" || !avatarMimePattern.test(dataUrl)) {
+  if (!dataUrl || typeof dataUrl !== "string") {
     return "Upload a PNG, JPG, or WebP image.";
   }
 
+  const mimeMatch = dataUrl.match(avatarMimePattern);
+  if (!mimeMatch) return "Upload a PNG, JPG, or WebP image.";
+
   const base64 = dataUrl.split(",")[1] || "";
-  const bytes = Math.ceil((base64.length * 3) / 4);
+  if (!base64 || !/^[A-Za-z0-9+/]+={0,2}$/.test(base64) || base64.length % 4 !== 0) {
+    return "Upload a valid PNG, JPG, or WebP image.";
+  }
+
+  const padding = base64.endsWith("==") ? 2 : base64.endsWith("=") ? 1 : 0;
+  const bytes = Math.floor((base64.length * 3) / 4) - padding;
   if (bytes > 500 * 1024) {
     return "Avatar must be 500KB or smaller after compression.";
+  }
+  if (!hasImageSignature(Buffer.from(base64, "base64"), mimeMatch[1])) {
+    return "The uploaded file does not match its PNG, JPG, or WebP type.";
   }
 
   return null;
@@ -128,26 +140,39 @@ export const getCurrentProfile = asyncHandler(async (req, res) => {
 });
 
 export const upsertCurrentProfile = asyncHandler(async (req, res) => {
-  const payload = {
-    ...req.body,
-    userId: req.user._id,
-    games: (req.body.games || []).map(normalizeGameRank)
+  const existing = await GamerProfile.findOne({ userId: req.user._id });
+  const updates = sanitizeProfileUpdate(req.body);
+
+  if (Object.hasOwn(updates, "displayName") && !updates.displayName) {
+    res.status(400);
+    throw new Error("Display name cannot be empty.");
+  }
+
+  const merged = {
+    ...(existing?.toObject() || {}),
+    ...updates,
+    userId: req.user._id
   };
+  updates.profileCompleteness = calculateProfileCompleteness(merged);
 
-  payload.profileCompleteness = calculateProfileCompleteness(payload);
-
-  const profile = await GamerProfile.findOneAndUpdate({ userId: req.user._id }, payload, {
-    upsert: true,
-    new: true,
-    runValidators: true
-  });
+  const profile = await GamerProfile.findOneAndUpdate(
+    { userId: req.user._id },
+    { $set: { ...updates, userId: req.user._id } },
+    {
+      upsert: true,
+      new: true,
+      runValidators: true,
+      setDefaultsOnInsert: true
+    }
+  );
 
   const enriched = await enrichProfileScores(profile);
 
   res.json({
     success: true,
     message: "Profile saved successfully",
-    data: enriched
+    data: enriched.profile,
+    warnings: enriched.warnings
   });
 });
 
@@ -211,7 +236,10 @@ export const getProfilePlayerScore = asyncHandler(async (req, res) => {
 });
 
 export const listProfiles = asyncHandler(async (req, res) => {
-  const { game, region, language, role } = req.query;
+  const game = boundedQueryText(req.query.game);
+  const region = boundedQueryText(req.query.region);
+  const language = boundedQueryText(req.query.language, 40);
+  const role = boundedQueryText(req.query.role, 50);
   const query = {};
 
   if (region) query.region = region;
@@ -219,22 +247,25 @@ export const listProfiles = asyncHandler(async (req, res) => {
   if (game) query["games.gameName"] = game;
   if (role) query["games.roles"] = role;
 
+  const requestedLimit = Number.parseInt(req.query.limit, 10);
+  const limit = Number.isFinite(requestedLimit) ? Math.max(1, Math.min(80, requestedLimit)) : 80;
   const profiles = await GamerProfile.find(query)
-    .populate("userId", "name email avatar role isSuspended")
+    .select("-customAvatar.dataUrl")
+    .populate({ path: "userId", select: "name avatar role isSuspended", match: { isSuspended: { $ne: true } } })
     .sort({ trustScore: -1, reliabilityScore: -1 })
-    .limit(80);
+    .limit(limit);
 
   res.json({
     success: true,
     message: "Profiles loaded",
-    data: profiles
+    data: profiles.filter((profile) => profile.userId)
   });
 });
 
 export const getProfileById = asyncHandler(async (req, res) => {
-  const profile = await GamerProfile.findById(req.params.id).populate("userId", "name email avatar role createdAt");
+  const profile = await GamerProfile.findById(req.params.id).populate("userId", "name avatar role createdAt isSuspended");
 
-  if (!profile) {
+  if (!profile || !profile.userId || profile.userId.isSuspended) {
     res.status(404);
     throw new Error("Profile not found");
   }
@@ -247,9 +278,9 @@ export const getProfileById = asyncHandler(async (req, res) => {
 });
 
 export const getProfileByUserId = asyncHandler(async (req, res) => {
-  const profile = await GamerProfile.findOne({ userId: req.params.userId }).populate("userId", "name email avatar role createdAt");
+  const profile = await GamerProfile.findOne({ userId: req.params.userId }).populate("userId", "name avatar role createdAt isSuspended");
 
-  if (!profile) {
+  if (!profile || !profile.userId || profile.userId.isSuspended) {
     res.status(404);
     throw new Error("Profile not found");
   }

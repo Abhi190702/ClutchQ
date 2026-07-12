@@ -6,12 +6,14 @@ const externalGameMetadataSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      lowercase: true
+      lowercase: true,
+      maxlength: 80
     },
     title: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
+      maxlength: 160
     },
     source: {
       type: String,
@@ -19,14 +21,14 @@ const externalGameMetadataSchema = new mongoose.Schema(
       default: "catalog",
       index: true
     },
-    coverUrl: String,
-    bannerUrl: String,
-    screenshots: [String],
-    genres: [String],
-    platforms: [String],
+    coverUrl: { type: String, maxlength: 2048 },
+    bannerUrl: { type: String, maxlength: 2048 },
+    screenshots: [{ type: String, maxlength: 2048 }],
+    genres: [{ type: String, maxlength: 60 }],
+    platforms: [{ type: String, maxlength: 60 }],
     releaseDate: Date,
-    developer: String,
-    publisher: String,
+    developer: { type: String, maxlength: 160 },
+    publisher: { type: String, maxlength: 160 },
     raw: mongoose.Schema.Types.Mixed,
     lastSyncedAt: {
       type: Date,

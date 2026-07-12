@@ -3,10 +3,34 @@ const localHostnames = new Set(["localhost", "127.0.0.1", "::1"]);
 const isLocalBrowser =
   typeof window !== "undefined" && localHostnames.has(window.location.hostname);
 
-const configuredApiUrl = cleanUrl(import.meta.env.VITE_API_URL);
-const localApiUrl = cleanUrl(import.meta.env.VITE_LOCAL_API_URL) || "http://localhost:5000/api";
+const normalizeApiUrl = (value) => {
+  const cleaned = cleanUrl(value);
+  if (!cleaned) return "";
+  try {
+    const url = new URL(cleaned);
+    if (!["http:", "https:"].includes(url.protocol)) return "";
+    if (url.pathname === "/") url.pathname = "/api";
+    return url.toString().replace(/\/$/, "");
+  } catch {
+    return "";
+  }
+};
+
+const isLocalApiUrl = (value) => {
+  try {
+    return localHostnames.has(new URL(value).hostname);
+  } catch {
+    return false;
+  }
+};
+
+const rawConfiguredApiUrl = normalizeApiUrl(import.meta.env.VITE_API_URL);
+const configuredApiUrl = !isLocalBrowser && isLocalApiUrl(rawConfiguredApiUrl) ? "" : rawConfiguredApiUrl;
+const localApiUrl = normalizeApiUrl(import.meta.env.VITE_LOCAL_API_URL) || "http://localhost:5000/api";
+const rawProductionApiUrl = normalizeApiUrl(import.meta.env.VITE_PRODUCTION_API_URL);
+const configuredProductionApiUrl = !isLocalBrowser && isLocalApiUrl(rawProductionApiUrl) ? "" : rawProductionApiUrl;
 const productionApiUrl =
-  cleanUrl(import.meta.env.VITE_PRODUCTION_API_URL) ||
+  configuredProductionApiUrl ||
   configuredApiUrl ||
   "https://clutchq-backend.onrender.com/api";
 

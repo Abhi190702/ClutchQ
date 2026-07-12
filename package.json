@@ -2,6 +2,9 @@
   "name": "clutchq",
   "version": "1.0.0",
   "description": "Skill-based gaming squad matchmaking platform",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "scripts": {
     "install-all": "npm install && cd client && npm install && cd ../server && npm install",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
@@ -15,6 +18,7 @@
     "sync:external-games": "cd server && npm run sync:external-games",
     "clear": "cd server && npm run clear",
     "build": "cd client && npm run build",
+    "test": "cd server && npm test",
     "serve": "node serve-dist.cjs"
   },
   "devDependencies": {

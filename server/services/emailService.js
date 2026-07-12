@@ -1,18 +1,27 @@
 import nodemailer from "nodemailer";
+import { isProductionRuntime } from "../utils/runtimeEnv.js";
 
-const isProduction = () => process.env.NODE_ENV === "production";
+const isProduction = isProductionRuntime;
 const configured = () => Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
 
-const createTransport = () =>
-  nodemailer.createTransport({
+let transport = null;
+
+const createTransport = () => {
+  if (transport) return transport;
+  transport = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT || 587),
     secure: Number(process.env.SMTP_PORT || 587) === 465,
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS
-    }
+    },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000
   });
+  return transport;
+};
 
 const purposeLabel = (purpose) => {
   if (purpose === "password_reset") return "password reset";

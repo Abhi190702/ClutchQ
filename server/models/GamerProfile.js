@@ -1,12 +1,15 @@
 import mongoose from "mongoose";
 
+const boundedScore = { type: Number, min: 0, max: 100 };
+const boundedRating = { type: Number, default: 0, min: 0, max: 5 };
+
 const gameSchema = new mongoose.Schema(
   {
-    gameName: String,
-    rank: String,
-    rankValue: Number,
-    roles: [String],
-    playstyle: String,
+    gameName: { type: String, trim: true, maxlength: 100 },
+    rank: { type: String, trim: true, maxlength: 50 },
+    rankValue: { type: Number, min: 0 },
+    roles: [{ type: String, trim: true, maxlength: 50 }],
+    playstyle: { type: String, trim: true, maxlength: 60 },
     isPrimary: Boolean
   },
   { _id: false }
@@ -14,37 +17,37 @@ const gameSchema = new mongoose.Schema(
 
 const availabilitySchema = new mongoose.Schema(
   {
-    day: Number,
-    hour: Number
+    day: { type: Number, min: 0, max: 6 },
+    hour: { type: Number, min: 0, max: 23 }
   },
   { _id: false }
 );
 
 const playstyleStatsSchema = new mongoose.Schema(
   {
-    aggression: { type: Number, default: 50 },
-    support: { type: Number, default: 50 },
-    communication: { type: Number, default: 50 },
-    consistency: { type: Number, default: 50 },
-    adaptability: { type: Number, default: 50 }
+    aggression: boundedScore,
+    support: boundedScore,
+    communication: boundedScore,
+    consistency: boundedScore,
+    adaptability: boundedScore
   },
   { _id: false }
 );
 
 const averageRatingsSchema = new mongoose.Schema(
   {
-    communication: { type: Number, default: 0 },
-    teamwork: { type: Number, default: 0 },
-    skill: { type: Number, default: 0 },
-    punctuality: { type: Number, default: 0 },
-    behavior: { type: Number, default: 0 }
+    communication: boundedRating,
+    teamwork: boundedRating,
+    skill: boundedRating,
+    punctuality: boundedRating,
+    behavior: boundedRating
   },
   { _id: false }
 );
 
 const customAvatarSchema = new mongoose.Schema(
   {
-    dataUrl: String,
+    dataUrl: { type: String, maxlength: 700000 },
     uploadedAt: Date
   },
   { _id: false }
@@ -58,17 +61,9 @@ const gamerProfileSchema = new mongoose.Schema(
       required: true,
       unique: true
     },
-    displayName: String,
-    clutchTag: {
-      type: String,
-      trim: true,
-      index: true
-    },
-    playerCode: {
-      type: String,
-      trim: true,
-      index: true
-    },
+    displayName: { type: String, trim: true, maxlength: 60 },
+    clutchTag: { type: String, trim: true, maxlength: 80, index: true },
+    playerCode: { type: String, trim: true, maxlength: 80, index: true },
     gameHandles: {
       type: Map,
       of: String,
@@ -78,56 +73,32 @@ const gamerProfileSchema = new mongoose.Schema(
       type: customAvatarSchema,
       default: undefined
     },
-    bio: String,
-    region: String,
-    country: String,
-    languages: [String],
+    bio: { type: String, trim: true, maxlength: 500 },
+    region: { type: String, trim: true, maxlength: 80 },
+    country: { type: String, trim: true, maxlength: 80 },
+    languages: [{ type: String, trim: true, maxlength: 40 }],
     micAvailable: Boolean,
-    discordTag: String,
-    lookingFor: [String],
+    discordTag: { type: String, trim: true, maxlength: 80 },
+    lookingFor: [{ type: String, trim: true, maxlength: 60 }],
     games: [gameSchema],
     availability: [availabilitySchema],
     playstyleStats: {
       type: playstyleStatsSchema,
-      default: () => ({})
+      default: undefined
     },
-    trustScore: {
-      type: Number,
-      default: 70
-    },
-    reliabilityScore: {
-      type: Number,
-      default: 80
-    },
-    totalReviews: {
-      type: Number,
-      default: 0
-    },
-    completedSessions: {
-      type: Number,
-      default: 0
-    },
-    noShows: {
-      type: Number,
-      default: 0
-    },
-    createdLobbies: {
-      type: Number,
-      default: 0
-    },
-    validReports: {
-      type: Number,
-      default: 0
-    },
+    trustScore: { type: Number, default: 70, min: 0, max: 100 },
+    reliabilityScore: { type: Number, default: 80, min: 0, max: 100 },
+    totalReviews: { type: Number, default: 0, min: 0 },
+    completedSessions: { type: Number, default: 0, min: 0 },
+    noShows: { type: Number, default: 0, min: 0 },
+    createdLobbies: { type: Number, default: 0, min: 0 },
+    validReports: { type: Number, default: 0, min: 0 },
     averageRatings: {
       type: averageRatingsSchema,
       default: () => ({})
     },
-    badges: [String],
-    profileCompleteness: {
-      type: Number,
-      default: 0
-    }
+    badges: [{ type: String, trim: true, maxlength: 80 }],
+    profileCompleteness: { type: Number, default: 0, min: 0, max: 100 }
   },
   { timestamps: true }
 );

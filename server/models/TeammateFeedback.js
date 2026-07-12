@@ -12,6 +12,10 @@ const teammateFeedbackSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Lobby"
     },
+    roomId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "GameRoom"
+    },
     fromUserId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -50,6 +54,7 @@ const teammateFeedbackSchema = new mongoose.Schema(
 
 teammateFeedbackSchema.index({ sessionId: 1, fromUserId: 1, toUserId: 1 }, { unique: true });
 teammateFeedbackSchema.index({ toUserId: 1, createdAt: -1 });
+teammateFeedbackSchema.index({ roomId: 1, createdAt: -1 });
 
 const TeammateFeedback = mongoose.model("TeammateFeedback", teammateFeedbackSchema);
 

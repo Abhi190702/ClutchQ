@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import Toast from "../components/common/Toast";
 
 const ToastContext = createContext(null);
@@ -10,17 +10,26 @@ export const ToastProvider = ({ children }) => {
     setToasts((current) => current.filter((toast) => toast.id !== id));
   }, []);
 
+  const showToast = useCallback((message, type = "success") => {
+    const id = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+    setToasts((current) => [...current, { id, message, type }]);
+    window.setTimeout(() => {
+      dismissToast(id);
+    }, 3200);
+  }, [dismissToast]);
+
+  useEffect(() => {
+    const handleToast = (event) => {
+      if (!event.detail?.message) return;
+      showToast(event.detail.message, event.detail.type || "info");
+    };
+    window.addEventListener("clutchq:toast", handleToast);
+    return () => window.removeEventListener("clutchq:toast", handleToast);
+  }, [showToast]);
+
   const value = useMemo(
-    () => ({
-      showToast: (message, type = "success") => {
-        const id = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
-        setToasts((current) => [...current, { id, message, type }]);
-        window.setTimeout(() => {
-          dismissToast(id);
-        }, 3200);
-      }
-    }),
-    [dismissToast]
+    () => ({ showToast }),
+    [showToast]
   );
 
   return (

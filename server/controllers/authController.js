@@ -5,22 +5,30 @@ import User from "../models/User.js";
 import GamerProfile from "../models/GamerProfile.js";
 import generateToken from "../utils/generateToken.js";
 import { asyncHandler } from "../middleware/errorMiddleware.js";
-import { createDemoProfile } from "../utils/seedData.js";
+import { createDemoProfile, demoAccounts } from "../utils/seedData.js";
 import { buildDiscordAuthUrl, handleDiscordOAuthCallback, isDiscordOAuthConfigured } from "../services/oauth/discordOAuthService.js";
 import { buildGoogleAuthUrl, handleGoogleOAuthCallback, isGoogleOAuthConfigured } from "../services/oauth/googleOAuthService.js";
 import { sendOtpEmail } from "../services/emailService.js";
 import { createOtp, invalidateOtps, verifyOtp } from "../services/otpService.js";
 import {
   consumePasswordResetSession,
-  createPasswordResetSession,
-  verifyPasswordResetSession
+  createPasswordResetSession
 } from "../services/passwordResetSessionService.js";
-import { buildSteamAuthUrl, getPlayerSummary, verifySteamOpenId } from "../services/steamService.js";
+import {
+  buildSteamAuthUrl,
+  getPlayerSummary,
+  removeStaleSteamAccountData,
+  verifySteamOpenId
+} from "../services/steamService.js";
 import { verifyTurnstileToken } from "../services/turnstileService.js";
 import { getJwtSecret } from "../utils/validateEnv.js";
+import { isLocalDevelopment } from "../utils/runtimeEnv.js";
+import { consumeOAuthLoginCode, createOAuthLoginCode } from "../services/oauthLoginCodeService.js";
+import { isSharedDemoEmail as isDemoEmail } from "../utils/demoAccounts.js";
+import { cleanTextInput } from "../utils/inputValue.js";
 
-const isLocalDev = process.env.npm_lifecycle_event === "dev" || process.env.NODE_ENV === "development";
-const useSecureCookies = process.env.NODE_ENV === "production" && !isLocalDev;
+const isLocalDev = isLocalDevelopment();
+const useSecureCookies = !isLocalDev;
 
 const cookieOptions = {
   httpOnly: true,
@@ -35,23 +43,59 @@ const oauthStateCookieOptions = {
   sameSite: "lax",
   secure: useSecureCookies
 };
+const oauthStateClearOptions = {
+  httpOnly: true,
+  sameSite: oauthStateCookieOptions.sameSite,
+  secure: oauthStateCookieOptions.secure
+};
 
 const oauthStateCookieName = (provider) => `clutchq_${provider}_oauth_state`;
 const oauthReturnCookieName = (provider) => `clutchq_${provider}_oauth_return_to`;
 const oauthNextCookieName = (provider) => `clutchq_${provider}_oauth_next`;
+const oauthLinkCookieName = (provider) => `clutchq_${provider}_oauth_link`;
 const DEMO_EMAIL = "demo@clutchq.com";
 const DEMO_PASSWORD = "demo123";
-const DEMO_EMAILS = new Set(["demo@clutchq.com", "captain@clutchq.com", "sentinel@clutchq.com", "flex@clutchq.com"]);
+const DUMMY_PASSWORD_HASH = "$2a$10$zS5JSaSUOCHlYZ/pgXexUOAUlfCjvMy22RDAIg/pmGAtuV1Lqy4Hq";
 const MAX_FAILED_LOGIN_ATTEMPTS = 10;
 const LOGIN_LOCK_MS = 15 * 60 * 1000;
 const OTP_PUBLIC_MESSAGE = "If this email can receive a code, an OTP has been sent.";
-const PUBLIC_OTP_PURPOSES = new Set(["email_verification", "password_reset"]);
+const MAX_PASSWORD_BYTES = 72;
+const PUBLIC_OTP_PURPOSES = new Set(["email_verification"]);
+const LINKABLE_OAUTH_PROVIDERS = new Set(["google", "discord", "steam"]);
 const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
 const safeNextPath = (value) => (typeof value === "string" && value.startsWith("/") && !value.startsWith("//") ? value : null);
-const isDemoEmail = (email) => DEMO_EMAILS.has(normalizeEmail(email));
-const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizeEmail(email));
+const isValidEmail = (email) => {
+  const normalized = normalizeEmail(email);
+  return normalized.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized);
+};
+const cleanPersonName = (value) => cleanTextInput(value, 80);
+const cleanExternalUrl = (value) => {
+  const text = String(value || "").trim();
+  if (!text || text.length > 2048) return undefined;
+  try {
+    const parsed = new URL(text);
+    return parsed.protocol === "https:" ? parsed.toString() : undefined;
+  } catch {
+    return undefined;
+  }
+};
+const resetSharedDemoProfile = async (user) => {
+  const index = demoAccounts.findIndex((account) => normalizeEmail(account.email) === normalizeEmail(user?.email));
+  if (index < 0) return null;
+  return GamerProfile.findOneAndUpdate(
+    { userId: user._id },
+    {
+      $set: createDemoProfile(user._id, demoAccounts[index], index),
+      $unset: { customAvatar: "" }
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true, runValidators: true }
+  );
+};
+const validPasswordInput = (password) =>
+  typeof password === "string" && Buffer.byteLength(password, "utf8") > 0 && Buffer.byteLength(password, "utf8") <= MAX_PASSWORD_BYTES;
 const strongEnoughPassword = (password) => {
-  const value = String(password || "");
+  if (!validPasswordInput(password)) return false;
+  const value = password;
   const lower = value.toLowerCase();
   const weak = new Set(["password", "password123", "12345678", "qwerty123", "admin123"]);
   return value.length >= 8 && /[a-z]/i.test(value) && /\d/.test(value) && !weak.has(lower);
@@ -76,7 +120,7 @@ const verifyPublicTurnstile = async (req) => {
 
 const createAndSendOtpIfEligible = async ({ req, email, purpose }) => {
   const normalizedEmail = normalizeEmail(email);
-  const user = await User.findOne({ email: normalizedEmail });
+  const user = await User.findOne({ email: normalizedEmail }).select("+passwordHash");
   const eligible =
     purpose === "email_verification"
       ? Boolean(user && !user.emailVerified)
@@ -97,7 +141,13 @@ const createAndSendOtpIfEligible = async ({ req, email, purpose }) => {
     return { sent: false, cooldown: true, retryAfterSeconds: created.retryAfterSeconds };
   }
 
-  await sendOtpEmail({ to: normalizedEmail, otp: created.otp, purpose });
+  try {
+    await sendOtpEmail({ to: normalizedEmail, otp: created.otp, purpose });
+  } catch (error) {
+    await invalidateOtps(normalizedEmail, purpose);
+    console.error(`[${req.id || "no-request-id"}] OTP delivery failed:`, error.message);
+    return { sent: false, deliveryFailed: true };
+  }
   return { sent: true, resendSeconds: created.resendSeconds, ttlMinutes: created.ttlMinutes };
 };
 
@@ -127,7 +177,7 @@ const originFromValue = (value) => {
 const isLocalOrigin = (origin) => {
   try {
     const url = new URL(origin);
-    return ["localhost", "127.0.0.1", "::1"].includes(url.hostname);
+    return isLocalDev && ["localhost", "127.0.0.1", "::1"].includes(url.hostname);
   } catch {
     return false;
   }
@@ -139,11 +189,10 @@ const configuredClientOrigin = () =>
 const allowedClientOrigins = () =>
   new Set(
     [
-      "http://localhost:5173",
-      "http://localhost:5174",
+      ...(isLocalDev ? ["http://localhost:5173", "http://localhost:5174"] : []),
       "https://clutch-q.vercel.app",
       process.env.CLIENT_URL,
-      process.env.LOCAL_CLIENT_URL,
+      ...(isLocalDev ? [process.env.LOCAL_CLIENT_URL] : []),
       ...(process.env.ALLOWED_CLIENT_ORIGINS || "").split(",")
     ]
       .map((value) => originFromValue(value))
@@ -160,14 +209,14 @@ const getRequestClientOrigin = (req) => {
 const getStoredClientOrigin = (req, res, provider) => {
   const cookieName = oauthReturnCookieName(provider);
   const stored = originFromValue(req.cookies?.[cookieName]);
-  res.clearCookie(cookieName, oauthStateCookieOptions);
+  res.clearCookie(cookieName, oauthStateClearOptions);
   return isAllowedClientOrigin(stored) ? stored : configuredClientOrigin();
 };
 
 const getStoredNextPath = (req, res, provider) => {
   const cookieName = oauthNextCookieName(provider);
   const stored = safeNextPath(req.cookies?.[cookieName]);
-  res.clearCookie(cookieName, oauthStateCookieOptions);
+  res.clearCookie(cookieName, oauthStateClearOptions);
   return stored;
 };
 
@@ -175,8 +224,39 @@ const getClientRedirect = (path, clientOrigin = configuredClientOrigin()) => `${
 
 const redirectOAuthError = (req, res, provider, error = "oauth_failed") => {
   const clientOrigin = provider ? getStoredClientOrigin(req, res, provider) : getRequestClientOrigin(req);
-  if (provider) getStoredNextPath(req, res, provider);
+  if (provider) {
+    getStoredNextPath(req, res, provider);
+    res.clearCookie(oauthLinkCookieName(provider), oauthStateClearOptions);
+  }
   res.redirect(getClientRedirect(`/login?error=${encodeURIComponent(error)}`, clientOrigin));
+};
+
+export const prepareOAuthLinkCookie = async (req, res, provider) => {
+  const linkCode = typeof req.query.linkCode === "string" ? req.query.linkCode : "";
+  if (!linkCode) {
+    res.clearCookie(oauthLinkCookieName(provider), oauthStateClearOptions);
+    return true;
+  }
+  const session = await consumeOAuthLoginCode(linkCode, { purpose: "link", provider });
+  if (!session) return false;
+
+  const linkToken = jwt.sign(
+    {
+      id: String(session.userId),
+      version: Number(session.tokenVersion) || 0,
+      purpose: "oauth-link",
+      provider
+    },
+    getJwtSecret(),
+    {
+      algorithm: "HS256",
+      issuer: "clutchq-api",
+      audience: "clutchq-oauth-link",
+      expiresIn: "10m"
+    }
+  );
+  res.cookie(oauthLinkCookieName(provider), linkToken, oauthStateCookieOptions);
+  return true;
 };
 
 const createOAuthState = (req, res, provider) => {
@@ -190,13 +270,15 @@ const createOAuthState = (req, res, provider) => {
 
 const verifyOAuthState = (req, res, provider) => {
   const cookieName = oauthStateCookieName(provider);
-  const expectedState = req.cookies?.[cookieName];
-  res.clearCookie(cookieName, oauthStateCookieOptions);
-  return Boolean(expectedState && req.query.state && expectedState === req.query.state);
+  const expectedState = String(req.cookies?.[cookieName] || "");
+  const returnedState = typeof req.query.state === "string" ? req.query.state : "";
+  res.clearCookie(cookieName, oauthStateClearOptions);
+  if (!expectedState || expectedState.length !== returnedState.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(expectedState), Buffer.from(returnedState));
 };
 
 const issueToken = (res, user) => {
-  const token = generateToken(user._id);
+  const token = generateToken(user._id, user.tokenVersion);
   res.cookie("token", token, cookieOptions);
   return token;
 };
@@ -216,95 +298,209 @@ const authResponse = async (res, user, message) => {
   });
 };
 
-const findUserForProvider = async (provider, providerId, email) => {
+const findUserForProvider = async (provider, providerId, email, emailVerified = false) => {
   const providerPath = `authProviders.${provider}.id`;
   const byProvider = await User.findOne({ [providerPath]: providerId });
   if (byProvider) return byProvider;
-  if (!email) return null;
+  if (!email || !emailVerified) return null;
   return User.findOne({ email: email.toLowerCase() });
 };
 
-const createOrUpdateOAuthUser = async ({ provider, providerData }) => {
-  const fallbackEmail = providerData.email || `${provider}-${providerData.id}@${provider}.clutchq.local`;
-  const user = await findUserForProvider(provider, providerData.id, fallbackEmail);
-  const name = providerData.name || providerData.globalName || providerData.username || fallbackEmail.split("@")[0];
+const createOrUpdateOAuthUser = async ({ provider, providerData, req }) => {
+  const providerId = String(providerData.id || "").trim().slice(0, 200);
+  if (!providerId) {
+    const error = new Error("OAuth provider did not return a valid account identifier.");
+    error.statusCode = 400;
+    throw error;
+  }
+  const candidateEmail = normalizeEmail(providerData.email);
+  const verifiedEmail = providerData.emailVerified && isValidEmail(candidateEmail) ? candidateEmail : "";
+  const fallbackEmail = verifiedEmail || `${provider}-${providerId}@${provider}.clutchq.local`;
+  const user = await findUserForProvider(provider, providerId, verifiedEmail, Boolean(verifiedEmail));
+  const name = cleanPersonName(providerData.name || providerData.globalName || providerData.username || fallbackEmail.split("@")[0]);
+  const existingProviderOwner = await User.findOne({ [`authProviders.${provider}.id`]: providerId });
+  const linkUser = await getLinkUserFromRequest(req, provider);
+
+  if (linkUser && isDemoEmail(linkUser.email)) {
+    const error = new Error("External accounts cannot be connected to the shared demo profile.");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  if (linkUser && existingProviderOwner && String(existingProviderOwner._id) !== String(linkUser._id)) {
+    const error = new Error(`This ${provider} account is already connected to another ClutchQ account.`);
+    error.statusCode = 409;
+    throw error;
+  }
+
+  if (linkUser && verifiedEmail) {
+    const emailOwner = await User.findOne({ email: verifiedEmail, _id: { $ne: linkUser._id } }).select("_id");
+    if (emailOwner) {
+      const error = new Error("That verified email belongs to another ClutchQ account.");
+      error.statusCode = 409;
+      throw error;
+    }
+  }
+
+  const targetUser = linkUser || user;
+  const previousProvider = targetUser?.authProviders?.[provider] || {};
+  const cleanProviderData = {
+    ...providerData,
+    id: providerId,
+    email: verifiedEmail || normalizeEmail(providerData.email) || undefined,
+    avatar: cleanExternalUrl(providerData.avatar),
+    connectedAt: previousProvider.connectedAt || providerData.connectedAt || new Date()
+  };
+
+  if (linkUser) {
+    const canAdoptVerifiedEmail = verifiedEmail && String(linkUser.email || "").endsWith(".clutchq.local");
+    linkUser.name = linkUser.name || name;
+    if (canAdoptVerifiedEmail) linkUser.email = verifiedEmail;
+    linkUser.avatar = linkUser.avatar || cleanProviderData.avatar;
+    if (verifiedEmail && (canAdoptVerifiedEmail || normalizeEmail(linkUser.email) === verifiedEmail)) {
+      linkUser.emailVerified = true;
+      linkUser.emailVerifiedAt = linkUser.emailVerifiedAt || new Date();
+    }
+    linkUser.authProviders = {
+      ...(linkUser.authProviders?.toObject?.() || linkUser.authProviders || {}),
+      [provider]: cleanProviderData
+    };
+    await linkUser.save();
+    return linkUser;
+  }
 
   if (user) {
+    if (verifiedEmail && String(user.email || "").endsWith(".clutchq.local")) {
+      const emailOwner = await User.exists({ email: verifiedEmail, _id: { $ne: user._id } });
+      if (!emailOwner) user.email = verifiedEmail;
+    }
     user.name = user.name || name;
     user.email = user.email || fallbackEmail;
-    user.avatar = providerData.avatar || user.avatar;
-    user.emailVerified = true;
-    user.emailVerifiedAt = user.emailVerifiedAt || new Date();
+    user.avatar = cleanProviderData.avatar || user.avatar;
+    user.emailVerified = user.emailVerified || Boolean(verifiedEmail && normalizeEmail(user.email) === verifiedEmail);
+    user.emailVerifiedAt = user.emailVerified ? user.emailVerifiedAt || new Date() : undefined;
     user.authProviders = {
       ...(user.authProviders?.toObject?.() || user.authProviders || {}),
-      [provider]: providerData
+      [provider]: cleanProviderData
     };
     await user.save();
     return user;
   }
 
-  return User.create({
-    name,
-    email: fallbackEmail,
-    avatar: providerData.avatar,
-    emailVerified: true,
-    emailVerifiedAt: new Date(),
-    authProviders: {
-      [provider]: providerData
-    }
-  });
-};
-
-const redirectOAuthSuccess = (req, res, provider, user, nextPath = null) => {
-  const clientOrigin = provider ? getStoredClientOrigin(req, res, provider) : getRequestClientOrigin(req);
-  const token = issueToken(res, user);
-  const params = new URLSearchParams({ token });
-  const safeNext = safeNextPath(nextPath) || (provider ? getStoredNextPath(req, res, provider) : null) || safeNextPath(req.query.next);
-  if (safeNext) params.set("next", safeNext);
-  res.redirect(getClientRedirect(`/oauth/success?${params.toString()}`, clientOrigin));
-};
-
-const getLinkUserFromRequest = async (req) => {
-  const token = req.cookies?.token || req.query.linkToken;
-  if (!token) return null;
-
   try {
-    const decoded = jwt.verify(token, getJwtSecret());
-    return User.findById(decoded.id);
-  } catch {
-    return null;
+    return await User.create({
+      name,
+      email: fallbackEmail,
+      avatar: cleanProviderData.avatar,
+      emailVerified: Boolean(verifiedEmail),
+      emailVerifiedAt: verifiedEmail ? new Date() : undefined,
+      authProviders: {
+        [provider]: cleanProviderData
+      }
+    });
+  } catch (error) {
+    if (error?.code !== 11000) throw error;
+    const winner = await findUserForProvider(provider, providerId, verifiedEmail, Boolean(verifiedEmail));
+    if (winner) return winner;
+    throw error;
   }
 };
 
+const redirectOAuthSuccess = async (req, res, provider, user, nextPath = null) => {
+  const clientOrigin = provider ? getStoredClientOrigin(req, res, provider) : getRequestClientOrigin(req);
+  const code = await createOAuthLoginCode(user._id, { tokenVersion: user.tokenVersion });
+  const params = new URLSearchParams({ code });
+  const safeNext = safeNextPath(nextPath) || (provider ? getStoredNextPath(req, res, provider) : null) || safeNextPath(req.query.next);
+  if (safeNext) params.set("next", safeNext);
+  if (provider) res.clearCookie(oauthLinkCookieName(provider), oauthStateClearOptions);
+  res.redirect(getClientRedirect(`/oauth/success?${params.toString()}`, clientOrigin));
+};
+
+export const getLinkUserFromRequest = async (req, provider) => {
+  const linkToken = provider ? req?.cookies?.[oauthLinkCookieName(provider)] : null;
+  if (linkToken) {
+    try {
+      const decoded = jwt.verify(linkToken, getJwtSecret(), {
+        algorithms: ["HS256"],
+        issuer: "clutchq-api",
+        audience: "clutchq-oauth-link"
+      });
+      if (decoded.purpose === "oauth-link" && decoded.provider === provider) {
+        const linkUser = await User.findById(decoded.id);
+        if (
+          linkUser &&
+          !linkUser.isSuspended &&
+          (Number(decoded.version) || 0) === (Number(linkUser.tokenVersion) || 0)
+        ) {
+          return linkUser;
+        }
+      }
+    } catch {
+      // Handled below with the same safe error as any invalid link handoff.
+    }
+    const error = new Error("OAuth account connection expired. Start the connection again.");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  // Normal OAuth sign-in must never become an account-link operation merely
+  // because the browser still has a ClutchQ session cookie. Linking is allowed
+  // only through the short-lived, provider-bound handoff created by the
+  // authenticated /oauth/link-code route.
+  return null;
+};
+
 const createOrUpdateSteamUser = async ({ req, steamId, summary }) => {
-  const linkUser = await getLinkUserFromRequest(req);
-  const steamData = {
+  const linkUser = await getLinkUserFromRequest(req, "steam");
+  const existingSteamOwner = await User.findOne({ "authProviders.steam.steamId": steamId });
+  const buildSteamData = (existingProvider = {}) => ({
     steamId,
-    displayName: summary?.personaname || `Steam ${steamId.slice(-6)}`,
-    avatar: summary?.avatarfull || summary?.avatarmedium,
-    profileUrl: summary?.profileurl || `https://steamcommunity.com/profiles/${steamId}`,
-    connectedAt: new Date(),
-    lastSyncedAt: new Date()
-  };
+    displayName: String(summary?.personaname || existingProvider.displayName || `Steam ${steamId.slice(-6)}`).slice(0, 200),
+    avatar: cleanExternalUrl(summary?.avatarfull || summary?.avatarmedium) || existingProvider.avatar,
+    profileUrl:
+      cleanExternalUrl(summary?.profileurl) || existingProvider.profileUrl || `https://steamcommunity.com/profiles/${steamId}`,
+    level: existingProvider.level,
+    connectedAt: existingProvider.connectedAt || new Date(),
+    lastSyncedAt: existingProvider.lastSyncedAt
+  });
 
   if (linkUser) {
+    if (isDemoEmail(linkUser.email)) {
+      const error = new Error("Steam cannot be connected to the shared demo profile.");
+      error.statusCode = 403;
+      throw error;
+    }
+    if (existingSteamOwner && String(existingSteamOwner._id) !== String(linkUser._id)) {
+      const error = new Error("This Steam account is already connected to another ClutchQ account.");
+      error.statusCode = 409;
+      throw error;
+    }
+    const previousSteamProvider = linkUser.authProviders?.steam || {};
+    const previousSteamId = previousSteamProvider.steamId;
+    const steamData = buildSteamData(previousSteamId === steamId ? previousSteamProvider : {});
     linkUser.authProviders = {
       ...(linkUser.authProviders?.toObject?.() || linkUser.authProviders || {}),
       steam: steamData
     };
     linkUser.avatar = linkUser.avatar || steamData.avatar;
-    linkUser.emailVerified = true;
-    linkUser.emailVerifiedAt = linkUser.emailVerifiedAt || new Date();
     await linkUser.save();
+    if (previousSteamId && previousSteamId !== steamId) {
+      await removeStaleSteamAccountData(linkUser._id, steamId).catch((error) => {
+        console.error(`[${req.id || "no-request-id"}] Old Steam data cleanup failed:`, error.message);
+      });
+    }
     return linkUser;
   }
 
-  const existing = await User.findOne({ "authProviders.steam.steamId": steamId });
+  const existing = existingSteamOwner;
   if (existing) {
+    const steamData = buildSteamData(existing.authProviders?.steam || {});
     existing.name = existing.name || steamData.displayName;
     existing.avatar = steamData.avatar || existing.avatar;
-    existing.emailVerified = true;
-    existing.emailVerifiedAt = existing.emailVerifiedAt || new Date();
+    if (String(existing.email || "").endsWith("@steam.clutchq.local")) {
+      existing.emailVerified = false;
+      existing.emailVerifiedAt = undefined;
+    }
     existing.authProviders = {
       ...(existing.authProviders?.toObject?.() || existing.authProviders || {}),
       steam: steamData
@@ -313,12 +509,12 @@ const createOrUpdateSteamUser = async ({ req, steamId, summary }) => {
     return existing;
   }
 
+  const steamData = buildSteamData();
   const user = await User.create({
     name: steamData.displayName,
     email: `steam-${steamId}@steam.clutchq.local`,
     avatar: steamData.avatar,
-    emailVerified: true,
-    emailVerifiedAt: new Date(),
+    emailVerified: false,
     authProviders: { steam: steamData }
   });
 
@@ -341,14 +537,21 @@ export const register = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
   const normalizedEmail = normalizeEmail(email);
 
-  if (!name || !normalizedEmail || !password) {
+  const cleanName = cleanPersonName(name);
+
+  if (!cleanName || !normalizedEmail || !password) {
     res.status(400);
     throw new Error("Name, email, and password are required");
   }
 
+  if (cleanName.length < 2 || cleanName.length > 80 || !isValidEmail(normalizedEmail)) {
+    res.status(400);
+    throw new Error("Enter a valid name and email address.");
+  }
+
   if (!strongEnoughPassword(password)) {
     res.status(400);
-    throw new Error("Password must be at least 8 characters and include a letter and a number.");
+    throw new Error("Password must be 8 to 72 bytes and include a letter and a number.");
   }
 
   const existingUser = await User.findOne({ email: normalizedEmail });
@@ -358,12 +561,13 @@ export const register = asyncHandler(async (req, res) => {
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
+  const avatarSeed = crypto.createHash("sha256").update(normalizedEmail).digest("hex").slice(0, 24);
   const user = await User.create({
-    name: String(name).trim(),
+    name: cleanName,
     email: normalizedEmail,
     passwordHash,
     emailVerified: false,
-    avatar: `https://api.dicebear.com/8.x/identicon/svg?seed=${encodeURIComponent(normalizedEmail)}`
+    avatar: `https://api.dicebear.com/8.x/identicon/svg?seed=${avatarSeed}`
   });
 
   res.status(201);
@@ -379,8 +583,15 @@ export const login = asyncHandler(async (req, res) => {
     throw new Error("Email and password are required");
   }
 
-  const user = await User.findOne({ email: normalizedEmail });
+  if (!isValidEmail(normalizedEmail) || !validPasswordInput(password)) {
+    await bcrypt.compare("invalid-password", DUMMY_PASSWORD_HASH);
+    res.status(401);
+    throw new Error("Invalid email or password");
+  }
+
+  const user = await User.findOne({ email: normalizedEmail }).select("+passwordHash");
   if (!user) {
+    await bcrypt.compare(String(password), DUMMY_PASSWORD_HASH);
     res.status(401);
     throw new Error("Invalid email or password");
   }
@@ -394,8 +605,13 @@ export const login = asyncHandler(async (req, res) => {
     res.status(429);
     throw new Error("Invalid email or password");
   }
+  if (user.lockedUntil && user.lockedUntil <= new Date()) {
+    user.failedLoginAttempts = 0;
+    user.lockedUntil = undefined;
+  }
 
-  let isMatch = Boolean(user.passwordHash) && (await bcrypt.compare(password, user.passwordHash));
+  let isMatch = await bcrypt.compare(password, user.passwordHash || DUMMY_PASSWORD_HASH);
+  isMatch = Boolean(user.passwordHash) && isMatch;
   if (!isMatch && normalizedEmail === DEMO_EMAIL && password === DEMO_PASSWORD) {
     user.passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
     await user.save();
@@ -422,6 +638,7 @@ export const login = asyncHandler(async (req, res) => {
     user.emailVerifiedAt = user.emailVerifiedAt || new Date();
   }
   await user.save();
+  if (isDemoEmail(normalizedEmail)) await resetSharedDemoProfile(user);
 
   await authResponse(res, user, "Logged in successfully");
 });
@@ -431,15 +648,25 @@ export const demoLogin = asyncHandler(async (req, res) => {
 
   if (!user) {
     const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
-    user = await User.create({
-      name: "Abhijeet",
-      email: DEMO_EMAIL,
-      passwordHash,
-      role: "user",
-      avatar: "/clutchq-logo.svg",
-      emailVerified: true,
-      emailVerifiedAt: new Date()
-    });
+    try {
+      user = await User.create({
+        name: "Abhijeet",
+        email: DEMO_EMAIL,
+        passwordHash,
+        role: "user",
+        avatar: "/clutchq-logo.svg",
+        emailVerified: true,
+        emailVerifiedAt: new Date()
+      });
+    } catch (error) {
+      if (error?.code !== 11000) throw error;
+      user = await User.findOne({ email: DEMO_EMAIL });
+    }
+  }
+
+  if (!user || user.isSuspended) {
+    res.status(403);
+    throw new Error("This account is suspended");
   }
 
   if (!user.emailVerified) {
@@ -448,10 +675,7 @@ export const demoLogin = asyncHandler(async (req, res) => {
     await user.save();
   }
 
-  const profile = await GamerProfile.findOne({ userId: user._id });
-  if (!profile) {
-    await GamerProfile.create(createDemoProfile(user._id));
-  }
+  await resetSharedDemoProfile(user);
 
   await authResponse(res, user, "Demo session started");
 });
@@ -466,6 +690,59 @@ export const logout = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     message: "Logged out"
+  });
+});
+
+export const exchangeOAuthCode = asyncHandler(async (req, res) => {
+  const session = await consumeOAuthLoginCode(req.body?.code, { purpose: "login" });
+  if (!session) {
+    res.status(400);
+    throw new Error("OAuth sign-in session is invalid or expired.");
+  }
+
+  const user = await User.findOne({ _id: session.userId, isSuspended: { $ne: true } });
+  if (!user) {
+    res.status(400);
+    throw new Error("OAuth sign-in session is invalid or expired.");
+  }
+  if ((Number(session.tokenVersion) || 0) !== (Number(user.tokenVersion) || 0)) {
+    res.status(400);
+    throw new Error("OAuth sign-in session is invalid or expired.");
+  }
+
+  user.lastLoginAt = new Date();
+  await user.save();
+  await authResponse(res, user, "Signed in successfully");
+});
+
+export const createOAuthLinkCode = asyncHandler(async (req, res) => {
+  const provider = cleanTextInput(req.body?.provider, 20).toLowerCase();
+  if (!LINKABLE_OAUTH_PROVIDERS.has(provider)) {
+    res.status(400);
+    throw new Error("This account provider cannot be connected yet.");
+  }
+  if (isDemoEmail(req.user.email)) {
+    res.status(403);
+    throw new Error("External accounts cannot be connected to the shared demo profile.");
+  }
+  if (provider === "google" && !isGoogleOAuthConfigured()) {
+    res.status(503);
+    throw new Error("Google sign-in is not configured yet.");
+  }
+  if (provider === "discord" && !isDiscordOAuthConfigured()) {
+    res.status(503);
+    throw new Error("Discord sign-in is not configured yet.");
+  }
+
+  const code = await createOAuthLoginCode(req.user._id, {
+    purpose: "link",
+    provider,
+    tokenVersion: req.user.tokenVersion
+  });
+  res.json({
+    success: true,
+    message: "Secure account connection prepared.",
+    data: { code }
   });
 });
 
@@ -550,7 +827,7 @@ export const verifyPasswordResetOtp = asyncHandler(async (req, res) => {
     throw new Error(result.reason === "locked" ? "Too many wrong codes. Request a new OTP." : "Invalid or expired code.");
   }
 
-  const user = await User.findOne({ email: normalizedEmail });
+  const user = await User.findOne({ email: normalizedEmail }).select("+passwordHash");
   if (!user || !user.passwordHash) {
     res.status(400);
     throw new Error("Invalid or expired code.");
@@ -579,13 +856,7 @@ export const resetPassword = asyncHandler(async (req, res) => {
 
   if (!strongEnoughPassword(newPassword)) {
     res.status(400);
-    throw new Error("Password must be at least 8 characters and include a letter and a number.");
-  }
-
-  const sessionCheck = await verifyPasswordResetSession(resetToken);
-  if (!sessionCheck.success) {
-    res.status(400);
-    throw new Error("Invalid or expired reset session.");
+    throw new Error("Password must be 8 to 72 bytes and include a letter and a number.");
   }
 
   const consumed = await consumePasswordResetSession(resetToken);
@@ -595,7 +866,7 @@ export const resetPassword = asyncHandler(async (req, res) => {
   }
 
   const resetEmail = consumed.session.email;
-  const user = await User.findOne({ email: resetEmail });
+  const user = await User.findOne({ email: resetEmail }).select("+passwordHash");
   if (!user || !user.passwordHash) {
     res.status(400);
     throw new Error("Unable to reset password. Request a new code.");
@@ -606,8 +877,15 @@ export const resetPassword = asyncHandler(async (req, res) => {
   user.lockedUntil = undefined;
   user.emailVerified = true;
   user.emailVerifiedAt = user.emailVerifiedAt || new Date();
+  user.tokenVersion = (Number(user.tokenVersion) || 0) + 1;
   await user.save();
   await invalidateOtps(resetEmail, "password_reset");
+
+  res.clearCookie("token", {
+    httpOnly: true,
+    sameSite: cookieOptions.sameSite,
+    secure: cookieOptions.secure
+  });
 
   res.json({
     success: true,
@@ -628,33 +906,40 @@ export const getSecurityHealth = asyncHandler(async (req, res) => {
 
 export const startGoogleOAuth = asyncHandler(async (req, res) => {
   if (!isGoogleOAuthConfigured()) return redirectOAuthError(req, res, "google", "provider_not_configured");
+  if (!(await prepareOAuthLinkCookie(req, res, "google"))) return redirectOAuthError(req, res, "google", "oauth_link_expired");
   const state = createOAuthState(req, res, "google");
   res.redirect(buildGoogleAuthUrl(state));
 });
 
 export const handleGoogleOAuth = asyncHandler(async (req, res) => {
   try {
-    if (!req.query.code || !verifyOAuthState(req, res, "google")) return redirectOAuthError(req, res, "google");
+    const stateValid = verifyOAuthState(req, res, "google");
+    if (!req.query.code || !stateValid) return redirectOAuthError(req, res, "google");
     const providerData = await handleGoogleOAuthCallback(req.query.code);
-    const user = await createOrUpdateOAuthUser({ provider: "google", providerData });
-    redirectOAuthSuccess(req, res, "google", user);
+    const user = await createOrUpdateOAuthUser({ provider: "google", providerData, req });
+    await redirectOAuthSuccess(req, res, "google", user);
   } catch (error) {
+    console.error(`[${req.id || "no-request-id"}] Google OAuth callback failed:`, error.message);
     redirectOAuthError(req, res, "google");
   }
 });
 
 export const startDiscordOAuth = asyncHandler(async (req, res) => {
   if (!isDiscordOAuthConfigured()) return redirectOAuthError(req, res, "discord", "provider_not_configured");
+  if (!(await prepareOAuthLinkCookie(req, res, "discord"))) return redirectOAuthError(req, res, "discord", "oauth_link_expired");
   const state = createOAuthState(req, res, "discord");
   res.redirect(buildDiscordAuthUrl(state));
 });
 
 export const startSteamOAuth = asyncHandler(async (req, res) => {
-  res.redirect(buildSteamAuthUrl({ returnTo: getRequestClientOrigin(req), token: req.query.token, next: req.query.next }));
+  if (!(await prepareOAuthLinkCookie(req, res, "steam"))) return redirectOAuthError(req, res, "steam", "oauth_link_expired");
+  const state = createOAuthState(req, res, "steam");
+  res.redirect(buildSteamAuthUrl({ state }));
 });
 
 export const handleSteamOAuth = asyncHandler(async (req, res) => {
   try {
+    if (!verifyOAuthState(req, res, "steam")) return redirectOAuthError(req, res, "steam");
     const steamId = await verifySteamOpenId(req.query);
     let summary = null;
     try {
@@ -663,19 +948,22 @@ export const handleSteamOAuth = asyncHandler(async (req, res) => {
       summary = null;
     }
     const user = await createOrUpdateSteamUser({ req, steamId, summary });
-    redirectOAuthSuccess(req, res, null, user, "/profile");
+    await redirectOAuthSuccess(req, res, "steam", user, "/profile");
   } catch (error) {
-    redirectOAuthError(req, res, null, "oauth_failed");
+    console.error(`[${req.id || "no-request-id"}] Steam OAuth callback failed:`, error.message);
+    redirectOAuthError(req, res, "steam", "oauth_failed");
   }
 });
 
 export const handleDiscordOAuth = asyncHandler(async (req, res) => {
   try {
-    if (!req.query.code || !verifyOAuthState(req, res, "discord")) return redirectOAuthError(req, res, "discord");
+    const stateValid = verifyOAuthState(req, res, "discord");
+    if (!req.query.code || !stateValid) return redirectOAuthError(req, res, "discord");
     const providerData = await handleDiscordOAuthCallback(req.query.code);
-    const user = await createOrUpdateOAuthUser({ provider: "discord", providerData });
-    redirectOAuthSuccess(req, res, "discord", user);
+    const user = await createOrUpdateOAuthUser({ provider: "discord", providerData, req });
+    await redirectOAuthSuccess(req, res, "discord", user);
   } catch (error) {
+    console.error(`[${req.id || "no-request-id"}] Discord OAuth callback failed:`, error.message);
     redirectOAuthError(req, res, "discord");
   }
 });

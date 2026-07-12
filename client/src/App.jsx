@@ -1,39 +1,46 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import AdminRoute from "./components/common/AdminRoute";
 import ProtectedRoute from "./components/common/ProtectedRoute";
-import AdminDashboard from "./pages/AdminDashboard";
-import AdminReports from "./pages/AdminReports";
-import CreateLobby from "./pages/CreateLobby";
-import Activity from "./pages/Activity";
-import Dashboard from "./pages/Dashboard";
-import GameDetail from "./pages/GameDetail";
-import GameRooms from "./pages/GameRooms";
-import Games from "./pages/Games";
-import Landing from "./pages/Landing";
-import Leaderboards from "./pages/Leaderboards";
-import Lobbies from "./pages/Lobbies";
-import LobbyDetails from "./pages/LobbyDetails";
-import Login from "./pages/Login";
-import NotFound from "./pages/NotFound";
-import Onboarding from "./pages/Onboarding";
-import OAuthSuccess from "./pages/OAuthSuccess";
-import PlayerProfile from "./pages/PlayerProfile";
-import Profile from "./pages/Profile";
-import Register from "./pages/Register";
-import Requests from "./pages/Requests";
-import Reviews from "./pages/Reviews";
-import Squad from "./pages/Squad";
 import usePageTitle from "./hooks/usePageTitle";
+
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const AdminReports = lazy(() => import("./pages/AdminReports"));
+const CreateLobby = lazy(() => import("./pages/CreateLobby"));
+const Activity = lazy(() => import("./pages/Activity"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const GameDetail = lazy(() => import("./pages/GameDetail"));
+const GameRooms = lazy(() => import("./pages/GameRooms"));
+const Games = lazy(() => import("./pages/Games"));
+const Landing = lazy(() => import("./pages/Landing"));
+const Leaderboards = lazy(() => import("./pages/Leaderboards"));
+const Lobbies = lazy(() => import("./pages/Lobbies"));
+const LobbyDetails = lazy(() => import("./pages/LobbyDetails"));
+const Login = lazy(() => import("./pages/Login"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Onboarding = lazy(() => import("./pages/Onboarding"));
+const OAuthSuccess = lazy(() => import("./pages/OAuthSuccess"));
+const PlayerProfile = lazy(() => import("./pages/PlayerProfile"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Register = lazy(() => import("./pages/Register"));
+const Requests = lazy(() => import("./pages/Requests"));
+const Reviews = lazy(() => import("./pages/Reviews"));
+const Squad = lazy(() => import("./pages/Squad"));
+
+const RouteFallback = () => (
+  <div className="noise-bg grid min-h-screen place-items-center text-sm font-semibold text-zinc-400">Loading ClutchQ...</div>
+);
 
 const App = () => {
   usePageTitle();
 
   return (
-    <Routes>
-    <Route path="/" element={<Landing />} />
-    <Route path="/login" element={<Login />} />
-    <Route path="/register" element={<Register />} />
-    <Route path="/oauth/success" element={<OAuthSuccess />} />
+    <Suspense fallback={<RouteFallback />}>
+      <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/oauth/success" element={<OAuthSuccess />} />
 
     <Route element={<ProtectedRoute />}>
       <Route path="/onboarding" element={<Onboarding />} />
@@ -61,8 +68,9 @@ const App = () => {
       </Route>
     </Route>
 
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   );
 };
 

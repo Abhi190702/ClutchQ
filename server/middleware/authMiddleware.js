@@ -10,7 +10,8 @@ export const protect = async (req, res, next) => {
     token = header.slice(7).trim();
   }
 
-  if (!token && req.cookies?.token) {
+  const safeMethod = ["GET", "HEAD", "OPTIONS"].includes(req.method);
+  if (!token && safeMethod && req.cookies?.token) {
     token = req.cookies.token;
   }
 
@@ -19,8 +20,24 @@ export const protect = async (req, res, next) => {
     return next(new Error("Please log in to continue."));
   }
 
+  let decoded;
   try {
-    const decoded = jwt.verify(token, getJwtSecret());
+    decoded = jwt.verify(token, getJwtSecret(), {
+      algorithms: ["HS256"],
+      issuer: "clutchq-api",
+      audience: "clutchq-client"
+    });
+  } catch (error) {
+    res.status(401);
+    return next(error);
+  }
+
+  if (!decoded?.id) {
+    res.status(401);
+    return next(new Error("Session expired. Please log in again."));
+  }
+
+  try {
     const user = await User.findById(decoded.id).select("-passwordHash");
 
     if (!user) {
@@ -33,10 +50,14 @@ export const protect = async (req, res, next) => {
       return next(new Error("This account is suspended"));
     }
 
+    if ((Number(decoded.version) || 0) !== (Number(user.tokenVersion) || 0)) {
+      res.status(401);
+      return next(new Error("Session expired. Please log in again."));
+    }
+
     req.user = user;
     next();
   } catch (error) {
-    res.status(401);
-    next(new Error("Session expired. Please log in again."));
+    next(error);
   }
 };

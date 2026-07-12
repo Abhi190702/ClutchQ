@@ -4,9 +4,10 @@ import {
   searchGameMetadata,
   syncExternalGameMetadata
 } from "../services/externalApis/gameMetadataService.js";
+import { boundedQueryText } from "../utils/queryInput.js";
 
 export const searchExternalGames = asyncHandler(async (req, res) => {
-  const query = String(req.query.q || "").trim();
+  const query = boundedQueryText(req.query.q, 100);
   if (query.length < 2) {
     return res.json({
       success: true,
@@ -24,7 +25,7 @@ export const searchExternalGames = asyncHandler(async (req, res) => {
 });
 
 export const getExternalGameMetadata = asyncHandler(async (req, res) => {
-  const data = await getGameMetadata(req.params.slug, { refresh: req.query.refresh === "true" });
+  const data = await getGameMetadata(String(req.params.slug || "").slice(0, 100), { refresh: false });
   if (!data) {
     res.status(404);
     throw new Error("Game metadata not found");

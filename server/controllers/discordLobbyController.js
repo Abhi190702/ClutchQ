@@ -1,6 +1,11 @@
 import Lobby from "../models/Lobby.js";
 import { asyncHandler } from "../middleware/errorMiddleware.js";
 import { createOrReuseLobbyRoom, deleteDiscordChannel, DiscordServiceError } from "../services/discordService.js";
+import {
+  acquireDiscordProvisioningLease,
+  persistDiscordProvision,
+  releaseDiscordProvisioningLease
+} from "../services/discordProvisioningService.js";
 
 const getUserId = (value) => String(value?._id || value || "");
 
@@ -67,17 +72,59 @@ export const createLobbyDiscordRoom = asyncHandler(async (req, res) => {
     });
   }
 
+  if (lobby.status === "closed") {
+    return res.status(409).json({
+      success: false,
+      message: "Discord rooms cannot be created for closed lobbies."
+    });
+  }
+
+  const guard = { ownerId: req.user._id, status: { $ne: "closed" } };
+  let lease = null;
+  let discord = null;
+  let previousChannelId = null;
   try {
-    const discord = await createOrReuseLobbyRoom(lobby);
-    lobby.discord = discord;
-    await lobby.save();
+    lease = await acquireDiscordProvisioningLease({ model: Lobby, resourceId: lobby._id, guard });
+    if (!lease) {
+      return res.status(409).json({
+        success: false,
+        message: "This Discord voice room is already being prepared or the lobby has closed.",
+        requestId: req.id
+      });
+    }
+    previousChannelId = lease.resource.discord?.channelId;
+    discord = await createOrReuseLobbyRoom(lease.resource);
+    const persisted = await persistDiscordProvision({
+      model: Lobby,
+      resourceId: lobby._id,
+      guard,
+      token: lease.token,
+      discord
+    });
+    if (!persisted) {
+      if (discord.channelId && discord.channelId !== previousChannelId) {
+        await deleteDiscordChannel(discord.channelId).catch(() => {});
+      }
+      await releaseDiscordProvisioningLease({ model: Lobby, resourceId: lobby._id, token: lease.token }).catch(() => {});
+      return res.status(409).json({
+        success: false,
+        message: "The lobby changed before Discord setup finished. Try again.",
+        requestId: req.id
+      });
+    }
 
     res.json({
       success: true,
       message: "Discord voice room ready.",
-      data: { discord: lobby.discord }
+      data: { discord: persisted.discord }
     });
   } catch (error) {
+    if (discord?.channelId && discord.channelId !== previousChannelId) {
+      await deleteDiscordChannel(discord.channelId).catch(() => {});
+    }
+    if (lease?.token) {
+      await releaseDiscordProvisioningLease({ model: Lobby, resourceId: lobby._id, token: lease.token }).catch(() => {});
+    }
     sendDiscordError(res, "create", error);
   }
 });

@@ -11,17 +11,19 @@ const steamFriendSchema = new mongoose.Schema(
     steamId: {
       type: String,
       required: true,
-      index: true
+      index: true,
+      match: /^\d{17}$/
     },
     friendSteamId: {
       type: String,
-      required: true
+      required: true,
+      match: /^\d{17}$/
     },
-    relationship: String,
+    relationship: { type: String, trim: true, maxlength: 30 },
     friendSince: Date,
-    displayName: String,
-    avatar: String,
-    profileUrl: String,
+    displayName: { type: String, trim: true, maxlength: 200 },
+    avatar: { type: String, maxlength: 600 },
+    profileUrl: { type: String, maxlength: 600 },
     lastSyncedAt: Date,
     onClutchQ: {
       type: Boolean,

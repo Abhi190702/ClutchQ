@@ -45,20 +45,41 @@ export const rankValueMap = [...VALORANT_RANKS, ...GENERIC_RANKS].reduce((map, r
 
 export const getRankValue = (rank = "") => {
   const normalized = String(rank).trim().toLowerCase();
+  if (!normalized) return null;
   if (rankValueMap[normalized]) return rankValueMap[normalized];
 
   const tier = GENERIC_RANKS.find((name) => normalized.includes(name.toLowerCase()));
-  return tier ? rankValueMap[tier.toLowerCase()] : 10;
+  return tier ? rankValueMap[tier.toLowerCase()] : null;
 };
 
 export const normalizeGameRank = (game) => ({
   ...game,
-  rankValue: game.rankValue || getRankValue(game.rank)
+  rankValue: Number.isFinite(Number(game.rankValue)) && Number(game.rankValue) > 0 ? Number(game.rankValue) : getRankValue(game.rank)
 });
 
 export const getPrimaryGame = (profile) => {
   if (!profile?.games?.length) return null;
   return profile.games.find((game) => game.isPrimary) || profile.games[0];
+};
+
+const gameAliases = new Map([
+  ["cs2", "counterstrike2"],
+  ["counterstrike2", "counterstrike2"],
+  ["counterstrikeglobaloffensive", "counterstrike2"],
+  ["pubg", "pubgbattlegrounds"],
+  ["playerunknownsbattlegrounds", "pubgbattlegrounds"]
+]);
+
+export const normalizeGameKey = (value = "") => {
+  const key = String(value).toLowerCase().replace(/[^a-z0-9]/g, "");
+  return gameAliases.get(key) || key;
+};
+
+export const getGameForContext = (profile, gameName) => {
+  if (!gameName) return getPrimaryGame(profile);
+  const target = normalizeGameKey(gameName);
+  if (!target || !profile?.games?.length) return null;
+  return profile.games.find((game) => normalizeGameKey(game.gameName) === target) || null;
 };
 
 export const getRankGap = (a, b) => Math.abs((a || 0) - (b || 0));

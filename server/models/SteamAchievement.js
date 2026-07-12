@@ -11,26 +11,28 @@ const steamAchievementSchema = new mongoose.Schema(
     steamId: {
       type: String,
       required: true,
-      index: true
+      index: true,
+      match: /^\d{17}$/
     },
     appId: {
       type: Number,
       required: true,
-      index: true
+      index: true,
+      min: 1
     },
-    gameName: String,
-    achievementName: String,
-    displayName: String,
-    description: String,
-    icon: String,
-    iconGray: String,
+    gameName: { type: String, trim: true, maxlength: 200 },
+    achievementName: { type: String, required: true, trim: true, maxlength: 200 },
+    displayName: { type: String, trim: true, maxlength: 240 },
+    description: { type: String, trim: true, maxlength: 1200 },
+    icon: { type: String, maxlength: 600 },
+    iconGray: { type: String, maxlength: 600 },
     achieved: {
       type: Boolean,
       default: false,
       index: true
     },
     unlockTime: Date,
-    rarityPercent: Number,
+    rarityPercent: { type: Number, min: 0, max: 100 },
     lastSyncedAt: Date
   },
   { timestamps: true }

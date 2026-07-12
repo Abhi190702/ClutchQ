@@ -14,6 +14,7 @@ import {
   SteamServiceError
 } from "../services/steamService.js";
 import { rebuildGraphForUser } from "./intelligenceController.js";
+import { publicOperationalError } from "../utils/publicError.js";
 
 const sendSteamError = (res, error) => {
   if (error instanceof SteamServiceError) {
@@ -42,7 +43,7 @@ export const syncSteam = asyncHandler(async (req, res) => {
     const result = await syncSteamForUser(req.user);
     const graphRefresh = await rebuildGraphForUser(req.user._id).catch((error) => ({
       graph: null,
-      warnings: [`Gameplay graph refresh skipped: ${error.message}`]
+      warnings: [`Gameplay graph refresh skipped: ${publicOperationalError(error)}`]
     }));
     res.json({
       success: true,

@@ -2,6 +2,7 @@ import express from "express";
 import {
   createGameRoom,
   createGameRoomDiscord,
+  deleteGameRoomDiscord,
   deleteGameRoom,
   getGameRoom,
   getGameRoomDiscord,
@@ -24,5 +25,6 @@ router.patch("/:id", updateGameRoom);
 router.delete("/:id", deleteGameRoom);
 router.post("/:id/discord/create", createGameRoomDiscord);
 router.get("/:id/discord", getGameRoomDiscord);
+router.delete("/:id/discord", deleteGameRoomDiscord);
 
 export default router;

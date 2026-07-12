@@ -14,15 +14,17 @@ const reportSchema = new mongoose.Schema(
     },
     reason: {
       type: String,
-      required: true
+      required: true,
+      trim: true,
+      maxlength: 120
     },
-    details: String,
+    details: { type: String, trim: true, maxlength: 1000 },
     status: {
       type: String,
       enum: ["pending", "reviewed", "dismissed", "warned", "suspended", "banned"],
       default: "pending"
     },
-    adminNote: String,
+    adminNote: { type: String, trim: true, maxlength: 1000 },
     reviewedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User"
@@ -30,6 +32,8 @@ const reportSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+reportSchema.index({ reporterId: 1, reportedUserId: 1, status: 1, createdAt: -1 });
 
 const Report = mongoose.model("Report", reportSchema);
 

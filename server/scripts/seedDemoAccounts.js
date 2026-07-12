@@ -7,6 +7,7 @@ import GamerProfile from "../models/GamerProfile.js";
 import Lobby from "../models/Lobby.js";
 import Request from "../models/Request.js";
 import Review from "../models/Review.js";
+import Session from "../models/Session.js";
 import GameActivity from "../models/GameActivity.js";
 import GamePlaytimeAggregate from "../models/GamePlaytimeAggregate.js";
 import MatchAnalysis from "../models/MatchAnalysis.js";
@@ -19,6 +20,7 @@ import SteamGame from "../models/SteamGame.js";
 import SteamSyncLog from "../models/SteamSyncLog.js";
 import TeammateFeedback from "../models/TeammateFeedback.js";
 import { createDemoProfile, demoAccounts } from "../utils/seedData.js";
+import { cleanupDiscordChannelsBeforeDelete } from "../utils/scriptDiscordCleanup.js";
 
 dotenv.config();
 
@@ -159,13 +161,16 @@ const resetDemoOnlyCollections = async (users) => {
 
   const oldDemoLobbies = await Lobby.find({
     $or: [{ ownerId: { $in: userIds } }, { inviteCode: { $in: ["DEMO1", "DEMO2", "DEMO3"] } }]
-  }).select("_id");
+  }).select("_id discord.channelId");
   const lobbyIds = oldDemoLobbies.map((lobby) => lobby._id);
+
+  await cleanupDiscordChannelsBeforeDelete(oldDemoLobbies, "Demo account reseeding");
 
   await Promise.all([
     Lobby.deleteMany({ _id: { $in: lobbyIds } }),
     Request.deleteMany({ $or: [{ fromUser: { $in: userIds } }, { toUser: { $in: userIds } }, { lobbyId: { $in: lobbyIds } }] }),
     Review.deleteMany({ $or: [{ reviewerId: { $in: userIds } }, { reviewedUserId: { $in: userIds } }] }),
+    Session.deleteMany({ lobbyId: { $in: lobbyIds } }),
     GameActivity.deleteMany({ userId: { $in: userIds }, source: "demo" }),
     GamePlaytimeAggregate.deleteMany({ userId: { $in: userIds } }),
     MatchAnalysis.deleteMany({ userId: { $in: userIds } }),

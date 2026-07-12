@@ -7,7 +7,8 @@ const otpTokenSchema = new mongoose.Schema(
       required: true,
       lowercase: true,
       trim: true,
-      index: true
+      index: true,
+      maxlength: 254
     },
     purpose: {
       type: String,
@@ -16,15 +17,20 @@ const otpTokenSchema = new mongoose.Schema(
     },
     otpHash: {
       type: String,
-      required: true
+      required: true,
+      minlength: 64,
+      maxlength: 64
     },
     attempts: {
       type: Number,
-      default: 0
+      default: 0,
+      min: 0
     },
     maxAttempts: {
       type: Number,
-      default: 5
+      default: 5,
+      min: 1,
+      max: 20
     },
     consumedAt: Date,
     expiresAt: {
@@ -33,8 +39,8 @@ const otpTokenSchema = new mongoose.Schema(
       index: { expires: 0 }
     },
     resendAvailableAt: Date,
-    requestIp: String,
-    userAgent: String,
+    requestIp: { type: String, maxlength: 100 },
+    userAgent: { type: String, maxlength: 500 },
     createdAt: {
       type: Date,
       default: Date.now
@@ -43,7 +49,10 @@ const otpTokenSchema = new mongoose.Schema(
   { versionKey: false }
 );
 
-otpTokenSchema.index({ email: 1, purpose: 1 });
+otpTokenSchema.index(
+  { email: 1, purpose: 1 },
+  { unique: true, partialFilterExpression: { consumedAt: null } }
+);
 otpTokenSchema.index({ consumedAt: 1 });
 otpTokenSchema.index({ createdAt: -1 });
 

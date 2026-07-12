@@ -1,11 +1,10 @@
 import GamerProfile from "../models/GamerProfile.js";
 import GameplayGraph from "../models/GameplayGraph.js";
 import Lobby from "../models/Lobby.js";
-import User from "../models/User.js";
 import { asyncHandler } from "../middleware/errorMiddleware.js";
 import calculateMatchScore from "../utils/calculateMatchScore.js";
 import calculateSquadChemistry from "../utils/calculateSquadChemistry.js";
-import { getPrimaryGame, isRankBetween } from "../utils/rankLogic.js";
+import { getGameForContext, isRankBetween } from "../utils/rankLogic.js";
 
 const getCurrentProfileOrFail = async (userId) => {
   const profile = await GamerProfile.findOne({ userId });
@@ -17,9 +16,13 @@ const getCurrentProfileOrFail = async (userId) => {
   return profile;
 };
 
-const visibleUsersQuery = async () => {
-  const suspendedUsers = await User.find({ isSuspended: true }).select("_id");
-  return { userId: { $nin: suspendedUsers.map((user) => user._id) } };
+const getVisibleCandidates = async (viewerId) => {
+  const rows = await GamerProfile.find({ userId: { $ne: viewerId } })
+    .select("-customAvatar.dataUrl")
+    .populate({ path: "userId", select: "name avatar role isSuspended", match: { isSuspended: { $ne: true } } })
+    .sort({ trustScore: -1, reliabilityScore: -1 })
+    .limit(240);
+  return rows.filter((profile) => profile.userId).slice(0, 200);
 };
 
 const enhanceWithGraphFit = (baseMatch, viewerGraph, candidateGraph) => {
@@ -62,15 +65,14 @@ const enhanceWithGraphFit = (baseMatch, viewerGraph, candidateGraph) => {
 
 export const getRecommendations = asyncHandler(async (req, res) => {
   const currentProfile = await getCurrentProfileOrFail(req.user._id);
-  const query = await visibleUsersQuery();
-  query.userId.$nin.push(req.user._id);
-
-  const candidates = await GamerProfile.find(query).populate("userId", "name avatar role");
+  const candidates = await getVisibleCandidates(req.user._id);
   const candidateUserIds = candidates.map((profile) => profile.userId?._id || profile.userId);
   const graphs = await GameplayGraph.find({ userId: { $in: [req.user._id, ...candidateUserIds] } }).lean();
   const graphByUser = new Map(graphs.map((graph) => [String(graph.userId), graph]));
   const viewerGraph = graphByUser.get(String(req.user._id));
 
+  const requestedLimit = Number.parseInt(req.query.limit, 10);
+  const limit = Number.isFinite(requestedLimit) ? Math.max(1, Math.min(50, requestedLimit)) : 12;
   const recommendations = candidates
     .map((profile) => {
       const candidateGraph = graphByUser.get(String(profile.userId?._id || profile.userId));
@@ -80,7 +82,7 @@ export const getRecommendations = asyncHandler(async (req, res) => {
       };
     })
     .sort((a, b) => b.match.totalScore - a.match.totalScore)
-    .slice(0, Number(req.query.limit) || 12);
+    .slice(0, limit);
 
   res.json({
     success: true,
@@ -91,9 +93,9 @@ export const getRecommendations = asyncHandler(async (req, res) => {
 
 export const explainMatch = asyncHandler(async (req, res) => {
   const currentProfile = await getCurrentProfileOrFail(req.user._id);
-  const target = await GamerProfile.findById(req.params.profileId).populate("userId", "name avatar role");
+  const target = await GamerProfile.findById(req.params.profileId).populate("userId", "name avatar role isSuspended");
 
-  if (!target) {
+  if (!target?.userId || target.userId.isSuspended) {
     res.status(404);
     throw new Error("Player profile not found");
   }
@@ -119,9 +121,9 @@ export const explainMatch = asyncHandler(async (req, res) => {
 
 export const compareProfiles = asyncHandler(async (req, res) => {
   const currentProfile = await getCurrentProfileOrFail(req.user._id);
-  const target = await GamerProfile.findById(req.params.profileId).populate("userId", "name avatar role");
+  const target = await GamerProfile.findById(req.params.profileId).populate("userId", "name avatar role isSuspended");
 
-  if (!target) {
+  if (!target?.userId || target.userId.isSuspended) {
     res.status(404);
     throw new Error("Player profile not found");
   }
@@ -146,25 +148,23 @@ export const compareProfiles = asyncHandler(async (req, res) => {
   });
 });
 
-const lobbyCompatibility = async (currentProfile, lobby) => {
-  const memberIds = lobby.currentMembers.map((member) => member.userId?._id || member.userId);
-  const memberProfiles = await GamerProfile.find({ userId: { $in: memberIds } }).populate("userId", "name avatar role");
+export const calculateLobbyCompatibility = (currentProfile, lobby, profileByUser) => {
+  const memberProfiles = lobby.currentMembers
+    .map((member) => profileByUser.get(String(member.userId?._id || member.userId)))
+    .filter(Boolean);
   const scores = memberProfiles.map((profile) => calculateMatchScore(currentProfile, profile, { game: lobby.game }).totalScore);
-  const currentGame = getPrimaryGame(currentProfile);
+  const currentGame = getGameForContext(currentProfile, lobby.game);
   const inRank = isRankBetween(currentGame?.rankValue, lobby.rankMinValue, lobby.rankMaxValue);
   const rankBonus = inRank ? 8 : -12;
   const micWarning = lobby.micRequired && !currentProfile.micAvailable ? -15 : 0;
-  const average = scores.length ? scores.reduce((sum, score) => sum + score, 0) / scores.length : 65;
+  const average = scores.length ? scores.reduce((sum, score) => sum + score, 0) / scores.length : 0;
 
   return Math.max(0, Math.min(100, Math.round(average + rankBonus + micWarning)));
 };
 
 export const findSquadNow = asyncHandler(async (req, res) => {
   const currentProfile = await getCurrentProfileOrFail(req.user._id);
-  const query = await visibleUsersQuery();
-  query.userId.$nin.push(req.user._id);
-
-  const candidates = await GamerProfile.find(query).populate("userId", "name avatar role");
+  const candidates = await getVisibleCandidates(req.user._id);
   const candidateUserIds = candidates.map((profile) => profile.userId?._id || profile.userId);
   const graphs = await GameplayGraph.find({ userId: { $in: [req.user._id, ...candidateUserIds] } }).lean();
   const graphByUser = new Map(graphs.map((graph) => [String(graph.userId), graph]));
@@ -180,13 +180,23 @@ export const findSquadNow = asyncHandler(async (req, res) => {
     .sort((a, b) => b.match.totalScore - a.match.totalScore);
 
   const bestSquadPlayers = scoredPlayers.slice(0, 4);
-  const lobbies = await Lobby.find({ status: "open" }).populate("ownerId", "name avatar").limit(30);
-  const scoredLobbies = await Promise.all(
-    lobbies.map(async (lobby) => ({
-      lobby,
-      score: await lobbyCompatibility(currentProfile, lobby)
-    }))
+  const lobbies = await Lobby.find({ status: "open" })
+    .select("-discord.inviteUrl -discord.channelId")
+    .populate({ path: "ownerId", select: "name avatar", match: { isSuspended: { $ne: true } } })
+    .limit(30);
+  const lobbyMemberIds = [...new Set(lobbies.flatMap((lobby) => lobby.currentMembers.map((member) => String(member.userId?._id || member.userId))))];
+  const lobbyMemberProfiles = await GamerProfile.find({ userId: { $in: lobbyMemberIds } })
+    .select("-customAvatar.dataUrl")
+    .populate({ path: "userId", select: "name avatar role", match: { isSuspended: { $ne: true } } });
+  const lobbyProfileByUser = new Map(
+    lobbyMemberProfiles
+      .filter((profile) => profile.userId)
+      .map((profile) => [String(profile.userId?._id || profile.userId), profile])
   );
+  const scoredLobbies = lobbies.filter((lobby) => lobby.ownerId).map((lobby) => ({
+      lobby,
+      score: calculateLobbyCompatibility(currentProfile, lobby, lobbyProfileByUser)
+    }));
 
   const bestOpenLobby = scoredLobbies.sort((a, b) => b.score - a.score)[0] || null;
   const squadProfiles = [currentProfile, ...bestSquadPlayers.map((item) => item.profile)];

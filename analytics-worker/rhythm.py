@@ -68,13 +68,16 @@ def build_rhythm(payload):
         game_totals[game_name]["gameName"] = game_name
         game_totals[game_name]["minutes"] += minutes
 
+    # Steam exposes recent aggregate playtime, not the exact date of each play
+    # session. It can inform the current game mix, but must never fabricate daily
+    # activity or inflate the dated total with lifetime playtime.
     for game in steam_library:
         name = game.get("gameName") or game.get("name")
         if not name:
             continue
-        minutes = safe_number(game.get("playtimeForeverMinutes") or game.get("totalMinutes"), 0)
+        minutes = safe_number(game.get("playtimeLastTwoWeeksMinutes"), 0)
         game_totals[name]["gameName"] = name
-        game_totals[name]["minutes"] = max(game_totals[name]["minutes"], minutes)
+        game_totals[name]["minutes"] = max(game_totals[name]["minutes"], max(0, minutes))
 
     if by_date:
         dates = [datetime.fromisoformat(key).date() for key in by_date.keys()]
@@ -103,7 +106,7 @@ def build_rhythm(payload):
     best_day = max([item["minutes"] for item in series], default=0)
     current_streak, best_streak = streak_from_dates(active_dates)
     game_mix_raw = sorted(game_totals.values(), key=lambda item: item["minutes"], reverse=True)
-    total_game_minutes = sum(item["minutes"] for item in game_mix_raw) or total_minutes or 1
+    total_game_minutes = sum(item["minutes"] for item in game_mix_raw) or 1
     game_mix = [
         {
             "gameSlug": item["gameName"].lower().replace(" ", "-"),
@@ -131,15 +134,17 @@ def build_rhythm(payload):
         variance = sum((item - avg) ** 2 for item in ratings) / len(ratings)
         rating_stability = clamp(100 - variance ** 0.5)
     else:
-        rating_stability = 70 if ratings else 50
+        rating_stability = 70 if ratings else 0
 
-    rhythm_score = clamp(
-        recent_frequency * 0.35
-        + consistency * 0.25
-        + length_quality * 0.20
-        + game_focus * 0.10
-        + rating_stability * 0.10
-    )
+    rhythm_score = 0
+    if total_minutes > 0:
+        rhythm_score = clamp(
+            recent_frequency * 0.35
+            + consistency * 0.25
+            + length_quality * 0.20
+            + game_focus * 0.10
+            + rating_stability * 0.10
+        )
 
     insights = []
     if active_14 >= 6:
@@ -150,10 +155,25 @@ def build_rhythm(payload):
         insights.append("Start or sync sessions to build a reliable rhythm read.")
     if dominant.get("share"):
         insights.append(f"{dominant['gameName']} currently dominates your activity mix.")
-    if length_quality >= 75:
-        insights.append("Your session lengths are in a healthy competitive window.")
-    else:
-        insights.append("Shorter focused sessions may improve consistency.")
+    if lengths:
+        if length_quality >= 75:
+            insights.append("Your session lengths are in a healthy competitive window.")
+        else:
+            insights.append("Shorter focused sessions may improve consistency.")
+
+    has_exact_activity = total_minutes > 0
+    has_recent_steam_mix = any(item["minutes"] > 0 for item in game_mix_raw)
+    confidence = 0.0
+    if sessions:
+        confidence += 0.42
+    if steam_heatmap:
+        confidence += 0.3
+    if has_recent_steam_mix:
+        confidence += 0.08
+
+    warnings = []
+    if has_recent_steam_mix and not has_exact_activity:
+        warnings.append("Steam recent playtime has no per-day timestamps, so it is shown only in the game mix.")
 
     return {
         "summary": {
@@ -169,5 +189,6 @@ def build_rhythm(payload):
         "series": series,
         "gameMix": game_mix,
         "insights": insights[:4],
-        "confidence": 0.88 if total_minutes else 0.48,
+        "warnings": warnings,
+        "confidence": round(min(0.92, confidence), 2),
     }

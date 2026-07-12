@@ -1,5 +1,5 @@
 import calculateMatchScore from "./calculateMatchScore.js";
-import { getPrimaryGame, getRankGap } from "./rankLogic.js";
+import { getGameForContext } from "./rankLogic.js";
 
 const ROLE_TEMPLATE = ["Duelist", "Controller", "Initiator", "Sentinel", "Flex"];
 
@@ -35,12 +35,12 @@ export const calculateSquadChemistry = (profiles = [], lobby = null) => {
     }
   }
 
-  const filledRoles = profiles.flatMap((profile) => getPrimaryGame(profile)?.roles || []);
+  const filledRoles = profiles.flatMap((profile) => getGameForContext(profile, lobby?.game)?.roles || []);
   const requiredRoles = lobby?.neededRoles?.length ? lobby.neededRoles : ROLE_TEMPLATE;
   const missingRoles = requiredRoles.filter((role) => !filledRoles.includes(role));
   const roleScore = Math.round(((requiredRoles.length - missingRoles.length) / requiredRoles.length) * 100);
 
-  const ranks = profiles.map((profile) => getPrimaryGame(profile)?.rankValue || 0).filter(Boolean);
+  const ranks = profiles.map((profile) => getGameForContext(profile, lobby?.game)?.rankValue || 0).filter(Boolean);
   const rankSpread = ranks.length > 1 ? Math.max(...ranks) - Math.min(...ranks) : 0;
   const languageCounts = new Map();
 

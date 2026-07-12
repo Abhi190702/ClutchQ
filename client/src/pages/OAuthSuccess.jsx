@@ -1,45 +1,47 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 
 const OAuthSuccess = () => {
   const navigate = useNavigate();
-  const { refresh } = useAuth();
+  const { completeSession } = useAuth();
+  const startedRef = useRef(false);
 
   useEffect(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+
     const completeSignIn = async () => {
+      const previousToken = localStorage.getItem("clutchq_token");
       const params = new URLSearchParams(window.location.search);
-      const token = params.get("token");
+      const code = params.get("code");
       const next = params.get("next");
       const nextPath = next?.startsWith("/") && !next.startsWith("//") ? next : null;
+      window.history.replaceState({}, "", "/oauth/success");
 
-      if (!token) {
+      if (!code) {
         navigate("/login?error=oauth_failed", { replace: true });
         return;
       }
 
-      localStorage.setItem("clutchq_token", token);
-      window.history.replaceState({}, "", "/oauth/success");
-
       try {
-        const response = await api.get("/auth/me");
-        const { user, profile } = response.data.data;
-        localStorage.setItem("clutchq_user", JSON.stringify(user));
-        if (profile) localStorage.setItem("clutchq_profile", JSON.stringify(profile));
-        else localStorage.removeItem("clutchq_profile");
-        await refresh();
+        const response = await api.post("/auth/oauth/exchange", { code });
+        const { profile } = response.data.data;
+        completeSession(response.data.data);
         navigate(nextPath || (profile ? "/dashboard" : "/onboarding"), { replace: true });
       } catch {
-        localStorage.removeItem("clutchq_token");
-        localStorage.removeItem("clutchq_user");
-        localStorage.removeItem("clutchq_profile");
+        if (!previousToken) {
+          localStorage.removeItem("clutchq_token");
+          localStorage.removeItem("clutchq_user");
+          localStorage.removeItem("clutchq_profile");
+        }
         navigate("/login?error=oauth_failed", { replace: true });
       }
     };
 
     completeSignIn();
-  }, [navigate, refresh]);
+  }, [completeSession, navigate]);
 
   return (
     <main className="grid min-h-screen place-items-center bg-[#101116] px-4 text-white">

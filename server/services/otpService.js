@@ -59,16 +59,36 @@ export const createOtp = async ({ email, purpose, ip, userAgent }) => {
 
   await invalidateOtps(normalizedEmail, purpose);
 
-  const token = await OtpToken.create({
-    email: normalizedEmail,
-    purpose,
-    otpHash: hashOtp(normalizedEmail, purpose, otp),
-    maxAttempts,
-    expiresAt: new Date(Date.now() + ttlMinutes * 60 * 1000),
-    resendAvailableAt: new Date(Date.now() + resendSeconds * 1000),
-    requestIp: ip,
-    userAgent
-  });
+  let token;
+  try {
+    token = await OtpToken.create({
+      email: normalizedEmail,
+      purpose,
+      otpHash: hashOtp(normalizedEmail, purpose, otp),
+      maxAttempts,
+      expiresAt: new Date(Date.now() + ttlMinutes * 60 * 1000),
+      resendAvailableAt: new Date(Date.now() + resendSeconds * 1000),
+      requestIp: String(ip || "").slice(0, 100),
+      userAgent: String(userAgent || "").slice(0, 500)
+    });
+  } catch (error) {
+    if (error?.code !== 11000) throw error;
+    const winningToken = await OtpToken.findOne({
+      email: normalizedEmail,
+      purpose,
+      consumedAt: null,
+      expiresAt: { $gt: new Date() }
+    }).sort({ createdAt: -1 });
+    return {
+      cooldown: true,
+      retryAfterSeconds: Math.max(
+        1,
+        Math.ceil(((winningToken?.resendAvailableAt?.getTime() || Date.now() + resendSeconds * 1000) - Date.now()) / 1000)
+      ),
+      ttlMinutes,
+      resendSeconds
+    };
+  }
 
   return { token, otp, ttlMinutes, resendSeconds };
 };
@@ -92,14 +112,21 @@ export const verifyOtp = async ({ email, purpose, otp }) => {
   if (token.attempts >= token.maxAttempts) return { success: false, reason: "locked" };
 
   if (!verifyOtpHash(normalizedEmail, purpose, cleanOtp, token.otpHash)) {
-    token.attempts += 1;
-    await token.save();
-    return { success: false, reason: token.attempts >= token.maxAttempts ? "locked" : "invalid" };
+    const updated = await OtpToken.findOneAndUpdate(
+      { _id: token._id, consumedAt: null, attempts: { $lt: token.maxAttempts } },
+      { $inc: { attempts: 1 } },
+      { new: true }
+    );
+    if (!updated) return { success: false, reason: "locked" };
+    return { success: false, reason: updated.attempts >= updated.maxAttempts ? "locked" : "invalid" };
   }
 
-  token.consumedAt = new Date();
-  await token.save();
-  return { success: true, token };
+  const consumed = await OtpToken.findOneAndUpdate(
+    { _id: token._id, consumedAt: null, attempts: { $lt: token.maxAttempts }, expiresAt: { $gt: new Date() } },
+    { $set: { consumedAt: new Date() } },
+    { new: true }
+  );
+  return consumed ? { success: true, token: consumed } : { success: false, reason: "expired" };
 };
 
 export const consumeOtp = async (token) => {

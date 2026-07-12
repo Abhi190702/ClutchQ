@@ -14,6 +14,19 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401 && localStorage.getItem("clutchq_token")) {
+      localStorage.removeItem("clutchq_token");
+      localStorage.removeItem("clutchq_user");
+      localStorage.removeItem("clutchq_profile");
+      window.dispatchEvent(new Event("clutchq:unauthorized"));
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const getErrorMessage = (error) => error?.response?.data?.message || error?.message || "Something went wrong";
 
 export default api;

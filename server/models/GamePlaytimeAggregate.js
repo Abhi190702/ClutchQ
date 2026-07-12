@@ -10,24 +10,31 @@ const gamePlaytimeAggregateSchema = new mongoose.Schema(
     },
     gameSlug: {
       type: String,
+      required: true,
+      trim: true,
+      maxlength: 80,
       index: true
     },
-    gameName: String,
+    gameName: { type: String, required: true, trim: true, maxlength: 200 },
     totalMinutes: {
       type: Number,
-      default: 0
+      default: 0,
+      min: 0
     },
     weeklyMinutes: {
       type: Number,
-      default: 0
+      default: 0,
+      min: 0
     },
     monthlyMinutes: {
       type: Number,
-      default: 0
+      default: 0,
+      min: 0
     },
     sessionsCount: {
       type: Number,
-      default: 0
+      default: 0,
+      min: 0
     },
     lastPlayedAt: Date
   },

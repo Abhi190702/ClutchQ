@@ -14,17 +14,32 @@ TASKS = {
     "compute_teammate_fit": compute_teammate_fit,
 }
 
+MAX_INPUT_BYTES = 2 * 1024 * 1024
+
 
 def main():
-    raw = sys.stdin.read()
+    raw_bytes = sys.stdin.buffer.read(MAX_INPUT_BYTES + 1)
+    if len(raw_bytes) > MAX_INPUT_BYTES:
+        write_json(error_response("unknown", "Analytics payload is too large."))
+        return
+
     try:
+        raw = raw_bytes.decode("utf-8")
         request = json.loads(raw or "{}")
-    except json.JSONDecodeError:
+    except (UnicodeDecodeError, json.JSONDecodeError):
         write_json(error_response("unknown", "Input must be valid JSON."))
+        return
+
+    if not isinstance(request, dict):
+        write_json(error_response("unknown", "Input must be a JSON object."))
         return
 
     task = request.get("task")
     payload = request.get("payload") or {}
+
+    if not isinstance(payload, dict):
+        write_json(error_response(task or "unknown", "Analytics payload must be a JSON object."))
+        return
 
     if task not in TASKS:
         write_json(error_response(task or "unknown", "Unsupported analytics task."))

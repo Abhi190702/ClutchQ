@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "main": "server.js",
   "type": "module",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
@@ -10,6 +13,9 @@
     "seed:demo": "node scripts/seedDemoAccounts.js",
     "seed:games": "node seed/gameSeed.js",
     "sync:external-games": "node scripts/syncExternalGames.js",
+    "test": "npm run test:server && npm run test:analytics",
+    "test:server": "node --test tests/backendHardening.test.js",
+    "test:analytics": "python -m unittest discover ../analytics-worker/tests -p \"test_*.py\"",
     "test:email": "node scripts/testEmail.js",
     "clear": "node scripts/clearDb.js"
   },

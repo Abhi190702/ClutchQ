@@ -1,3 +1,5 @@
+import { fetchWithTimeout } from "../utils/fetchWithTimeout.js";
+
 const DISCORD_API_BASE = "https://discord.com/api/v10";
 const INVITE_MAX_AGE_SECONDS = 24 * 60 * 60;
 const CATEGORY_CHANNEL_TYPE = 4;
@@ -20,7 +22,7 @@ export class DiscordServiceError extends Error {
 }
 
 export const ensureDiscordConfigured = () => {
-  if (!process.env.DISCORD_BOT_TOKEN || !process.env.DISCORD_GUILD_ID) {
+  if (!String(process.env.DISCORD_BOT_TOKEN || "").trim() || !String(process.env.DISCORD_GUILD_ID || "").trim()) {
     throw new DiscordServiceError("Discord voice rooms are not configured yet.", 503);
   }
 };
@@ -29,7 +31,7 @@ export const getDiscordHeaders = () => {
   ensureDiscordConfigured();
 
   return {
-    Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
+    Authorization: `Bot ${String(process.env.DISCORD_BOT_TOKEN).trim()}`,
     "Content-Type": "application/json"
   };
 };
@@ -114,7 +116,7 @@ const applyCategoryOverwrites = (permissions, guild, member, category) => {
 };
 
 const runDiscordRequest = async (path) => {
-  const response = await fetch(`${DISCORD_API_BASE}${path}`, {
+  const response = await fetchWithTimeout(`${DISCORD_API_BASE}${path}`, {
     headers: getDiscordHeaders()
   });
   const data = await readDiscordResponse(response);
@@ -260,6 +262,10 @@ const handleCreateChannelError = (response, body) => {
 };
 
 const handleInviteError = (response, body) => {
+  if (response.status === 404) {
+    throw new DiscordServiceError("Discord voice channel no longer exists.", 404, body);
+  }
+
   if (response.status === 401 || response.status === 403) {
     throw new DiscordServiceError("Discord bot does not have permission to create voice rooms.", 403, body);
   }
@@ -277,7 +283,7 @@ export const createLobbyVoiceChannel = async (lobby) => {
     body.parent_id = process.env.DISCORD_CATEGORY_ID;
   }
 
-  const response = await fetch(`${DISCORD_API_BASE}/guilds/${process.env.DISCORD_GUILD_ID}/channels`, {
+  const response = await fetchWithTimeout(`${DISCORD_API_BASE}/guilds/${process.env.DISCORD_GUILD_ID}/channels`, {
     method: "POST",
     headers: getDiscordHeaders(),
     body: JSON.stringify(body)
@@ -296,7 +302,7 @@ export const createLobbyVoiceChannel = async (lobby) => {
 };
 
 export const createInviteForChannel = async (channelId) => {
-  const response = await fetch(`${DISCORD_API_BASE}/channels/${channelId}/invites`, {
+  const response = await fetchWithTimeout(`${DISCORD_API_BASE}/channels/${channelId}/invites`, {
     method: "POST",
     headers: getDiscordHeaders(),
     body: JSON.stringify({
@@ -322,7 +328,7 @@ export const createInviteForChannel = async (channelId) => {
 export const deleteDiscordChannel = async (channelId) => {
   if (!channelId) return { success: true };
 
-  const response = await fetch(`${DISCORD_API_BASE}/channels/${channelId}`, {
+  const response = await fetchWithTimeout(`${DISCORD_API_BASE}/channels/${channelId}`, {
     method: "DELETE",
     headers: getDiscordHeaders()
   });
@@ -337,7 +343,7 @@ export const deleteDiscordChannel = async (channelId) => {
     logDiscordError("delete voice channel", response, data);
 
     if (response.status === 401 || response.status === 403) {
-      throw new DiscordServiceError("Discord bot does not have permission to create voice rooms.", 403, data);
+      throw new DiscordServiceError("Discord bot does not have permission to manage voice rooms.", 403, data);
     }
 
     throw new DiscordServiceError("Discord voice room could not be deleted.", 502, data);
@@ -346,8 +352,13 @@ export const deleteDiscordChannel = async (channelId) => {
   return { success: true };
 };
 
-export const createOrReuseLobbyRoom = async (lobby) => {
-  if (lobby?.discord?.channelId && lobby?.discord?.inviteUrl) {
+const provisioningByLobby = new Map();
+
+const provisionLobbyRoom = async (lobby) => {
+  const inviteExpiresAt = lobby?.discord?.expiresAt ? new Date(lobby.discord.expiresAt).getTime() : 0;
+  const reusableInvite = lobby?.discord?.inviteUrl && inviteExpiresAt > Date.now() + 60 * 1000;
+
+  if (lobby?.discord?.channelId && reusableInvite) {
     return {
       channelId: lobby.discord.channelId,
       channelName: lobby.discord.channelName,
@@ -355,6 +366,21 @@ export const createOrReuseLobbyRoom = async (lobby) => {
       createdAt: lobby.discord.createdAt,
       expiresAt: lobby.discord.expiresAt
     };
+  }
+
+  if (lobby?.discord?.channelId) {
+    try {
+      const invite = await createInviteForChannel(lobby.discord.channelId);
+      return {
+        channelId: lobby.discord.channelId,
+        channelName: lobby.discord.channelName,
+        inviteUrl: invite.inviteUrl,
+        createdAt: lobby.discord.createdAt || new Date(),
+        expiresAt: invite.expiresAt ? new Date(invite.expiresAt) : undefined
+      };
+    } catch (error) {
+      if (!(error instanceof DiscordServiceError) || error.statusCode !== 404) throw error;
+    }
   }
 
   const channel = await createLobbyVoiceChannel(lobby);
@@ -373,5 +399,20 @@ export const createOrReuseLobbyRoom = async (lobby) => {
       console.error("Failed to clean up Discord channel after invite error", deleteError);
     });
     throw error;
+  }
+};
+
+export const createOrReuseLobbyRoom = async (lobby) => {
+  const key = String(lobby?._id || "");
+  if (!key) return provisionLobbyRoom(lobby);
+  if (provisioningByLobby.has(key)) return provisioningByLobby.get(key);
+
+  const provisioning = provisionLobbyRoom(lobby);
+  provisioningByLobby.set(key, provisioning);
+
+  try {
+    return await provisioning;
+  } finally {
+    if (provisioningByLobby.get(key) === provisioning) provisioningByLobby.delete(key);
   }
 };

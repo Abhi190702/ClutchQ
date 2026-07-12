@@ -14,22 +14,26 @@ export const summarizeReviewRatings = (reviews = []) => {
   }, {});
 };
 
-export const calculateTrustScore = ({ profile, reviews = [], validReports = 0 } = {}) => {
-  const ratingSummary = summarizeReviewRatings(reviews);
+export const calculateTrustScore = ({ profile, reviews = [], reviewCount = reviews.length, ratingSummary: suppliedRatingSummary, validReports = 0 } = {}) => {
+  const ratingSummary = suppliedRatingSummary || summarizeReviewRatings(reviews);
   const reviewAverage = average(Object.values(ratingSummary));
-  const baseTrust = reviews.length ? reviewAverage * 20 : profile?.trustScore || 70;
-  const reliabilityBonus = (profile?.reliabilityScore || 80) * 0.2;
+  const reviewEvidence = Math.min(1, reviewCount / 5);
+  const reviewSignal = reviewCount ? reviewAverage * 20 : 70;
+  const blendedReviewSignal = 70 * (1 - reviewEvidence) + reviewSignal * reviewEvidence;
+  const reliabilityScore = Number.isFinite(Number(profile?.reliabilityScore)) ? Number(profile.reliabilityScore) : 70;
+  const baseTrust = blendedReviewSignal * 0.7 + reliabilityScore * 0.3;
   const noShowPenalty = (profile?.noShows || 0) * 3;
   const reportPenalty = validReports * 5;
-  const completedBoost = Math.min((profile?.completedSessions || 0) * 0.4, 8);
-  const finalScore = clamp(Math.round(baseTrust + reliabilityBonus + completedBoost - noShowPenalty - reportPenalty));
+  const completedBoost = Math.min((profile?.completedSessions || 0) * 0.3, 6);
+  const finalScore = clamp(Math.round(baseTrust + completedBoost - noShowPenalty - reportPenalty));
 
   return {
     trustScore: finalScore,
     ratingSummary,
     inputs: {
       reviewAverage: Number(reviewAverage.toFixed(2)),
-      reliabilityBonus,
+      reviewEvidence: Number(reviewEvidence.toFixed(2)),
+      reliabilityScore,
       noShowPenalty,
       reportPenalty,
       completedBoost

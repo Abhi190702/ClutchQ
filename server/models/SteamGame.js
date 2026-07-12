@@ -11,22 +11,26 @@ const steamGameSchema = new mongoose.Schema(
     steamId: {
       type: String,
       required: true,
-      index: true
+      index: true,
+      match: /^\d{17}$/
     },
     appId: {
       type: Number,
-      required: true
+      required: true,
+      min: 1
     },
-    name: String,
-    iconUrl: String,
-    logoUrl: String,
+    name: { type: String, trim: true, maxlength: 200 },
+    iconUrl: { type: String, maxlength: 600 },
+    logoUrl: { type: String, maxlength: 600 },
     playtimeForeverMinutes: {
       type: Number,
-      default: 0
+      default: 0,
+      min: 0
     },
     playtimeLastTwoWeeksMinutes: {
       type: Number,
-      default: 0
+      default: 0,
+      min: 0
     },
     lastPlayedAt: Date,
     hasCommunityVisibleStats: Boolean,

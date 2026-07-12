@@ -1,12 +1,11 @@
+import { fetchWithTimeout } from "../utils/fetchWithTimeout.js";
+import { isProductionRuntime } from "../utils/runtimeEnv.js";
+
 const VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
 export const verifyTurnstileToken = async (token, remoteIp) => {
   const secret = process.env.TURNSTILE_SECRET_KEY;
-  const isProduction = process.env.NODE_ENV === "production";
-
-  if (!token) {
-    return { success: false, errors: ["missing-input-response"], challengeTs: null, hostname: null };
-  }
+  const isProduction = isProductionRuntime();
 
   if (!secret) {
     return {
@@ -17,6 +16,10 @@ export const verifyTurnstileToken = async (token, remoteIp) => {
     };
   }
 
+  if (!token || typeof token !== "string" || token.length > 2048) {
+    return { success: false, errors: ["missing-input-response"], challengeTs: null, hostname: null };
+  }
+
   try {
     const body = new URLSearchParams({
       secret,
@@ -24,12 +27,23 @@ export const verifyTurnstileToken = async (token, remoteIp) => {
     });
     if (remoteIp) body.set("remoteip", remoteIp);
 
-    const response = await fetch(VERIFY_URL, {
+    const response = await fetchWithTimeout(VERIFY_URL, {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
       body
     });
+    if (!response.ok) {
+      return { success: false, errors: ["turnstile_unavailable"], challengeTs: null, hostname: null };
+    }
     const data = await response.json();
+
+    const configuredHostnames = String(process.env.TURNSTILE_ALLOWED_HOSTNAMES || "")
+      .split(",")
+      .map((hostname) => hostname.trim().toLowerCase())
+      .filter(Boolean);
+    if (isProduction && configuredHostnames.length && !configuredHostnames.includes(String(data.hostname || "").toLowerCase())) {
+      return { success: false, errors: ["hostname-mismatch"], challengeTs: data.challenge_ts || null, hostname: data.hostname || null };
+    }
 
     return {
       success: Boolean(data.success),

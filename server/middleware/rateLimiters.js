@@ -24,6 +24,11 @@ export const authLimiter = createLimiter({
   limit: 50
 });
 
+export const registrationLimiter = createLimiter({
+  windowMs: 60 * 60 * 1000,
+  limit: 10
+});
+
 export const loginLimiter = createLimiter({
   windowMs: 15 * 60 * 1000,
   limit: 10
@@ -47,4 +52,24 @@ export const passwordResetLimiter = createLimiter({
 export const scorecardUploadLimiter = createLimiter({
   windowMs: 15 * 60 * 1000,
   limit: 20
+});
+
+export const analyticsRebuildLimiter = createLimiter({
+  windowMs: 15 * 60 * 1000,
+  limit: 10
+});
+
+export const steamSyncLimiter = createLimiter({
+  windowMs: 15 * 60 * 1000,
+  limit: 5
+});
+
+export const externalMetadataLimiter = createLimiter({
+  windowMs: 15 * 60 * 1000,
+  limit: 30
+});
+
+export const reportLimiter = createLimiter({
+  windowMs: 60 * 60 * 1000,
+  limit: 10
 });

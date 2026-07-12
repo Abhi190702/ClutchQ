@@ -1,6 +1,7 @@
 const defaultTimeoutMs = 8000;
+const defaultMaxResponseBytes = 5 * 1024 * 1024;
 
-export const fetchJson = async (url, { timeoutMs = defaultTimeoutMs, headers = {} } = {}) => {
+export const fetchJson = async (url, { timeoutMs = defaultTimeoutMs, maxResponseBytes = defaultMaxResponseBytes, headers = {} } = {}) => {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -18,7 +19,21 @@ export const fetchJson = async (url, { timeoutMs = defaultTimeoutMs, headers = {
       throw new Error(`External API returned ${response.status}`);
     }
 
-    return response.json();
+    const declaredLength = Number(response.headers.get("content-length"));
+    if (Number.isFinite(declaredLength) && declaredLength > maxResponseBytes) {
+      throw new Error("External API response is too large");
+    }
+
+    const payload = await response.arrayBuffer();
+    if (payload.byteLength > maxResponseBytes) {
+      throw new Error("External API response is too large");
+    }
+
+    try {
+      return JSON.parse(new TextDecoder().decode(payload));
+    } catch {
+      throw new Error("External API returned invalid JSON");
+    }
   } finally {
     clearTimeout(timer);
   }

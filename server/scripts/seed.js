@@ -15,9 +15,21 @@ import SteamAchievement from "../models/SteamAchievement.js";
 import SteamFriend from "../models/SteamFriend.js";
 import SteamGame from "../models/SteamGame.js";
 import SteamSyncLog from "../models/SteamSyncLog.js";
+import GameRoom from "../models/GameRoom.js";
+import GameplayGraph from "../models/GameplayGraph.js";
+import ScorecardAnalysis from "../models/ScorecardAnalysis.js";
+import ScorecardUpload from "../models/ScorecardUpload.js";
+import TeammateFeedback from "../models/TeammateFeedback.js";
+import OtpToken from "../models/OtpToken.js";
+import PasswordResetSession from "../models/PasswordResetSession.js";
+import OAuthLoginCode from "../models/OAuthLoginCode.js";
 import calculateSquadChemistry from "../utils/calculateSquadChemistry.js";
 import calculateTrustScore from "../utils/calculateTrustScore.js";
 import generateBadges from "../utils/badgeEngine.js";
+import { assertDestructiveScriptAllowed } from "../utils/scriptSafety.js";
+import { isProductionRuntime } from "../utils/runtimeEnv.js";
+import { substantiatedReportStatuses } from "../services/reputationService.js";
+import { cleanupDiscordChannelsBeforeDelete } from "../utils/scriptDiscordCleanup.js";
 import {
   createDemoProfile,
   createProfilePayload,
@@ -32,7 +44,22 @@ import {
 } from "../utils/seedData.js";
 
 dotenv.config();
+assertDestructiveScriptAllowed("ALLOW_DESTRUCTIVE_SEED", "Full database seeding");
+const productionRuntime = isProductionRuntime();
+const adminPasswordValue = process.env.SEED_ADMIN_PASSWORD || (productionRuntime ? "" : "admin123");
+if (productionRuntime && adminPasswordValue.length < 12) {
+  throw new Error("SEED_ADMIN_PASSWORD must be at least 12 characters for a production seed.");
+}
 await connectDB();
+
+const [existingLobbyDiscord, existingRoomDiscord] = await Promise.all([
+  Lobby.find({ "discord.channelId": { $exists: true, $ne: "" } }).select("discord.channelId"),
+  GameRoom.find({ "discord.channelId": { $exists: true, $ne: "" } }).select("discord.channelId")
+]);
+await cleanupDiscordChannelsBeforeDelete(
+  [...existingLobbyDiscord, ...existingRoomDiscord],
+  "Full database seeding"
+);
 
 await Promise.all([
   User.deleteMany({}),
@@ -48,11 +75,19 @@ await Promise.all([
   SteamGame.deleteMany({}),
   SteamFriend.deleteMany({}),
   SteamAchievement.deleteMany({}),
-  SteamSyncLog.deleteMany({})
+  SteamSyncLog.deleteMany({}),
+  GameRoom.deleteMany({}),
+  GameplayGraph.deleteMany({}),
+  ScorecardAnalysis.deleteMany({}),
+  ScorecardUpload.deleteMany({}),
+  TeammateFeedback.deleteMany({}),
+  OtpToken.deleteMany({}),
+  PasswordResetSession.deleteMany({}),
+  OAuthLoginCode.deleteMany({})
 ]);
 
 const userPassword = await bcrypt.hash("demo123", 10);
-const adminPassword = await bcrypt.hash("admin123", 10);
+const adminPassword = await bcrypt.hash(adminPasswordValue, 10);
 
 const admin = await User.create({
   name: "ClutchQ Admin",
@@ -621,7 +656,10 @@ for (const user of demoUsers) {
 
 for (const profile of await GamerProfile.find({})) {
   const userReviews = await Review.find({ reviewedUserId: profile.userId });
-  const reportCount = await Report.countDocuments({ reportedUserId: profile.userId, status: { $ne: "dismissed" } });
+  const reportCount = await Report.countDocuments({
+    reportedUserId: profile.userId,
+    status: { $in: substantiatedReportStatuses }
+  });
   const trust = calculateTrustScore({ profile, reviews: userReviews, validReports: reportCount });
   profile.trustScore = trust.trustScore;
   profile.averageRatings = trust.ratingSummary;
@@ -633,6 +671,6 @@ for (const profile of await GamerProfile.find({})) {
 
 console.log("ClutchQ seed complete");
 console.log("Demo User: demo@clutchq.com / demo123");
-console.log("Admin: admin@clutchq.com / admin123");
+console.log(`Admin: admin@clutchq.com / ${productionRuntime ? "password from SEED_ADMIN_PASSWORD" : "admin123"}`);
 console.log(`Seeded ${profiles.length} profiles, ${lobbies.length} lobbies, ${requests.length} requests, ${reviews.length} reviews, ${reports.length} reports.`);
 process.exit(0);

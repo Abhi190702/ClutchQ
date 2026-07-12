@@ -1,3 +1,5 @@
+import { fetchWithTimeout } from "../../utils/fetchWithTimeout.js";
+
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_USERINFO_URL = "https://openidconnect.googleapis.com/v1/userinfo";
@@ -20,7 +22,7 @@ export const buildGoogleAuthUrl = (state) => {
 };
 
 export const exchangeGoogleCodeForToken = async (code) => {
-  const response = await fetch(GOOGLE_TOKEN_URL, {
+  const response = await fetchWithTimeout(GOOGLE_TOKEN_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
@@ -40,7 +42,7 @@ export const exchangeGoogleCodeForToken = async (code) => {
 };
 
 export const fetchGoogleProfile = async (accessToken) => {
-  const response = await fetch(GOOGLE_USERINFO_URL, {
+  const response = await fetchWithTimeout(GOOGLE_USERINFO_URL, {
     headers: { Authorization: `Bearer ${accessToken}` }
   });
 
@@ -58,6 +60,7 @@ export const handleGoogleOAuthCallback = async (code) => {
   return {
     id: profile.sub,
     email: profile.email,
+    emailVerified: Boolean(profile.email_verified),
     name: profile.name || profile.email?.split("@")[0] || "Google Player",
     avatar: profile.picture,
     connectedAt: new Date()

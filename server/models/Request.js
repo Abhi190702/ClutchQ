@@ -25,13 +25,18 @@ const requestSchema = new mongoose.Schema(
       enum: ["pending", "accepted", "rejected", "cancelled"],
       default: "pending"
     },
-    message: String
+    message: { type: String, trim: true, maxlength: 500 }
   },
   { timestamps: true }
 );
 
 requestSchema.index({ fromUser: 1, toUser: 1, status: 1 });
 requestSchema.index({ lobbyId: 1, status: 1 });
+requestSchema.index({ status: 1, createdAt: 1, lobbyId: 1 });
+requestSchema.index(
+  { fromUser: 1, toUser: 1, lobbyId: 1, type: 1 },
+  { unique: true, partialFilterExpression: { status: "pending" } }
+);
 
 const Request = mongoose.model("Request", requestSchema);
 

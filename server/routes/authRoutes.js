@@ -1,6 +1,8 @@
 import express from "express";
 import {
   demoLogin,
+  createOAuthLinkCode,
+  exchangeOAuthCode,
   forgotPassword,
   getSecurityHealth,
   getMe,
@@ -20,18 +22,28 @@ import {
   verifyPasswordResetOtp
 } from "../controllers/authController.js";
 import { protect } from "../middleware/authMiddleware.js";
-import { authLimiter, loginLimiter, otpRequestLimiter, otpVerifyLimiter, passwordResetLimiter } from "../middleware/rateLimiters.js";
+import { adminOnly } from "../middleware/adminMiddleware.js";
+import {
+  authLimiter,
+  loginLimiter,
+  otpRequestLimiter,
+  otpVerifyLimiter,
+  passwordResetLimiter,
+  registrationLimiter
+} from "../middleware/rateLimiters.js";
 
 const router = express.Router();
 
-router.post("/register", authLimiter, register);
+router.post("/register", registrationLimiter, register);
 router.post("/login", loginLimiter, login);
 router.post("/demo", loginLimiter, demoLogin);
 router.post("/logout", logout);
+router.post("/oauth/exchange", loginLimiter, exchangeOAuthCode);
+router.post("/oauth/link-code", authLimiter, protect, createOAuthLinkCode);
 router.get("/me", protect, getMe);
 router.post("/otp/request", otpRequestLimiter, requestOtp);
 router.post("/otp/verify", otpVerifyLimiter, verifyEmailOtp);
-router.get("/security/health", authLimiter, getSecurityHealth);
+router.get("/security/health", authLimiter, protect, adminOnly, getSecurityHealth);
 router.post("/password/forgot", passwordResetLimiter, forgotPassword);
 router.post("/password/verify-otp", otpVerifyLimiter, verifyPasswordResetOtp);
 router.post("/password/reset", passwordResetLimiter, resetPassword);

@@ -11,6 +11,35 @@ const slugify = (value = "") =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 
+const cleanText = (value, maxLength = 160) => String(value || "").replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, maxLength);
+const safeUrl = (value) => {
+  if (!value || String(value).length > 2048) return "";
+  try {
+    const url = new URL(String(value));
+    return ["http:", "https:"].includes(url.protocol) ? url.toString() : "";
+  } catch {
+    return "";
+  }
+};
+const cleanList = (values, maxItems = 20, maxLength = 80) =>
+  Array.isArray(values) ? [...new Set(values.map((value) => cleanText(value, maxLength)).filter(Boolean))].slice(0, maxItems) : [];
+const cleanMetadata = (metadata = {}) => {
+  const source = ["catalog", "freetogame", "rawg", "manual"].includes(metadata.source) ? metadata.source : "catalog";
+  const releaseDate = metadata.releaseDate ? new Date(metadata.releaseDate) : undefined;
+  return {
+    title: cleanText(metadata.title, 160),
+    source,
+    coverUrl: safeUrl(metadata.coverUrl),
+    bannerUrl: safeUrl(metadata.bannerUrl),
+    screenshots: cleanList((metadata.screenshots || []).map(safeUrl), 12, 2048),
+    genres: cleanList(metadata.genres, 20, 60),
+    platforms: cleanList(metadata.platforms, 20, 60),
+    releaseDate: releaseDate && !Number.isNaN(releaseDate.getTime()) ? releaseDate : undefined,
+    developer: cleanText(metadata.developer, 160),
+    publisher: cleanText(metadata.publisher, 160)
+  };
+};
+
 const toPublicMetadata = (doc) => {
   if (!doc) return null;
   const data = doc.toObject ? doc.toObject() : doc;
@@ -30,6 +59,17 @@ const toPublicMetadata = (doc) => {
   };
 };
 
+const toTransientPublicMetadata = (metadata) => {
+  const cleaned = cleanMetadata(metadata);
+  const gameSlug = slugify(cleaned.title);
+  if (!cleaned.title || !gameSlug) return null;
+  return toPublicMetadata({
+    ...cleaned,
+    gameSlug,
+    lastSyncedAt: null
+  });
+};
+
 const catalogFallback = async (slug) => {
   const dbGame = await Game.findOne({ slug }).lean();
   const catalogGame = dbGame || getGameBySlug(slug);
@@ -47,25 +87,22 @@ const catalogFallback = async (slug) => {
     releaseDate: undefined,
     developer: "",
     publisher: "",
-    raw: {
-      source: "catalog",
-      category: catalogGame.category,
-      status: catalogGame.status
-    }
+    raw: undefined
   };
 };
 
 const upsertMetadata = async (gameSlug, metadata) => {
-  if (!metadata?.title) return null;
+  const cleaned = cleanMetadata(metadata);
+  if (!cleaned.title) return null;
   const payload = {
-    ...metadata,
+    ...cleaned,
     gameSlug,
     lastSyncedAt: new Date()
   };
 
   const doc = await ExternalGameMetadata.findOneAndUpdate(
     { gameSlug },
-    { $set: payload },
+    { $set: payload, $unset: { raw: "" } },
     { new: true, upsert: true, setDefaultsOnInsert: true }
   );
   return toPublicMetadata(doc);
@@ -109,12 +146,13 @@ export const getGameMetadata = async (slug, { refresh = false } = {}) => {
 export const searchGameMetadata = async (query) => {
   const search = String(query || "").trim();
   if (!search) return [];
+  const searchSlug = slugify(search);
+  const escapedTitle = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const searchConditions = [{ title: new RegExp(escapedTitle, "i") }];
+  if (searchSlug) searchConditions.push({ gameSlug: new RegExp(searchSlug, "i") });
 
   const cached = await ExternalGameMetadata.find({
-    $or: [
-      { title: new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i") },
-      { gameSlug: new RegExp(slugify(search), "i") }
-    ]
+    $or: searchConditions
   })
     .sort({ lastSyncedAt: -1 })
     .limit(10)
@@ -123,13 +161,8 @@ export const searchGameMetadata = async (query) => {
   if (cached.length) return cached.map(toPublicMetadata);
 
   const external = await fetchExternalMetadata(search).catch(() => []);
-  const saved = [];
-  for (const metadata of external.slice(0, 8)) {
-    const gameSlug = slugify(metadata.title);
-    const doc = await upsertMetadata(gameSlug, metadata);
-    if (doc) saved.push(doc);
-  }
-  return saved;
+  const transient = external.slice(0, 8).map(toTransientPublicMetadata).filter(Boolean);
+  return [...new Map(transient.map((item) => [item.gameSlug, item])).values()];
 };
 
 export const syncExternalGameMetadata = async ({ slugs = [] } = {}) => {

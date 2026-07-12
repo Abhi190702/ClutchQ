@@ -19,10 +19,12 @@ const scorecardUploadSchema = new mongoose.Schema(
     },
     gameSlug: {
       type: String,
+      trim: true,
+      maxlength: 80,
       index: true
     },
-    gameName: String,
-    imageDataUrl: String,
+    gameName: { type: String, trim: true, maxlength: 120 },
+    imageDataUrl: { type: String, maxlength: 1250000, select: false },
     imageMime: {
       type: String,
       enum: ["", "image/jpeg", "image/png", "image/webp"],
@@ -46,7 +48,7 @@ const scorecardUploadSchema = new mongoose.Schema(
       default: "user_upload"
     },
     processedAt: Date,
-    errorMessage: String
+    errorMessage: { type: String, maxlength: 500 }
   },
   { timestamps: true }
 );

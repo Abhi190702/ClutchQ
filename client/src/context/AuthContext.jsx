@@ -51,7 +51,8 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const refresh = useCallback(async () => {
-    if (!localStorage.getItem("clutchq_token")) {
+    const storedToken = localStorage.getItem("clutchq_token");
+    if (!storedToken) {
       if (mountedRef.current) {
         resetSession();
         setLoading(false);
@@ -59,6 +60,7 @@ export const AuthProvider = ({ children }) => {
       return null;
     }
 
+    if (mountedRef.current) setToken(storedToken);
     if (mountedRef.current) setLoading(true);
     try {
       const response = await Promise.race([
@@ -87,6 +89,15 @@ export const AuthProvider = ({ children }) => {
       mountedRef.current = false;
     };
   }, [refresh]);
+
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      resetSession();
+      setLoading(false);
+    };
+    window.addEventListener("clutchq:unauthorized", handleUnauthorized);
+    return () => window.removeEventListener("clutchq:unauthorized", handleUnauthorized);
+  }, [resetSession]);
 
   const login = useCallback(async (credentials) => {
     const response = await api.post("/auth/login", credentials);
@@ -136,11 +147,12 @@ export const AuthProvider = ({ children }) => {
       login,
       register,
       demoLogin,
+      completeSession: applySession,
       saveProfile,
       refresh,
       logout
     }),
-    [token, user, profile, loading, login, register, demoLogin, saveProfile, refresh, logout]
+    [token, user, profile, loading, login, register, demoLogin, applySession, saveProfile, refresh, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

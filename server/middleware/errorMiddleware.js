@@ -1,3 +1,5 @@
+import { isProductionRuntime } from "../utils/runtimeEnv.js";
+
 export const notFound = (req, res, next) => {
   const error = new Error(`Route not found: ${req.originalUrl}`);
   error.statusCode = 404;
@@ -5,8 +7,13 @@ export const notFound = (req, res, next) => {
 };
 
 const normalizeError = (err, res) => {
+  if (err instanceof SyntaxError && err.status === 400 && Object.hasOwn(err, "body")) {
+    return { statusCode: 400, message: "Request body contains invalid JSON." };
+  }
+
   if (err.name === "CastError") {
-    return { statusCode: 404, message: "Resource not found" };
+    const isIdentifier = err.path === "_id" || /Id$/.test(String(err.path || ""));
+    return { statusCode: isIdentifier ? 404 : 400, message: isIdentifier ? "Resource not found" : "Invalid request data" };
   }
 
   if (err.name === "ValidationError") {
@@ -35,12 +42,21 @@ const normalizeError = (err, res) => {
 };
 
 export const errorHandler = (err, req, res, next) => {
+  if (res.headersSent) return next(err);
   const { statusCode, message } = normalizeError(err, res);
-  const isProduction = process.env.NODE_ENV === "production";
+  const isProduction = isProductionRuntime();
   const safeMessage = isProduction && statusCode >= 500 ? "Server error. Please try again." : message;
 
   if (statusCode >= 500) {
-    console.error(`[${req.id || "no-request-id"}] ${req.method} ${req.originalUrl}`, err);
+    if (isProduction) {
+      console.error(`[${req.id || "no-request-id"}] ${req.method} ${req.originalUrl}`, {
+        name: err.name || "Error",
+        statusCode,
+        message: err.message || "Server error"
+      });
+    } else {
+      console.error(`[${req.id || "no-request-id"}] ${req.method} ${req.originalUrl}`, err);
+    }
   }
 
   res.status(statusCode).json({

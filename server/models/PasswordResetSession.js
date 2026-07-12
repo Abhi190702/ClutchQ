@@ -7,12 +7,15 @@ const passwordResetSessionSchema = new mongoose.Schema(
       required: true,
       lowercase: true,
       trim: true,
-      index: true
+      index: true,
+      maxlength: 254
     },
     tokenHash: {
       type: String,
       required: true,
-      index: true
+      unique: true,
+      minlength: 64,
+      maxlength: 64
     },
     consumedAt: Date,
     expiresAt: {
@@ -20,8 +23,8 @@ const passwordResetSessionSchema = new mongoose.Schema(
       required: true,
       index: { expires: 0 }
     },
-    requestIp: String,
-    userAgent: String,
+    requestIp: { type: String, maxlength: 100 },
+    userAgent: { type: String, maxlength: 500 },
     createdAt: {
       type: Date,
       default: Date.now
