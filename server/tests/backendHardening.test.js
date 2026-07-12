@@ -33,6 +33,7 @@ import {
 import { isSharedDemoEmail, isSharedDemoUser } from "../utils/demoAccounts.js";
 import { getLinkUserFromRequest, prepareOAuthLinkCookie } from "../controllers/authController.js";
 import { calculateLobbyCompatibility } from "../controllers/matchmakingController.js";
+import { getTurnstileAllowedHostnames } from "../utils/turnstileConfig.js";
 
 test("request IDs accept a bounded safe value and replace unsafe input", () => {
   assert.equal(createRequestId("client-request_123"), "client-request_123");
@@ -454,9 +455,13 @@ test("hosted runtime validates production secrets even when NODE_ENV is missing"
       TURNSTILE_SECRET_KEY: "configured-secret"
     });
     delete process.env.TURNSTILE_ALLOWED_HOSTNAMES;
-    assert.throws(() => validateEnv(), /TURNSTILE_ALLOWED_HOSTNAMES/);
-    process.env.TURNSTILE_ALLOWED_HOSTNAMES = "client.example.com";
     assert.doesNotThrow(() => validateEnv());
+    assert.deepEqual(getTurnstileAllowedHostnames(), ["client.example.com"]);
+    process.env.TURNSTILE_ALLOWED_HOSTNAMES = "https://client.example.com/";
+    assert.doesNotThrow(() => validateEnv());
+    assert.deepEqual(getTurnstileAllowedHostnames(), ["client.example.com"]);
+    process.env.TURNSTILE_ALLOWED_HOSTNAMES = "https://client.example.com/path";
+    assert.throws(() => validateEnv(), /TURNSTILE_ALLOWED_HOSTNAMES/);
   } finally {
     Object.entries(previous).forEach(([key, value]) => {
       if (value === undefined) delete process.env[key];

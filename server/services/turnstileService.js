@@ -1,5 +1,6 @@
 import { fetchWithTimeout } from "../utils/fetchWithTimeout.js";
 import { isProductionRuntime } from "../utils/runtimeEnv.js";
+import { getTurnstileAllowedHostnames } from "../utils/turnstileConfig.js";
 
 const VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
@@ -37,10 +38,7 @@ export const verifyTurnstileToken = async (token, remoteIp) => {
     }
     const data = await response.json();
 
-    const configuredHostnames = String(process.env.TURNSTILE_ALLOWED_HOSTNAMES || "")
-      .split(",")
-      .map((hostname) => hostname.trim().toLowerCase())
-      .filter(Boolean);
+    const configuredHostnames = getTurnstileAllowedHostnames();
     if (isProduction && configuredHostnames.length && !configuredHostnames.includes(String(data.hostname || "").toLowerCase())) {
       return { success: false, errors: ["hostname-mismatch"], challengeTs: data.challenge_ts || null, hostname: data.hostname || null };
     }

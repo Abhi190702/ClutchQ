@@ -1,4 +1,5 @@
 import { isProductionRuntime } from "./runtimeEnv.js";
+import { resolveTurnstileAllowedHostnames } from "./turnstileConfig.js";
 
 const isProduction = isProductionRuntime;
 
@@ -128,12 +129,14 @@ export const validateEnv = () => {
     if (!/^\d{17,20}$/.test(valueFor(key))) throw new Error(`${key} must be a Discord snowflake ID.`);
   });
   if (isProduction() && present("TURNSTILE_SECRET_KEY")) {
-    const hostnames = valueFor("TURNSTILE_ALLOWED_HOSTNAMES")
-      .split(",")
-      .map((hostname) => hostname.trim().toLowerCase())
-      .filter(Boolean);
-    if (!hostnames.length || hostnames.some((hostname) => !/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(hostname))) {
-      throw new Error("TURNSTILE_ALLOWED_HOSTNAMES must list valid production hostnames when Turnstile is enabled.");
+    const { hostnames, invalidEntries } = resolveTurnstileAllowedHostnames({
+      configuredValue: valueFor("TURNSTILE_ALLOWED_HOSTNAMES"),
+      clientUrl: valueFor("CLIENT_URL")
+    });
+    if (!hostnames.length || invalidEntries.length) {
+      throw new Error(
+        "TURNSTILE_ALLOWED_HOSTNAMES must contain comma-separated hostnames or http(s) origins; leave it blank to use CLIENT_URL."
+      );
     }
   }
   assertBoundedInteger("OTP_TTL_MINUTES", 1, 60);

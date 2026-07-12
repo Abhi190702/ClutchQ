@@ -122,6 +122,7 @@ Backend `server/.env` or Render:
 
 ```env
 TURNSTILE_SECRET_KEY=
+TURNSTILE_ALLOWED_HOSTNAMES=clutch-q.vercel.app
 OTP_EMAIL_FROM=ClutchQ <no-reply@example.com>
 SMTP_HOST=
 SMTP_PORT=587
@@ -141,6 +142,7 @@ VITE_TURNSTILE_SITE_KEY=
 Production rules:
 
 - Add `TURNSTILE_SECRET_KEY` to Render and `VITE_TURNSTILE_SITE_KEY` to Vercel from the same Cloudflare Turnstile widget.
+- `TURNSTILE_ALLOWED_HOSTNAMES` is optional and defaults to the hostname in `CLIENT_URL`. It also accepts an HTTPS origin such as `https://clutch-q.vercel.app/`.
 - Add SMTP values to Render before testing live OTP email.
 - Redeploy both backend and frontend after changing these values.
 - Do not put SMTP or Turnstile secret keys in Vercel.
