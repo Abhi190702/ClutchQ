@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import PageShell from "../components/common/PageShell";
 import ErrorState from "../components/common/ErrorState";
 import SkeletonCard from "../components/common/SkeletonCard";
-import ActivityCalendarStrip from "../components/activity/ActivityCalendarStrip";
 import ActivityHero from "../components/activity/ActivityHero";
 import ActivityInsightPanel from "../components/activity/ActivityInsightPanel";
 import FriendCompatibilityStrip from "../components/activity/FriendCompatibilityStrip";
@@ -130,7 +129,6 @@ const Activity = () => {
             <div className="grid min-w-0 gap-7 xl:grid-cols-[minmax(0,1.85fr)_minmax(320px,0.95fr)]">
               <div className="min-w-0 space-y-6">
                 <GamingRhythmChart series={series} />
-                <ActivityCalendarStrip days={series} />
                 <RecentGameTimeline sessions={sessions} analyses={scorecardAnalyses} />
               </div>
               <aside className="min-w-0 space-y-6">
