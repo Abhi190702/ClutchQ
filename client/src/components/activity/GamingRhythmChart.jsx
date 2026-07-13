@@ -22,7 +22,8 @@ const normalizeSeries = (series = [], length = 30) => {
       date: toDateKey(item.date),
       minutes: safeNumber(item.minutes ?? item.totalMinutes)
     }))
-    .filter((item) => item.date);
+    .filter((item) => item.date)
+    .sort((left, right) => left.date.localeCompare(right.date));
   const byDate = new Map(source.map((item) => [item.date, item]));
   const endDate = source.length ? new Date(source[source.length - 1].date) : new Date();
   const startDate = addDays(endDate, -(length - 1));
@@ -109,7 +110,7 @@ const buildSmoothPath = (points) => {
   return segments.join(" ");
 };
 
-const GamingRhythmChart = ({ series = [] }) => {
+const GamingRhythmChart = ({ series = [], embedded = false }) => {
   const days = normalizeSeries(series);
   const maxMinutes = Math.max(...days.map((item) => safeNumber(item.minutes)), 0);
   const activeDays = days.filter((item) => item.minutes > 0).length;
@@ -124,6 +125,7 @@ const GamingRhythmChart = ({ series = [] }) => {
     if (!hasActivity || !element) return undefined;
     const updateWidth = () => setChartWidth(Math.max(240, Math.round(element.clientWidth)));
     updateWidth();
+    if (typeof ResizeObserver !== "function") return undefined;
     const observer = new ResizeObserver(updateWidth);
     observer.observe(element);
     return () => observer.disconnect();
@@ -148,7 +150,7 @@ const GamingRhythmChart = ({ series = [] }) => {
 
   if (!hasActivity) {
     return (
-      <section className="border-b border-white/10 pb-6">
+      <section className={embedded ? "" : "border-b border-white/10 pb-6"}>
         <div className="eyebrow mb-3">Rhythm</div>
         <h2 className="text-2xl font-black text-white">Gaming rhythm</h2>
         <EmptyState
@@ -162,7 +164,7 @@ const GamingRhythmChart = ({ series = [] }) => {
   }
 
   return (
-    <section className="border-b border-white/10 pb-6">
+    <section className={embedded ? "" : "border-b border-white/10 pb-6"}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="eyebrow mb-3">Rhythm</div>

@@ -19,7 +19,7 @@ const labels = {
   consistency: "Consistency"
 };
 
-const PlayerScoreStory = ({ score, graph }) => {
+const PlayerScoreStory = ({ score, graph, embedded = false }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const graphBreakdown = Object.fromEntries((graph?.situationalStrengths || []).map((signal) => [signal.key, signal.score]));
   const breakdown = Object.keys(graphBreakdown).length ? graphBreakdown : score?.breakdown || {};
@@ -36,8 +36,8 @@ const PlayerScoreStory = ({ score, graph }) => {
     : score?.explanation || "Reliable teammate profile signals improve as Steam depth, completed rooms, and teammate reviews grow.";
 
   return (
-    <section className="border-b border-white/10 py-6 md:py-8">
-      <div className="grid gap-6 lg:grid-cols-[128px_minmax(0,1fr)_auto] lg:items-center">
+    <section className={embedded ? "py-8 xl:pr-10" : "border-b border-white/10 py-6 md:py-8"}>
+      <div className={`grid gap-6 ${embedded ? "sm:grid-cols-[118px_minmax(0,1fr)] sm:items-center" : "lg:grid-cols-[128px_minmax(0,1fr)_auto] lg:items-center"}`}>
         <div className="flex justify-center lg:justify-start">
           <ScoreRing score={displayScore} size={118} label="Score" />
         </div>
@@ -56,19 +56,26 @@ const PlayerScoreStory = ({ score, graph }) => {
               </div>
             ))}
           </div>
+          {embedded ? (
+            <button type="button" className="btn-secondary mt-6" onClick={() => setDrawerOpen(true)}>
+              View full breakdown
+            </button>
+          ) : null}
         </div>
-        <button type="button" className="btn-secondary h-fit" onClick={() => setDrawerOpen(true)}>
-          View full breakdown
-        </button>
+        {!embedded ? (
+          <button type="button" className="btn-secondary h-fit" onClick={() => setDrawerOpen(true)}>
+            View full breakdown
+          </button>
+        ) : null}
       </div>
 
-      <div className="mt-5 flex flex-wrap gap-2">
+      {!embedded ? <div className="mt-5 flex flex-wrap gap-2">
         {chips.map(([key, label, value]) => (
           <span key={key} className="rounded-full bg-white/[0.055] px-3 py-1.5 text-xs font-semibold text-clutch-muted">
             {label} <span className="ml-1 font-black text-clutch-text">{Math.round(value || 0)}</span>
           </span>
         ))}
-      </div>
+      </div> : null}
 
       <DetailDrawer
         open={drawerOpen}

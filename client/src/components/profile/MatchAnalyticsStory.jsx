@@ -11,7 +11,7 @@ const Signal = ({ label, value, helper }) => (
   </div>
 );
 
-const MatchAnalyticsStory = ({ insights, recentActivitySummary, profile, graph, scorecards = [] }) => {
+const MatchAnalyticsStory = ({ insights, recentActivitySummary, profile, graph, scorecards = [], embedded = false }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const sessions = recentActivitySummary?.sessions || [];
   const scorecardRows = scorecards.map((card) => ({
@@ -35,7 +35,7 @@ const MatchAnalyticsStory = ({ insights, recentActivitySummary, profile, graph, 
   const getSignalScore = (item) => item.signalScore ?? item.matchRating ?? item.teamworkScore ?? item.communicationScore ?? "";
 
   return (
-    <section className="border-b border-white/10 py-6 md:py-8">
+    <section className={embedded ? "py-8 xl:border-l xl:border-white/10 xl:pl-10" : "border-b border-white/10 py-6 md:py-8"}>
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
           <div className="eyebrow">Squad fit</div>

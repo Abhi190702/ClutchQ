@@ -83,7 +83,7 @@ const ProfileAccountMenu = ({ user, profile, steamSummary, steamLinked, onLogout
 
       {open && (
         <div
-          className={`${isSidebar ? "bottom-[calc(100%+12px)] left-0" : "right-0 top-[calc(100%+12px)]"} thin-scrollbar absolute z-50 max-h-[calc(100vh-120px)] w-[min(350px,calc(100vw-2rem))] overflow-y-auto rounded-[22px] border border-white/[0.12] bg-[#111319] shadow-[0_34px_100px_rgba(0,0,0,0.78),0_0_0_1px_rgba(255,255,255,0.025)]`}
+          className={`${isSidebar ? "bottom-[calc(100%+12px)] left-0" : "right-0 top-[calc(100%+12px)]"} scrollbar-none absolute z-50 max-h-[calc(100vh-120px)] w-[min(350px,calc(100vw-2rem))] overflow-y-auto rounded-[22px] border border-white/[0.12] bg-[#111319] shadow-[0_34px_100px_rgba(0,0,0,0.78),0_0_0_1px_rgba(255,255,255,0.025)]`}
           role="menu"
         >
           <div className="border-b border-white/[0.07] bg-[#171b23] px-5 py-5">

@@ -208,9 +208,9 @@ const Profile = () => {
       {activeTab === PROFILE_TABS.activity && (
         <div className="space-y-6">
           <GamingActivityVisual heatmap={steam.heatmap} library={steam.library} recentActivitySummary={bundle.recentActivitySummary} rhythm={rhythmIntel} graph={gameplayGraph} />
-          <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-            <PlayerScoreStory score={score} graph={gameplayGraph} />
-            <MatchAnalyticsStory insights={steam.insights} recentActivitySummary={bundle.recentActivitySummary} profile={bundle.profile} graph={gameplayGraph} scorecards={scorecardAnalyses} />
+          <div className="grid border-b border-white/10 xl:grid-cols-[0.9fr_1.1fr]">
+            <PlayerScoreStory score={score} graph={gameplayGraph} embedded />
+            <MatchAnalyticsStory insights={steam.insights} recentActivitySummary={bundle.recentActivitySummary} profile={bundle.profile} graph={gameplayGraph} scorecards={scorecardAnalyses} embedded />
           </div>
         </div>
       )}

@@ -34,10 +34,12 @@
   background: rgba(148, 163, 184, 0.5);
 }
 
+.scrollbar-none,
 .landing-scrollbar-none {
   scrollbar-width: none;
 }
 
+.scrollbar-none::-webkit-scrollbar,
 .landing-scrollbar-none::-webkit-scrollbar {
   display: none;
 }

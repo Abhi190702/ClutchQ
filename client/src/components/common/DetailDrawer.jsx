@@ -1,21 +1,43 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 const DetailDrawer = ({ open, title, subtitle, children, onClose }) => {
+  const closeButtonRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   useEffect(() => {
     if (!open) return undefined;
 
+    const previousActiveElement = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButtonRef.current?.focus();
+
     const handleKeyDown = (event) => {
-      if (event.key === "Escape") onClose?.();
+      if (event.key === "Escape") onCloseRef.current?.();
     };
 
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, onClose]);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previousActiveElement?.focus?.();
+    };
+  }, [open]);
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-labelledby="detail-drawer-title">
+    <div
+      className="fixed inset-0 z-50"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="detail-drawer-title"
+      aria-describedby={subtitle ? "detail-drawer-subtitle" : undefined}
+    >
       <button
         type="button"
         aria-label="Close details"
@@ -27,9 +49,9 @@ const DetailDrawer = ({ open, title, subtitle, children, onClose }) => {
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 id="detail-drawer-title" className="text-xl font-black tracking-tight text-clutch-text">{title}</h2>
-              {subtitle ? <p className="mt-1 text-sm leading-6 text-clutch-muted">{subtitle}</p> : null}
+              {subtitle ? <p id="detail-drawer-subtitle" className="mt-1 text-sm leading-6 text-clutch-muted">{subtitle}</p> : null}
             </div>
-            <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-[14px] border border-white/[0.08] text-xl leading-none text-zinc-500 transition hover:bg-white/[0.06] hover:text-white">
+            <button ref={closeButtonRef} type="button" aria-label="Close details" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-[14px] border border-white/[0.08] text-xl leading-none text-zinc-500 transition hover:bg-white/[0.06] hover:text-white">
               x
             </button>
           </div>

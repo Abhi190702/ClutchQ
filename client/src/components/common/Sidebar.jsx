@@ -95,7 +95,7 @@ const Sidebar = () => {
           </button>
         </div>
 
-        <nav className="thin-scrollbar min-h-0 flex-1 overflow-y-auto pr-1">
+        <nav className="scrollbar-none min-h-0 flex-1 overflow-y-auto pr-1" aria-label="Primary navigation">
           {Object.entries(groups).map(([group, groupLinks]) => (
             <div key={group} className="mb-7">
               {!collapsed && <div className="mb-2.5 px-3 text-[10px] font-black uppercase tracking-[0.24em] text-zinc-600">{group}</div>}
