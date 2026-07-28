@@ -157,7 +157,7 @@ const GamingRhythmChart = ({ series = [], embedded = false }) => {
           compact
           className="mt-5 border-white/10 bg-transparent"
           title="No rhythm yet."
-          description="Start a session or sync Steam to build your activity graph."
+          description="Join a game room or sync Steam and your activity graph builds itself."
         />
       </section>
     );

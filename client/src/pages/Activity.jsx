@@ -8,7 +8,8 @@ import FriendCompatibilityStrip from "../components/activity/FriendCompatibility
 import GameTimeSplit from "../components/activity/GameTimeSplit";
 import GamingRhythmChart from "../components/activity/GamingRhythmChart";
 import RecentGameTimeline from "../components/activity/RecentGameTimeline";
-import StartSessionDock from "../components/activity/StartSessionDock";
+import RhythmCalendar from "../components/activity/RhythmCalendar";
+import AutoSessionStatus from "../components/activity/AutoSessionStatus";
 import MatchWrapUpModal from "../components/intelligence/MatchWrapUpModal";
 import {
   buildActivitySnapshot,
@@ -94,6 +95,7 @@ const Activity = () => {
 
   const fallbackSeries = useMemo(() => buildPlaytimeSeries(sessions, steamHeatmap, 30), [sessions, steamHeatmap]);
   const series = useMemo(() => (rhythmIntel?.series?.length ? rhythmIntel.series : fallbackSeries), [fallbackSeries, rhythmIntel]);
+  const calendarSeries = useMemo(() => buildPlaytimeSeries(sessions, steamHeatmap, 182), [sessions, steamHeatmap]);
   const fallbackSplit = useMemo(() => buildGameTimeSplit(summary.aggregates, steamLibrary), [summary.aggregates, steamLibrary]);
   const split = useMemo(() => (rhythmIntel?.gameMix?.length ? rhythmIntel.gameMix : fallbackSplit), [fallbackSplit, rhythmIntel]);
   const snapshot = useMemo(
@@ -110,7 +112,7 @@ const Activity = () => {
     <PageShell fullWidth>
       <div className="space-y-8">
         <ActivityHero snapshot={snapshot} rhythmSummary={rhythmIntel?.summary} active={summary.active} onEndActive={setEnding}>
-          <StartSessionDock games={games} active={summary.active} onStarted={load} compact />
+          <AutoSessionStatus active={summary.active} />
         </ActivityHero>
         {error ? <ErrorState message={error} onRetry={load} /> : null}
         {loading ? (
@@ -128,6 +130,7 @@ const Activity = () => {
           <>
             <div className="grid min-w-0 gap-7 xl:grid-cols-[minmax(0,1.85fr)_minmax(320px,0.95fr)]">
               <div className="min-w-0 space-y-6">
+                <RhythmCalendar series={calendarSeries} />
                 <GamingRhythmChart series={series} />
                 <RecentGameTimeline sessions={sessions} analyses={scorecardAnalyses} />
               </div>

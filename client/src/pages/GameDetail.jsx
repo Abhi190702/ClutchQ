@@ -5,7 +5,7 @@ import ActiveRoomsPanel from "../components/games/ActiveRoomsPanel";
 import GameEmptyState from "../components/games/GameEmptyState";
 import GameHero from "../components/games/GameHero";
 import GameStatsStrip from "../components/games/GameStatsStrip";
-import StartSessionDock from "../components/activity/StartSessionDock";
+import AutoSessionStatus from "../components/activity/AutoSessionStatus";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import gameApi from "../services/gameApi";
@@ -103,7 +103,7 @@ const GameDetail = () => {
             </section>
           </div>
           <aside className="space-y-6">
-            <StartSessionDock games={[game]} selectedGameSlug={game.slug} onStarted={() => navigate("/activity")} />
+            <AutoSessionStatus variant="panel" />
             <div className="premium-panel p-5">
               <h3 className="text-lg font-black text-white">Top Players</h3>
               <div className="mt-4 grid gap-3">

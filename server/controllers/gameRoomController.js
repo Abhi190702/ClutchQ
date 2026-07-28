@@ -10,6 +10,7 @@ import {
   releaseDiscordProvisioningLease
 } from "../services/discordProvisioningService.js";
 import { sanitizeRoomForViewer } from "../utils/roomPrivacy.js";
+import { startRoomSession, completeRoomSessionForUser, completeRoomSessions } from "./activityController.js";
 import { boundedSlug } from "../utils/queryInput.js";
 import { booleanInput, cleanTextInput, dateInput, numberInput } from "../utils/inputValue.js";
 import { isSharedDemoUser } from "../utils/demoAccounts.js";
@@ -151,6 +152,8 @@ export const createGameRoom = asyncHandler(async (req, res) => {
     startsAt: parseRoomDate(startsAt)
   });
 
+  await startRoomSession(req.user, room); // host is a member — start tracking their playtime
+
   res.status(201).json({
     success: true,
     message: "Game room created",
@@ -180,6 +183,7 @@ export const joinGameRoom = asyncHandler(async (req, res) => {
   }
 
   if (isRoomMember(room, req.user._id)) {
+    await startRoomSession(req.user, room); // ensure tracking is running (idempotent)
     return res.json({
       success: true,
       message: "You are already in this room",
@@ -251,6 +255,8 @@ export const joinGameRoom = asyncHandler(async (req, res) => {
     await GameRoom.updateOne({ _id: updated._id, status: "open" }, { $set: { status: "full" } });
   }
 
+  await startRoomSession(req.user, updated); // begin auto-tracking playtime for this room
+
   res.json({
     success: true,
     message: "Joined game room",
@@ -296,6 +302,8 @@ export const leaveGameRoom = asyncHandler(async (req, res) => {
   if (updated.status === "full") {
     await GameRoom.updateOne({ _id: updated._id, status: "full" }, { $set: { status: "open" } });
   }
+
+  await completeRoomSessionForUser(req.user._id, updated._id); // save tracked playtime on leave
 
   res.json({
     success: true,
@@ -415,6 +423,7 @@ export const updateGameRoom = asyncHandler(async (req, res) => {
 
   await room.save();
   if (terminalRoomStatuses.has(room.status)) {
+    await completeRoomSessions(room._id); // save every member's tracked playtime
     warnings.push(...(await cleanupDiscordRoom(room, req.id)));
   }
 
@@ -454,6 +463,7 @@ export const deleteGameRoom = asyncHandler(async (req, res) => {
 
   room.status = "cancelled";
   await room.save();
+  await completeRoomSessions(room._id); // save every member's tracked playtime
   const warnings = await cleanupDiscordRoom(room, req.id);
 
   res.json({

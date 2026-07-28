@@ -171,6 +171,84 @@ const rebuildAggregate = async (activity) => {
   return aggregate;
 };
 
+// Complete (or expire) an active session record and refresh derived data.
+// Shared by the manual stop flow and the automatic room-based tracking below.
+const finalizeSessionRecord = async (activity) => {
+  const endedAt = new Date();
+  const elapsedMs = endedAt.getTime() - new Date(activity.startedAt).getTime();
+  const expired = elapsedMs > maxTrackedSessionMs;
+  const updated = await GameActivity.findOneAndUpdate(
+    { _id: activity._id, status: "active" },
+    expired
+      ? {
+          $set: { status: "cancelled", endedAt, durationMinutes: 0, notes: "Automatically expired after 24 hours." },
+          $unset: { matchRating: "" }
+        }
+      : {
+          $set: { status: "completed", endedAt, durationMinutes: minutesBetween(activity.startedAt, endedAt), result: "completed" }
+        },
+    { new: true, runValidators: true }
+  );
+
+  if (!updated || updated.status !== "completed") return updated;
+
+  const game = await getGameInfo(updated.gameSlug);
+  await Promise.all([rebuildAggregate(updated), createAnalysis(updated, game)]);
+  await rebuildGraphForUser(updated.userId).catch(() => null);
+  return updated;
+};
+
+// Auto-start a tracked session when a player joins/creates a game room.
+// Non-fatal by design: session tracking must never block the room action.
+export const startRoomSession = async (user, room) => {
+  try {
+    if (!user?._id || !room?._id || !room?.gameSlug) return;
+    const existing = await GameActivity.findOne({ userId: user._id, status: "active" });
+    if (existing) {
+      if (String(existing.roomId || "") === String(room._id)) return; // already tracking this room
+      await finalizeSessionRecord(existing); // switch tracking to the room the player just entered
+    }
+    const game = await getGameInfo(room.gameSlug);
+    await GameActivity.create({
+      userId: user._id,
+      gameId: room.gameId || game?._id,
+      gameSlug: room.gameSlug,
+      gameName: game?.title || room.gameSlug,
+      roomId: room._id,
+      source: "api",
+      status: "active",
+      startedAt: new Date()
+    });
+  } catch (error) {
+    if (error?.code === 11000) return; // an active session already exists — safe to ignore
+    console.error("Auto session start failed:", error?.message || error);
+  }
+};
+
+// Auto-complete a player's tracked session when they leave a specific room.
+export const completeRoomSessionForUser = async (userId, roomId) => {
+  try {
+    if (!userId || !roomId) return;
+    const activity = await GameActivity.findOne({ userId, roomId, status: "active" });
+    if (activity) await finalizeSessionRecord(activity);
+  } catch (error) {
+    console.error("Auto session complete failed:", error?.message || error);
+  }
+};
+
+// Auto-complete every tracked session tied to a room (room completed/cancelled).
+export const completeRoomSessions = async (roomId) => {
+  try {
+    if (!roomId) return;
+    const activities = await GameActivity.find({ roomId, status: "active" });
+    for (const activity of activities) {
+      await finalizeSessionRecord(activity); // eslint-disable-line no-await-in-loop
+    }
+  } catch (error) {
+    console.error("Auto session batch complete failed:", error?.message || error);
+  }
+};
+
 export const startActivity = asyncHandler(async (req, res) => {
   const gameSlug = boundedSlug(req.body.gameSlug);
   const { roomId } = req.body;
