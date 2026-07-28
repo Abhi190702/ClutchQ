@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import ChevronIcon from "./ChevronIcon";
 import ProfileAccountMenu from "../navigation/ProfileAccountMenu";
 
 const baseLinks = [
+  { to: "/", label: "Discover", icon: "discover", group: "Play", end: true },
   { to: "/dashboard", label: "Dashboard", icon: "dashboard", group: "Play" },
   { to: "/games", label: "Games", icon: "games", group: "Play" },
   { to: "/activity", label: "Activity", icon: "activity", group: "Play" },
@@ -16,6 +17,7 @@ const baseLinks = [
 ];
 
 const iconPaths = {
+  discover: "M12 3a9 9 0 100 18 9 9 0 000-18zM15.5 8.5l-2 5-5 2 2-5z",
   games: "M5 8h14M7 16h10M8 5l-3 6 3 6M16 5l3 6-3 6",
   activity: "M4 15h3l3-8 4 10 3-6h3",
   leaders: "M6 18V9m6 9V5m6 13v-6",
@@ -76,7 +78,7 @@ const Sidebar = () => {
     <aside className={`hidden shrink-0 border-r border-white/[0.07] bg-[#0b0d12]/94 shadow-[18px_0_60px_rgba(0,0,0,0.14)] backdrop-blur-2xl transition-all duration-300 lg:block ${collapsed ? "w-[88px]" : "w-[288px]"}`}>
       <div className="sticky top-0 flex h-screen flex-col px-4 py-5">
         <div className={`mb-9 flex items-center ${collapsed ? "flex-col justify-center gap-4" : "justify-between"}`}>
-          <div className={`flex min-w-0 items-center ${collapsed ? "justify-center" : "gap-3"}`}>
+          <Link to="/" title="Go to Discover" className={`flex min-w-0 items-center rounded-[16px] transition hover:opacity-90 ${collapsed ? "justify-center" : "gap-3"}`}>
             <img src="/brand/clutchq-logo.png" alt="ClutchQ" className="h-11 w-11 shrink-0 rounded-[15px] object-cover shadow-[0_12px_28px_rgba(0,0,0,0.3)] ring-1 ring-white/10" />
             {!collapsed && (
               <div className="min-w-0">
@@ -84,7 +86,7 @@ const Sidebar = () => {
                 <div className="mt-1 truncate text-sm font-black text-zinc-100">Squad Console</div>
               </div>
             )}
-          </div>
+          </Link>
           <button
             type="button"
             onClick={() => setCollapsed((current) => !current)}
@@ -104,6 +106,7 @@ const Sidebar = () => {
                   <NavLink
                     key={link.to}
                     to={link.to}
+                    end={link.end}
                     title={collapsed ? link.label : undefined}
                     className={({ isActive }) =>
                       `group relative flex h-12 items-center rounded-[16px] text-sm font-bold transition duration-200 ${

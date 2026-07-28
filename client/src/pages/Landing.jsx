@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/common/Navbar";
+import PageShell from "../components/common/PageShell";
 import GameDiscoveryRail from "../components/landing/GameDiscoveryRail";
 import GameFirstHero from "../components/landing/GameFirstHero";
 import GameplayGraphPreview from "../components/landing/GameplayGraphPreview";
@@ -7,7 +9,18 @@ import HowItWorksSection from "../components/landing/HowItWorksSection";
 import LandingCTA from "../components/landing/LandingCTA";
 import LiveSquadPreview from "../components/landing/LiveSquadPreview";
 
-const Landing = () => (
+// Signed-in players get Discover inside the same Squad Console shell as every
+// other page, so navigation stays uniform and the Discover tab never vanishes.
+const DiscoverConsole = () => (
+  <PageShell flush>
+    <GameDiscoveryRail />
+    <LiveSquadPreview />
+    <HowItWorksSection />
+  </PageShell>
+);
+
+// Signed-out visitors get the full marketing landing with the top navbar.
+const MarketingLanding = () => (
   <div className="noise-bg min-h-screen overflow-x-hidden text-clutch-text">
     <Navbar />
     <main>
@@ -36,5 +49,15 @@ const Landing = () => (
     </footer>
   </div>
 );
+
+const Landing = () => {
+  const { user, loading } = useAuth();
+  // A stored session is still being verified — avoid flashing the marketing
+  // page to someone who is actually signed in.
+  if (loading && !user) {
+    return <div className="noise-bg grid min-h-screen place-items-center text-sm font-semibold text-zinc-400">Loading ClutchQ...</div>;
+  }
+  return user ? <DiscoverConsole /> : <MarketingLanding />;
+};
 
 export default Landing;

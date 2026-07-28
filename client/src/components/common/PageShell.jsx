@@ -5,7 +5,7 @@ import MobileBottomNav from "./MobileBottomNav";
 import ProfileAccountMenu from "../navigation/ProfileAccountMenu";
 import EmailVerificationBanner from "../auth/EmailVerificationBanner";
 
-const PageShell = ({ children, title, eyebrow, actions, fullWidth = false, hideSidebar = false }) => {
+const PageShell = ({ children, title, eyebrow, actions, fullWidth = false, hideSidebar = false, flush = false }) => {
   const { user, profile, logout } = useAuth();
   const navigate = useNavigate();
   const steamProvider = user?.authProviders?.steam;
@@ -46,20 +46,29 @@ const PageShell = ({ children, title, eyebrow, actions, fullWidth = false, hideS
       <div className="relative z-10 flex min-h-screen">
         {!hideSidebar && <Sidebar />}
         <div className="min-w-0 flex-1">
-          <main className="min-w-0 flex-1 px-4 pb-32 pt-24 sm:px-6 lg:px-10 lg:pb-12 lg:pt-10 2xl:px-12">
-            <div className={`mx-auto w-full ${fullWidth ? "max-w-[1600px]" : "max-w-[1320px]"}`}>
-              <EmailVerificationBanner />
-              {(title || eyebrow || actions) && (
-                <div className="mb-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-                  <div>
-                    {eyebrow && <div className="eyebrow mb-3">{eyebrow}</div>}
-                    {title && <h1 className="text-4xl font-black tracking-[-0.04em] text-white md:text-5xl">{title}</h1>}
-                  </div>
-                  {actions && <div className="flex flex-wrap gap-3">{actions}</div>}
+          <main className={`min-w-0 flex-1 ${flush ? "pb-32 pt-24 lg:pb-12 lg:pt-6" : "px-4 pb-32 pt-24 sm:px-6 lg:px-10 lg:pb-12 lg:pt-10 2xl:px-12"}`}>
+            {flush ? (
+              <>
+                <div className="mx-auto w-full max-w-[1540px] px-4 sm:px-6">
+                  <EmailVerificationBanner />
                 </div>
-              )}
-              {children}
-            </div>
+                {children}
+              </>
+            ) : (
+              <div className={`mx-auto w-full ${fullWidth ? "max-w-[1600px]" : "max-w-[1320px]"}`}>
+                <EmailVerificationBanner />
+                {(title || eyebrow || actions) && (
+                  <div className="mb-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+                    <div>
+                      {eyebrow && <div className="eyebrow mb-3">{eyebrow}</div>}
+                      {title && <h1 className="text-4xl font-black tracking-[-0.04em] text-white md:text-5xl">{title}</h1>}
+                    </div>
+                    {actions && <div className="flex flex-wrap gap-3">{actions}</div>}
+                  </div>
+                )}
+                {children}
+              </div>
+            )}
           </main>
         </div>
       </div>
