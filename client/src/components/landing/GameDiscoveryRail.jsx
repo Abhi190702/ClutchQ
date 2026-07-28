@@ -40,15 +40,20 @@ const DiscoveryCard = ({ gameName, rowLabel, duplicate = false }) => {
             Find squad
           </div>
         </LandingPoster>
-        <div className="space-y-3 p-4.5">
-          <div>
-            <div className="line-clamp-1 text-lg font-black leading-tight text-white">{gameName}</div>
-            <div className="mt-2 text-sm text-zinc-400">{cleanRowLabel(rowLabel)}</div>
+        <div className="space-y-2 p-5">
+          <div className="text-[0.62rem] font-black uppercase tracking-[0.2em] text-zinc-500">
+            {cleanRowLabel(rowLabel)}
           </div>
-          <div className="flex flex-wrap gap-2 text-xs font-black text-zinc-200">
-            <span className="text-clutch-blue">{openLobbies} lobbies</span>
+          <div className="line-clamp-1 text-[1.05rem] font-black leading-tight tracking-[-0.01em] text-white">
+            {gameName}
+          </div>
+          <div className="flex items-center gap-2 text-xs font-black">
+            <span className="inline-flex shrink-0 items-center gap-1.5 text-clutch-blue">
+              <span className="h-1.5 w-1.5 rounded-full bg-clutch-blue shadow-[0_0_8px_rgba(61,187,250,0.85)]" />
+              {openLobbies} lobbies
+            </span>
             <span className="text-zinc-600">/</span>
-            <span className="text-zinc-400">{role}</span>
+            <span className="min-w-0 truncate text-zinc-400">{role}</span>
           </div>
         </div>
       </div>
@@ -73,8 +78,9 @@ const GameDiscoveryRail = () => (
         {discoveryRows.map((row, rowIndex) => (
           <div key={row.label}>
             <div className="mb-4 flex items-center justify-between gap-4">
-              <h3 className="text-2xl font-black text-white">{row.label}</h3>
-              <span className="hidden text-xs font-black uppercase tracking-[0.22em] text-zinc-500 sm:inline-flex">
+              <h3 className="text-2xl font-black tracking-[-0.02em] text-white">{row.label}</h3>
+              <span className="hidden items-center gap-2 text-xs font-black uppercase tracking-[0.22em] text-zinc-500 sm:inline-flex">
+                <span className="h-1.5 w-1.5 rounded-full bg-clutch-green shadow-[0_0_8px_rgba(55,216,164,0.9)]" />
                 Live queues
               </span>
             </div>
