@@ -11,6 +11,7 @@ import {
 } from "../services/discordProvisioningService.js";
 import { sanitizeRoomForViewer } from "../utils/roomPrivacy.js";
 import { startRoomSession, completeRoomSessionForUser, completeRoomSessions } from "./activityController.js";
+import { getGameBySlug } from "../data/gameCatalog.js";
 import { boundedSlug } from "../utils/queryInput.js";
 import { booleanInput, cleanTextInput, dateInput, numberInput } from "../utils/inputValue.js";
 import { isSharedDemoUser } from "../utils/demoAccounts.js";
@@ -72,6 +73,22 @@ const parseRoomDate = (value) => {
   return date;
 };
 
+// Resolve the DB game for a write. Read endpoints already fall back to the
+// static catalog, but writes need a persisted Game (for gameId). If the game
+// isn't in the DB yet, provision it from the catalog on demand so room
+// creation works even against a database that was never seeded.
+const ensureGameForSlug = async (slug) => {
+  const existing = await Game.findOne({ slug, active: true });
+  if (existing) return existing;
+  const catalogGame = getGameBySlug(slug);
+  if (!catalogGame) return null;
+  return Game.findOneAndUpdate(
+    { slug },
+    { $set: { ...catalogGame, active: true } },
+    { new: true, upsert: true, runValidators: true }
+  );
+};
+
 const getRoom = async (id) =>
   GameRoom.findById(id)
     .populate({ path: "hostId", select: "name avatar", match: { isSuspended: { $ne: true } } })
@@ -108,7 +125,7 @@ export const createGameRoom = asyncHandler(async (req, res) => {
     throw new Error("Room title is required");
   }
 
-  const game = await Game.findOne({ slug: cleanGameSlug, active: true });
+  const game = await ensureGameForSlug(cleanGameSlug);
   if (!game) {
     res.status(404);
     throw new Error("Game not found");

@@ -162,6 +162,7 @@ const GamingRhythmChart = ({ series = [], embedded = false }) => {
       </section>
     );
   }
+  
 
   return (
     <section className={embedded ? "" : "border-b border-white/10 pb-6"}>

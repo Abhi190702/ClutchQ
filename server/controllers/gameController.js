@@ -33,7 +33,18 @@ const applyCatalogPresentation = (game) => {
 
 const getGamesWithFallback = async (query = {}) => {
   const games = await Game.find({ active: true, ...query }).sort({ activeRooms: -1, title: 1 });
-  return games.length ? games.map((game) => applyCatalogPresentation(toGameObject(game))) : gameCatalog;
+  if (!games.length) return gameCatalog;
+  // Merge, don't replace: always surface the full catalog library, letting a
+  // persisted game override its catalog entry (and appending any DB-only
+  // games). This keeps the Games list complete even when only some games have
+  // been provisioned into the database — e.g. after a room was created for one.
+  const dbBySlug = new Map(games.map((game) => [game.slug, applyCatalogPresentation(toGameObject(game))]));
+  const catalogSlugs = new Set(gameCatalog.map((game) => game.slug));
+  const merged = gameCatalog.map((catalogGame) => dbBySlug.get(catalogGame.slug) || catalogGame);
+  for (const game of games) {
+    if (!catalogSlugs.has(game.slug)) merged.push(applyCatalogPresentation(toGameObject(game)));
+  }
+  return merged;
 };
 
 const aggregateVisibleRoomStats = async (slugs) => {
